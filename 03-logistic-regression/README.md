@@ -38,6 +38,13 @@ $t^\star = c_{FP}/(c_{FP}+c_{FN})$ — and it is nowhere near 0.5.
 - Run a likelihood-ratio test for a group of coefficients
 - Fit an ordinal model, and check the proportional-odds assumption it rests on
 
+## The written treatment
+
+[*Quantitative Methods in International Business with Python*](https://warint.github.io/quantitative-methods/book/) (Warin),
+chapter [4 · Logistic Regression: Binary, Ordinal, and Multinomial](https://warint.github.io/quantitative-methods/book/session-04.html).
+Assigned in the pre-session; [`chapter.md`](chapter.md) follows its argument on
+this session's data.
+
 ## Contents
 
 | | |

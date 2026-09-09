@@ -36,6 +36,13 @@ diagnostic.
 - Compare nested models with an F-test and non-nested ones with AIC
 - Report an optimum as a region
 
+## The written treatment
+
+[*Quantitative Methods in International Business with Python*](https://warint.github.io/quantitative-methods/book/) (Warin),
+chapter [6 · Regression: Advanced Considerations](https://warint.github.io/quantitative-methods/book/session-06.html).
+Assigned in the pre-session; [`chapter.md`](chapter.md) follows its argument on
+this session's data.
+
 ## Contents
 
 | | |

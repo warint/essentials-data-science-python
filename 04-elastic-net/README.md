@@ -44,6 +44,14 @@ variables correctly.
 - Recognise when two collinear variables carry only one identifiable quantity
 - Refuse to report a selected set as a list of true effects, or $p$-values on one
 
+## The written treatment
+
+[*Quantitative Methods in International Business with Python*](https://warint.github.io/quantitative-methods/book/) (Warin),
+chapter [5 · Regularisation: Ridge, Lasso, and the Elastic Net](https://warint.github.io/quantitative-methods/book/session-05.html),
+with the bias–variance sections of chapter [8](https://warint.github.io/quantitative-methods/book/session-08.html).
+Assigned in the pre-session; [`chapter.md`](chapter.md) follows their argument on
+this session's data.
+
 ## Contents
 
 | | |

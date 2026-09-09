@@ -44,6 +44,14 @@ quarters. *An estimator that refuses is more useful than one that invents.*
 - Say what your design cannot identify, and what to do about it at the design stage
 - Report a breakdown value instead of asserting parallel trends
 
+## The written treatment
+
+[*Quantitative Methods in International Business with Python*](https://warint.github.io/quantitative-methods/book/) (Warin),
+chapters [10 · Causal Inference I: Counterfactuals, Randomisation, Matching](https://warint.github.io/quantitative-methods/book/session-10.html)
+and [11 · Causal Inference II: Difference-in-Differences](https://warint.github.io/quantitative-methods/book/session-11.html).
+Assigned in the pre-session. Chapter 11 is the **classical** treatment;
+[`chapter.md`](chapter.md) and the lecture start where it stops.
+
 ## Contents
 
 | | |

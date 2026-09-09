@@ -31,6 +31,14 @@ driven by motors rather than gravity, and keeping them moves the exponent to
 - Recognise a curved relationship, and fix it with a transformation
 - Distrust $R^2$ as evidence of correctness
 
+## The written treatment
+
+[*Quantitative Methods in International Business with Python*](https://warint.github.io/quantitative-methods/book/) (Warin),
+chapters [2 · Exploratory Data Analysis, and the First Model](https://warint.github.io/quantitative-methods/book/session-02.html)
+and [3 · Regression: Adequacy, Validity, and Robustness](https://warint.github.io/quantitative-methods/book/session-03.html).
+Assigned in the pre-session; [`chapter.md`](chapter.md) follows their argument on
+this session's data.
+
 ## Contents
 
 | | |

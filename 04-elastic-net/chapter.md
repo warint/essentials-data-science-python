@@ -43,20 +43,91 @@ and did.
 The way out is to stop asking for the best fit and deliberately accept a worse
 one. The device is a penalty, and the rest of this chapter is three of them.
 
-## 4.2 Bias on purpose
+## 4.2 The mechanical first attempt
 
-$$ \mathbb{E}\left[(y - \hat f(x))^2\right] = \text{Bias}^2 + \text{Variance} + \sigma^2 $$
+Before the penalties, the procedure they replaced — because everything in this
+chapter is a response to the way it fails.
 
-- **Bias** — how far the average fit sits from the truth. High for models too
-  simple to represent it.
-- **Variance** — how much the fit moves when you resample. High for flexible
-  models.
-- **$\sigma^2$** — noise. No method removes it, and a method that appears to has
-  found something that is not there.
+The obvious way to handle 200 candidates is to let the data choose: start from
+nothing, add whichever ingredient improves the fit most, stop when nothing
+improves it further. That is **forward stepwise selection**, and variants of it
+were the standard answer for decades and remain the default in a great deal of
+applied software.
 
-Least squares is *unbiased*. That sounds like a virtue, and as $p$ approaches $n$
-it becomes a disaster: the unbiasedness is bought with enormous variance, and
-total error is what you actually pay.
+```python
+def forward(X, y, k_max):
+    chosen, remaining = [], list(range(X.shape[1]))
+    for _ in range(k_max):
+        best = max(remaining,
+                   key=lambda j: LinearRegression()
+                                 .fit(X[:, chosen + [j]], y)
+                                 .score(X[:, chosen + [j]], y))
+        chosen.append(best); remaining.remove(best)
+    return chosen
+```
+
+Run it for fifteen steps and the first six chosen are `vanilla_extract`,
+`baking_powder`, `sea_salt`, `brown_sugar`, `browned_butter`, `dutch_cocoa` —
+six of the seven planted ingredients, in almost their true order of magnitude.
+It looks like a triumph. Of the fifteen selected, **nine are noise.**
+
+The damning result is what happens when the same procedure is run on bootstrap
+resamples of the same data:
+
+| | |
+|---|---|
+| candidates selected in **at least one** of 120 resamples | **189 of 200** |
+| selection frequency, `vanilla_extract` (true) | 82.5% |
+| `sea_salt` (true) | 61.7% |
+| `brown_sugar` (true) | 54.2% |
+| `baking_powder` (true) | 48.3% |
+| **`sour_cream_toasted` (pure noise)** | **27.5%** |
+
+Nearly every candidate in the table is selected somewhere, and a column of pure
+noise is chosen in more than a quarter of resamples.
+
+> **"The data selected these variables" is therefore not a finding.** Perturb the
+> data slightly and the data select different ones.
+
+The diagnosis is that stepwise makes a sequence of **discrete** decisions, each
+conditional on the last. A variable is either in or out; a marginal difference in
+fit at step three changes the entire subsequent path. That discreteness is what
+makes the procedure unstable — and it points straight at the fix: **stop making
+in-or-out decisions and shrink coefficients continuously instead.**
+
+## 4.3 Bias on purpose
+
+Chapter 1 gave the Gauss–Markov theorem as reassurance: least squares is best
+among linear estimators that are **unbiased**. Read it again as a *restriction*.
+The theorem says nothing whatever about estimators that accept bias, and it
+leaves open whether one of those might have smaller error overall.
+
+Decompose the expected squared error of an estimate $\hat\theta$ of a quantity
+$\theta$:
+
+$$
+\operatorname{E}\big[(\hat\theta - \theta)^2\big]
+= \underbrace{\big(\operatorname{E}[\hat\theta] - \theta\big)^2}_{\text{bias}^2}
++ \underbrace{\operatorname{Var}(\hat\theta)}_{\text{variance}} .
+$$
+
+- **Bias** — how far the average fit sits from the truth. An error made
+  systematically, in every sample.
+- **Variance** — how much the fit moves when you resample. An error made
+  differently each time.
+- **$\sigma^2$** — irreducible noise, which appears when the target is a new
+  observation rather than the function. No method removes it, and a method that
+  appears to has found something that is not there.
+
+Least squares sets the bias term to **exactly zero**. If the variance term is
+large — and with 200 predictors and 60 observations it is enormous — then
+accepting a little bias to remove a lot of variance is a straightforwardly better
+trade.
+
+> This is a **decision-theoretic** argument rather than a statistical convention.
+> Two estimators: A is unbiased with variance 100, giving error $0 + 100$. B has
+> bias 2 and variance 10, giving $4 + 10 = 14$. **The biased estimator wins by a
+> factor of seven.** Every method in this chapter is a version of B.
 
 > Two estimators. A is unbiased with variance 100, giving error $0 + 100$. B has
 > bias 2 and variance 10, giving $4 + 10 = 14$. **The biased estimator wins by a
@@ -64,13 +135,18 @@ total error is what you actually pay.
 
 ### Standardise first
 
-A penalty sums coefficients, and a coefficient's magnitude depends on its
-variable's units. An unstandardised penalty therefore punishes whichever variable
-happens to be recorded in small numbers — so the variables it selects are partly
-an artefact of somebody's choice of units. Standardising is not a nicety; it is a
-precondition for the penalty meaning anything.
+The penalties are on the *size* of the coefficients, and a coefficient's size
+depends on the units of its predictor. Measure an ingredient in milligrams rather
+than grams and its coefficient shrinks by a factor of a thousand, so the penalty
+barely notices it. **Nothing about the data changed; the answer did.**
 
-## 4.3 Ridge
+Standardising every predictor to mean zero and unit variance before fitting is
+therefore not hygiene — **it is part of the estimator's definition.** The
+intercept is left unpenalised, since there is no reason to shrink the overall
+level toward zero, which is why it is conventionally handled by centring $y$
+rather than by including a column of ones in the penalty.
+
+## 4.4 Ridge
 
 $$ \hat\beta_{\text{ridge}} = \arg\min_\beta \|y - X\beta\|^2 + \lambda\|\beta\|_2^2
 = (X^\top X + \lambda I)^{-1}X^\top y $$
@@ -78,17 +154,46 @@ $$ \hat\beta_{\text{ridge}} = \arg\min_\beta \|y - X\beta\|^2 + \lambda\|\beta\|
 Adding $\lambda$ to the diagonal makes a singular matrix invertible: ridge did not
 merely improve the $p>n$ problem, it made it *solvable*.
 
-In the singular-value basis, ridge multiplies the $j$-th component of the OLS
-solution by
+Compare that with $(X^{\top}X)^{-1}X^{\top}y$. The only change is $\lambda I$
+added to the diagonal — which is why the method is called *ridge*, and why it
+works where least squares cannot.
 
-$$ \frac{d_j^2}{d_j^2 + \lambda},$$
+The shrinkage is not uniform, and the singular value decomposition says exactly
+how it is targeted. Ridge multiplies the component of the solution along the
+$j$-th singular direction by
 
-which is strictly between 0 and 1 for any finite $\lambda$. Two consequences:
+$$ \frac{d_j^2}{d_j^2 + \lambda} .$$
 
-- Low-variance directions (small $d_j$) are shrunk hardest — precisely where OLS
-  was least stable.
-- The factor is **never exactly zero**, so ridge keeps all $p$ coefficients.
-  Always.
+Where the data are informative — large $d_j$ — the factor is near 1 and almost
+nothing happens. Where the data barely vary, and the least-squares coefficient is
+therefore an unstable ratio of noise to a very small number, the factor is near 0
+and the coefficient is crushed. **The shrinkage goes exactly where the variance
+problem is.**
+
+On the standardised recipe design, $X$ has **59 non-zero singular values**
+(largest 21.55, smallest non-zero 7.47, so a condition ratio of only 2.9) and
+**141 directions in which the data has no variation at all**:
+
+| $\lambda$ | strongest direction | median | weakest non-zero | the 141 null directions |
+|---|---|---|---|---|
+| 1 | 0.9979 | 0.9945 | 0.9824 | **0** |
+| 10 | 0.9789 | 0.9479 | 0.8480 | **0** |
+| 100 | 0.8229 | 0.6454 | 0.3581 | **0** |
+| 1000 | 0.3172 | 0.1540 | 0.0528 | **0** |
+
+The last column is why ridge is *defined* when $p > n$. In the 141 directions the
+data cannot see, the factor is zero for any $\lambda > 0$, so ridge assigns them
+no weight — where least squares had infinitely many equally good answers and no
+way to choose. **Ridge did not merely improve the $p > n$ problem; it made it
+solvable.**
+
+Note also what the condition ratio of 2.9 tells you: on *this* design the
+informative directions are all similarly informative, because the predictors were
+generated independently. The targeting matters far more when predictors are
+badly collinear, which is the situation Hoerl and Kennard (1970) proposed it for.
+
+For any finite $\lambda$ the factor on a non-zero direction is strictly between
+0 and 1, so **ridge never reaches exactly zero** and keeps all $p$ coefficients.
 
 ```python
 from sklearn.linear_model import RidgeCV
@@ -104,7 +209,7 @@ coefficients non-zero and 135 of them above 0.1. Ridge cannot answer "which
 ingredients matter", and it predicts poorly here because the truth is sparse and
 ridge has no way to represent sparsity.
 
-## 4.4 Lasso
+## 4.5 Lasso
 
 $$ \hat\beta_{\text{lasso}} = \arg\min_\beta \|y - X\beta\|^2 + \lambda\|\beta\|_1 $$
 
@@ -123,13 +228,40 @@ Both methods minimise squared error subject to a budget on $\beta$. Only the
 > Sparsity is a fact about the geometry of the constraint region, not a threshold
 > applied afterwards.
 
-In the one-variable case the solution is **soft-thresholding**:
+### Derive it once, on an orthonormal design
 
-$$ \hat\beta = \operatorname{sign}(z)\left(|z| - \lambda\right)_+ $$
+There is no closed form in general, but there is in the case that explains
+everything. Suppose the predictors are orthonormal, so $X^{\top}X = I$ and the
+least-squares solution is simply $z_j$. The objective then separates into one
+problem per coefficient, each with the solution
 
-where $z$ is the OLS estimate. Everything within $\lambda$ of zero *becomes*
-zero; everything else moves towards zero by exactly $\lambda$. Ridge, by
-contrast, multiplies by $1/(1+\lambda)$ — always proportional, never arriving.
+$$ \hat\beta_j^{\text{lasso}} = \operatorname{sign}(z_j)\big(|z_j| - \lambda/2\big)_+ $$
+
+— the **soft-thresholding** operator. Ridge, in the same case, gives
+$z_j/(1+\lambda)$.
+
+Build a genuinely orthonormal design and check both, at $\lambda = 1$:
+
+| $z$ (OLS) | lasso, fitted | soft-threshold formula | ridge, fitted | $z/(1+\lambda)$ |
+|---|---|---|---|---|
+| +3.000 | +2.500 | **+2.500** | +1.500 | **+1.500** |
+| +1.500 | +1.000 | **+1.000** | +0.750 | **+0.750** |
+| +0.400 | **0.000** | **0.000** | +0.200 | +0.200 |
+| −0.900 | −0.400 | **−0.400** | −0.450 | **−0.450** |
+| −2.200 | −1.700 | **−1.700** | −1.100 | **−1.100** |
+| +0.050 | **0.000** | **0.000** | +0.025 | +0.025 |
+
+Both match their formulas to $2\times10^{-16}$.
+
+Read what the operator does. **Every coefficient is pulled toward zero by the
+same fixed amount $\lambda/2$**, and any coefficient whose least-squares value
+was smaller than that amount is pulled *past* zero and held there — rows three
+and six. The zeros are not a numerical accident. They are what happens when a
+constant subtraction meets a small number.
+
+Ridge, by contrast, applies a *proportional* shrinkage, which multiplies small
+coefficients by a factor and therefore never reaches zero — rows three and six
+again, at +0.200 and +0.025.
 
 ### On the recipe data
 
@@ -155,7 +287,7 @@ ridge — and 25 selected ingredients.
 Every recovered coefficient is smaller than the truth. That is shrinkage doing
 its job, and it is the bias you agreed to.
 
-## 4.5 Two ingredients that are one ingredient
+## 4.6 Two ingredients that are one ingredient
 
 `baking_soda` and `baking_powder` are correlated at **0.963** and have
 **identical** true effects. The lasso set one to exactly zero and gave the other
@@ -207,7 +339,7 @@ The honest report is *"leavening matters, combined effect about +1.9; the data
 cannot apportion it between soda and powder, because the two were varied
 together."* The fix is a better experiment, not a better estimator.
 
-## 4.6 What cross-validation is optimising
+## 4.7 What cross-validation is optimising
 
 $k$-fold cross-validation splits the rows into $k$ parts, fits on $k-1$ and
 predicts the held-out part, then averages. `shuffle=True` matters: without it
@@ -225,6 +357,51 @@ extra small coefficients cost almost nothing predictively.
 > 25 drivers of taste" is the commonest misuse of this method — and it is a misuse
 > of a correctly fitted model.
 
+### The one-standard-error rule
+
+The cross-validation curve is itself an estimate with noise in it, so its minimum
+is **optimistically located**. The standard correction is to take not the
+$\lambda$ with the lowest estimated error but the *largest* $\lambda$ whose error
+is within one standard error of the minimum:
+
+| | $\lambda$ | selected | true found | false positives |
+|---|---|---|---|---|
+| CV minimum | 0.398 | 27 | 6 of 7 | 21 |
+| **1-SE rule** | 0.631 | **15** | 5 of 7 | 10 |
+
+The rule buys a model 45% smaller for an error difference the data cannot
+resolve — at the cost of one more true ingredient. That is the trade, stated
+plainly; neither answer is wrong, and reporting which rule you used is not
+optional.
+
+### Report stability, not significance
+
+If a single fit cannot be trusted to name variables, the honest alternative is
+to say how *reliably* each one is named. Refit on many resamples and report the
+proportion of times each appears (Meinshausen & Bühlmann, 2010):
+
+| ingredient | selection frequency | |
+|---|---|---|
+| `vanilla_extract` | **100.0%** | true |
+| `sea_salt` | 90.5% | true |
+| **`sour_cream_toasted`** | **85.5%** | **noise** |
+| `brown_sugar` | 81.0% | true |
+| `baking_powder` | 75.0% | true |
+| `browned_butter` | 71.0% | true |
+| **`walnut_toasted`** | **69.0%** | **noise** |
+| `baking_soda` | 24.0% | true |
+| `dutch_cocoa` | 14.0% | true |
+
+Stability selection is a real improvement on a single fit — the four strongest
+signals sit at the top, and the ordering is broadly right. **It is not a
+solution.** A pure-noise column ranks third, above two genuine ingredients, and
+the two hardest true cases — the collinear leavener and the weak signal — sit at
+24% and 14%, below half a dozen noise columns.
+
+> Report the frequencies anyway. A table like this is a statement the data
+> supports, and it is far less impressive than the single-fit result — which is
+> precisely its value.
+
 ### The signal that got away
 
 `dutch_cocoa` has a true effect of +1.1 and comes back between 0.00 and 0.25
@@ -235,37 +412,103 @@ appeared to would have found noise.
 Being able to say *"there may be further effects around 1 that this design cannot
 detect"* is worth more than selecting variables correctly.
 
-## 4.7 Three limitations to state out loud
+## 4.8 What none of this licenses
+
+The most important sentence in this chapter is a prohibition.
+
+> **A $p$-value from a model chosen by the lasso is not a $p$-value.** Fit the
+> selected variables by ordinary least squares, report the resulting standard
+> errors, and every one of them is wrong — computed as though the specification
+> had been fixed in advance, when in fact it was chosen using the same data.
+
+This is chapter 1's Freedman problem with a modern face, and it has been treated
+formally. Valid inference after selection requires either conditioning on the
+selection event or widening the intervals to cover every model that might have
+been selected (Berk et al., 2013). Tests designed specifically for the lasso path
+exist (Lockhart et al., 2014) and are not what a naive refit computes.
+
+The practical responses, in order of how often they are available:
+
+**Split the sample.** Select on one half, estimate and test on the other. The
+inference is then honest, at the cost of half the data, and it is the only remedy
+that needs no theory.
+
+**Report stability rather than significance** — the frequency table in §4.7. That
+is a statement the data support.
+
+**Treat selection as exploratory and say so.** A shortlist for further work is a
+legitimate output. A shortlist presented as a tested finding is not.
+
+And three properties to state alongside it:
 
 1. **Penalised coefficients are biased towards zero, by design.** Do not report
    them as effect sizes without saying so.
-2. **The standard errors are not valid.** Any library will print them, computed as
-   though $\lambda$ and the selected set had been fixed in advance. They were
-   chosen by looking at the data. Honest inference needs post-selection machinery
-   or a clean sample split. A table of lasso coefficients with stars beside them
-   reports inference that its own selection invalidated.
-3. **Selection is unstable under collinearity.** Which of two correlated
-   variables survives is close to arbitrary and changes with a resample.
+2. **Selection is unstable under collinearity.** Which of two correlated
+   variables survives is close to arbitrary and changes with a resample — §4.6
+   measured exactly that.
+3. **A signal below the detection floor stays there.** `dutch_cocoa` is not
+   recoverable at $n = 60$ by any method here, and the honest report says so
+   rather than presenting the selected set as complete.
 
-## 4.8 Summary
+## 4.9 Summary
 
 1. When $p > n$, OLS has no unique solution, fits perfectly and predicts terribly.
-2. Every method here is biased on purpose, and that is why it wins.
-3. Standardise before penalising.
-4. Ridge shrinks and never zeroes; the lasso zeroes, because the $\ell_1$ ball has
-   corners.
-5. The lasso must choose between collinear columns; the elastic net shares — but
+   Zero training error is a symptom, not an achievement.
+2. **Stepwise selection is unstable**: 189 of 200 candidates are selected in some
+   resample. "The data chose these variables" is not a finding.
+3. Gauss–Markov is a restriction, not a reassurance. Every method here is biased
+   on purpose, and that is why it wins.
+4. Standardise before penalising — it is part of the estimator's definition.
+5. Ridge shrinks by $d_j^2/(d_j^2+\lambda)$, targeting the unstable directions,
+   and assigns exactly zero to the directions the data cannot see — which is why
+   it is defined when $p > n$. It never reaches zero on a direction the data *can*
+   see, so it never selects.
+6. The lasso soft-thresholds: a **constant** subtraction, which is where the zeros
+   come from. Ridge shrinks **proportionally**, which is why it has none.
+7. The lasso must choose between collinear columns; the elastic net shares — but
    only the pair's total is identified.
-6. Cross-validation optimises prediction. Its selected set is not a list of true
-   effects, and its coefficients carry no valid $p$-values.
+8. Cross-validation optimises prediction. Use the one-standard-error rule if you
+   want a smaller model, and say which rule you used.
+9. Report **selection frequencies**, not $p$-values. And know that even those rank
+   a noise column third here.
+10. **A $p$-value from a lasso-selected model is not a $p$-value.**
 
 ## Further reading
 
-- Hastie, Tibshirani & Friedman (2009), *The Elements of Statistical Learning*,
-  2nd ed., §3.4.
-- Tibshirani (1996), "Regression shrinkage and selection via the lasso",
-  *JRSS-B* 58(1), 267–288.
-- Zou & Hastie (2005), "Regularization and variable selection via the elastic
-  net", *JRSS-B* 67(2), 301–320.
-- James, Witten, Hastie & Tibshirani (2021), *An Introduction to Statistical
-  Learning*, 2nd ed., ch. 6.
+The written treatment is
+[*Quantitative Methods in International Business with Python*](https://warint.github.io/quantitative-methods/book/),
+chapter [5 · Regularisation: Ridge, Lasso, and the Elastic Net](https://warint.github.io/quantitative-methods/book/session-05.html).
+Chapter [8](https://warint.github.io/quantitative-methods/book/session-08.html)
+carries the bias–variance decomposition this one assumes.
+
+Ridge regression begins with **Hoerl & Kennard (1970)**, who proposed biased
+estimation explicitly as a response to instability under near-collinearity — the
+title says "biased estimation" without apology. **Frank & Friedman (1993)** set
+ridge, subset selection and their relatives in a common framework indexed by the
+power of the penalty, which is where the lasso's $\ell_1$ sits between ridge's
+$\ell_2$ and subset selection's $\ell_0$.
+
+**Tibshirani (1996)** introduced the lasso and observed the property that made it
+dominant: continuous shrinkage and automatic selection in the same estimator.
+**Efron, Hastie, Johnstone & Tibshirani (2004)** supplied least angle regression,
+which computes the entire coefficient path at the cost of a single least-squares
+fit and turned the lasso from attractive into practical. **Zou & Hastie (2005)**
+diagnosed the lasso's behaviour among correlated predictors and proposed the
+elastic net, with the grouping effect as the explicit remedy.
+
+Choosing the penalty rests on **Stone (1974)**, whose formulation of
+cross-validation as a general criterion for model choice long predates its use
+here.
+
+The inferential warning has the sharpest literature. **Berk, Brown, Buja, Zhang &
+Zhao (2013)** established what valid post-selection inference requires and how
+much wider the intervals must be; **Lockhart, Taylor, Tibshirani & Tibshirani
+(2014)** developed a test for the lasso path specifically, making clear how
+different it is from a naive refit. **Meinshausen & Bühlmann (2010)** offers
+stability selection as the practical alternative — report how often a variable is
+chosen across resamples, rather than a significance level that assumes it was
+never chosen at all.
+
+Textbook treatments: **Hastie, Tibshirani & Friedman (2009)**, *The Elements of
+Statistical Learning*, 2nd ed., §3.4; **James, Witten, Hastie & Tibshirani
+(2021)**, *An Introduction to Statistical Learning*, 2nd ed., ch. 6.

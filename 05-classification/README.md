@@ -34,6 +34,13 @@ carry information and three that are noise.
 - Choose between precision and recall from the problem
 - Explain why irrelevant features punish distance methods
 
+## The written treatment
+
+[*Quantitative Methods in International Business with Python*](https://warint.github.io/quantitative-methods/book/) (Warin),
+chapter [8 · K-Nearest Neighbours and the Bias–Variance Trade-off](https://warint.github.io/quantitative-methods/book/session-08.html).
+Assigned in the pre-session; [`chapter.md`](chapter.md) follows its argument on
+this session's data.
+
 ## Contents
 
 | | |

@@ -1,0 +1,207 @@
+---
+title: "Session 6: Before the session"
+subtitle: "The counterfactual you never get to see"
+author: "Thierry Warin, PhD"
+institute: "HEC Montréal"
+format:
+  revealjs:
+    theme: [default, ../../theme/economist.scss]
+    embed-resources: true
+    slide-number: c/t
+    slide-level: 2
+    history: false
+    transition: none
+    navigation-mode: linear
+    controls: true
+    progress: true
+    width: 1280
+    height: 760
+    margin: 0.06
+    smaller: true
+    footer: "Essentials of Data Science in Python · Session 06 pre-session · Thierry Warin, PhD"
+---
+
+## Outline · Before class {.center .scrollable}
+
+1. What to do, and how long it takes
+2. Potential outcomes, and the missing half
+3. The 2×2 difference-in-differences
+4. Parallel trends
+5. Load the data
+6. Self-check
+
+# Before the session {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### The counterfactual you never get to see
+:::
+
+## What to do, and how long it takes
+
+| | | |
+|---|---|---|
+| **1** | Read the potential-outcomes section, with a pen | 25 min |
+| **2** | Work the 2×2 example by hand | 20 min |
+| **3** | Load `cat_cafe` and answer four questions | 15 min |
+| **4** | Attempt the self-check | 10 min |
+
+::: {.warn}
+This pre-session carries the whole conceptual load of the last session, so the
+lecture can spend its ninety minutes on what goes wrong. Do not skip it.
+:::
+
+## 1 · Potential outcomes
+
+For each unit $i$, imagine two numbers:
+
+| | |
+|---|---|
+| $Y_i(1)$ | the outcome **if treated** |
+| $Y_i(0)$ | the outcome **if not treated** |
+
+The causal effect for that unit is $Y_i(1) - Y_i(0)$.
+
+::: {.warn}
+You never observe both. A café either has a cat or it does not, so exactly half
+of every unit's causal information is **missing by construction**. This is the
+fundamental problem of causal inference, and no dataset solves it.
+:::
+
+## What we estimate instead
+
+We give up on individual effects and estimate an average:
+
+$$ \text{ATT} = \mathbb{E}\left[Y_i(1) - Y_i(0) \mid \text{treated}\right] $$
+
+the average effect **on the treated**. To get it, we need a stand-in for
+$\mathbb{E}[Y_i(0) \mid \text{treated}]$ — the outcome the treated units *would*
+have had. That stand-in is what every method in this session is arguing about.
+
+::: {.step}
+A causal claim is always a claim about a counterfactual, and a counterfactual is
+never in your data. The design is the argument for the substitute you used.
+:::
+
+## 2 · The 2×2 difference-in-differences
+
+Two groups, two periods. One group gets treated in between.
+
+| | before | after | change |
+|---|---|---|---|
+| **treated** | 50 | 85 | **+35** |
+| **control** | 35 | 55 | **+20** |
+| | | | **DiD = +15** |
+
+::: {.tight}
+- The treated group rose by 35. That is **not** the effect: things were changing
+  anyway.
+- The control group rose by 20. That is our estimate of what would have happened
+  to the treated group without treatment.
+- The **difference of the differences** is 15.
+:::
+
+## The same number, as a regression
+
+$$ Y = \beta_0 + \beta_1\,\text{Treated} + \beta_2\,\text{Post} + \beta_3\,(\text{Treated}\times\text{Post}) + \varepsilon $$
+
+| | |
+|---|---|
+| $\beta_0$ | control group, before |
+| $\beta_1$ | how much higher the treated group started |
+| $\beta_2$ | how much everyone changed over time |
+| $\beta_3$ | **the DiD estimate** |
+
+::: {.check}
+**The interaction is the estimate.** Work through the table above and confirm
+that $\beta_0 = 35$, $\beta_1 = 15$, $\beta_2 = 20$, $\beta_3 = 15$. Do it on
+paper — it is fifteen minutes that makes the rest of the session readable.
+:::
+
+## 3 · Parallel trends
+
+The assumption doing all the work:
+
+::: {.step}
+**In the absence of treatment, the treated and control groups would have followed
+the same trend.**
+:::
+
+::: {.tight}
+- It does **not** require the two groups to be similar. Levels can differ freely
+  — $\beta_1$ absorbs that.
+- It does require their *changes* to have matched.
+- It is fundamentally **untestable**, because it is a statement about a
+  counterfactual.
+:::
+
+::: {.warn}
+What you can do is check whether trends matched *before* treatment, and treat
+that as evidence about the period after. That is the event study, and it is
+evidence rather than proof.
+:::
+
+## 4 · Load the data
+
+```python
+import essentials as ess
+
+d = ess.load("cat_cafe")
+d.groupby("cat_arrival_quarter").cafe_id.nunique()
+```
+
+186 cafés observed over 12 quarters. Each adopts a resident cat in quarter 4, 7
+or 10. The outcome is average customer dwell time in minutes.
+
+::: {.tight}
+Answer before class:
+
+1. How many cafés in each adoption cohort? How many are **never** treated?
+2. Plot mean `dwell_min` by quarter, one line per cohort. What do you see?
+3. In quarter 11, how many cafés are untreated?
+4. Given your answer to 3 — for a café treated in quarter 10, what would you use
+   as a control group?
+:::
+
+## Why question 4 matters
+
+::: {.warn}
+There is no good answer, and finding that out before class is the point. By
+quarter 10 every café has a cat. **Nothing is left to serve as a counterfactual**,
+and no estimator can manufacture one.
+
+Keep that in mind on Thursday, because one of the methods we look at will happily
+report a number for those quarters anyway.
+:::
+
+## 5 · Self-check
+
+::: {.tight}
+1. Why does difference-in-differences not require the two groups to be similar?
+2. A treated group rose by 12 and a control group rose by 12. What is the DiD
+   estimate, and what does it mean?
+3. Pre-treatment trends are parallel. Does that prove parallel trends holds?
+4. Staggered adoption: units treated in 2018, 2020 and 2022. Which of them could
+   serve as a control for the 2022 cohort, and which could not?
+:::
+
+::: {.muted}
+Question 4 is the whole subject of the lecture. If your answer is "the ones not
+yet treated", you are ahead of a great deal of published work.
+:::
+
+## What the session will ask of you
+
+::: {.tight}
+- Estimate a 2×2 DiD as an interaction, and read every coefficient
+- Explain why two-way fixed effects generalises it, and where that breaks
+- Decompose a two-way fixed effects estimate into its 2×2 comparisons
+- Identify **forbidden comparisons** — already-treated units used as controls
+- Estimate group-time effects that avoid them
+- Build an event study, and read the pre-treatment periods properly
+- Say how large a violation would have to be to overturn your conclusion
+:::
+
+::: {.get}
+**Arrive with:** the 2×2 table worked by hand · the four data questions
+answered · the self-check attempted.
+:::

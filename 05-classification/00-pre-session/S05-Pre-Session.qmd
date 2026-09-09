@@ -1,0 +1,176 @@
+---
+title: "Session 5: Before the session"
+subtitle: "Drawing a line between kinds of things"
+author: "Thierry Warin, PhD"
+institute: "HEC Montréal"
+format:
+  revealjs:
+    theme: [default, ../../theme/economist.scss]
+    embed-resources: true
+    slide-number: c/t
+    slide-level: 2
+    history: false
+    transition: none
+    navigation-mode: linear
+    controls: true
+    progress: true
+    width: 1280
+    height: 760
+    margin: 0.06
+    smaller: true
+    footer: "Essentials of Data Science in Python · Session 05 pre-session · Thierry Warin, PhD"
+---
+
+## Outline · Before class {.center .scrollable}
+
+1. What to do, and how long it takes
+2. The Bayes classifier, and the floor it sets
+3. $k$-nearest neighbours, by hand
+4. Load the data
+5. Self-check
+
+# Before the session {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### Drawing a line between kinds of things
+:::
+
+## What to do, and how long it takes
+
+| | | |
+|---|---|---|
+| **1** | Read the Bayes classifier section | 15 min |
+| **2** | Do the $k$-NN exercise **by hand**, on paper | 20 min |
+| **3** | Load `bestiary` and answer three questions | 15 min |
+| **4** | Attempt the self-check | 10 min |
+
+## 1 · The best possible classifier
+
+Suppose you knew, for every point $x$, the true probability of each class. The
+best rule is obvious: **predict the most likely class.**
+
+$$ \hat y(x) = \arg\max_j \Pr(Y = j \mid X = x) $$
+
+That is the **Bayes classifier**, and no method can beat it. Its error rate is
+the **Bayes rate**, and it is usually not zero — because classes overlap, and
+because labels contain mistakes.
+
+::: {.step}
+This session's data is generated from known distributions, so the Bayes rate can
+be **computed exactly**. You will know, before fitting anything, the accuracy no
+classifier can exceed.
+:::
+
+::: {.warn}
+Which means: if your test accuracy comes out above that number, you have a leak —
+test data in your training set, or a feature that encodes the answer. Knowing the
+floor turns "my model scores 0.99" from good news into a bug report.
+:::
+
+## 2 · $k$-nearest neighbours, by hand
+
+The whole algorithm: to classify a new point, find the $k$ closest training
+points and take a vote.
+
+There is no fitting. There are no coefficients. The training data **is** the
+model.
+
+$$ \hat{\Pr}(Y = j \mid x) = \frac{1}{k}\sum_{i \in N_k(x)} \mathbb{1}(y_i = j) $$
+
+## Do this on paper
+
+Five training points, two features:
+
+| point | $x_1$ | $x_2$ | class |
+|---|---|---|---|
+| A | 1 | 1 | red |
+| B | 2 | 2 | red |
+| C | 4 | 4 | blue |
+| D | 5 | 3 | blue |
+| E | 3 | 3 | blue |
+
+Classify the new point $(3, 2)$.
+
+::: {.tight}
+1. Compute the Euclidean distance to all five points.
+2. What does $k = 1$ predict?
+3. What does $k = 3$ predict?
+4. What does $k = 5$ predict, and why is that answer uninformative?
+:::
+
+::: {.muted}
+The $k = 5$ answer is always the majority class of the whole training set,
+whatever the new point is. That is what "too much smoothing" looks like at its
+limit.
+:::
+
+## Why $k$ is the whole story
+
+::: {.tight}
+- **$k = 1$**: every training point is its own island. Training error is zero, and
+  the boundary is a jagged mess that has memorised the noise. **High variance.**
+- **$k = n$**: every prediction is the majority class. The boundary has vanished.
+  **High bias.**
+- Somewhere in between is a $k$ that is close to the truth.
+:::
+
+::: {.warn}
+$k$-NN is a **distance** method, so every feature must be on a comparable scale.
+Forget to standardise and a variable measured in grams will dominate one measured
+in centimetres, for no reason but the units.
+:::
+
+## 3 · Load the data
+
+```python
+import essentials as ess
+
+d = ess.load("bestiary")
+d.species.value_counts()
+```
+
+1,600 creatures, four species, three of them common and one rare.
+
+::: {.tight}
+Answer before class:
+
+1. How many of each species? What share is the rarest?
+2. Plot `tail_length_cm` against `wing_span_cm`, coloured by species. Could a
+   single straight line separate any species from the rest?
+3. If a classifier simply **never predicted** the rarest species, what would its
+   accuracy be? Compare that with a classifier that gets it right.
+:::
+
+::: {.warn}
+Question 3 is the trap in this session, and the answer is smaller than you expect.
+:::
+
+## 4 · Self-check
+
+::: {.tight}
+1. A $k$-NN with $k = 1$ has zero training error. Is that evidence of anything?
+2. You add three columns of random numbers to a $k$-NN. What happens to accuracy,
+   and *why* — be specific about distance.
+3. A four-class classifier is 96% accurate. One class is 2% of the data. What do
+   you still not know?
+:::
+
+::: {.muted}
+Question 2 is the curse of dimensionality in miniature: distance in an irrelevant
+dimension is still distance, and it drowns the dimensions that matter.
+:::
+
+## What the session will ask of you
+
+::: {.tight}
+- Compute a Bayes rate, and use it as a ceiling rather than a curiosity
+- Fit $k$-NN, choose $k$ by cross-validation, and draw the boundary
+- Read a multi-class confusion matrix, and say what accuracy concealed
+- Distinguish precision from recall, and say which one your problem needs
+- Show what irrelevant features do to a distance-based method
+:::
+
+::: {.get}
+**Arrive with:** the $k$-NN exercise done on paper · the three data questions
+answered · the self-check attempted.
+:::

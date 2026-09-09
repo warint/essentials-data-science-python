@@ -1,0 +1,224 @@
+---
+title: "Session 6: Practice"
+subtitle: "The Cat Café Effect"
+author: "Thierry Warin, PhD"
+institute: "HEC Montréal"
+format:
+  revealjs:
+    theme: [default, ../../theme/economist.scss]
+    embed-resources: true
+    slide-number: c/t
+    slide-level: 2
+    history: false
+    transition: none
+    navigation-mode: linear
+    controls: true
+    progress: true
+    width: 1280
+    height: 760
+    margin: 0.06
+    smaller: true
+    footer: "Essentials of Data Science in Python · Session 06 practice · Thierry Warin, PhD"
+---
+
+## Outline · The workshop {.center .scrollable}
+
+1. The brief
+2. Ninety minutes
+3. Stage 1 — get the wrong answer
+4. Stage 2 — find out why
+5. Stage 3 — get the right answer
+6. Stage 4 — the event study
+7. Stage 5 — what you cannot know
+8. What you hand in
+
+# The Cat Café Effect {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### Did the cat work?
+:::
+
+## The brief
+
+186 cafés, 12 quarters. Each adopts a resident cat in quarter 4, 7 or 10. The
+outcome is average customer dwell time in minutes.
+
+::: {.step}
+**Deliverable: an estimate of the effect of adopting a cat**, with a design
+statement, an event study, and an explicit list of what your data cannot answer.
+:::
+
+::: {.warn}
+Every planted effect in this dataset is **positive** and **growing**. The
+estimator most people reach for first returns a significant **negative** number.
+You will get the wrong answer on purpose, and then work out why.
+:::
+
+## Ninety minutes
+
+| | | |
+|---|---|---|
+| **00–15** | Get the wrong answer | two-way fixed effects |
+| **15–40** | Find out why | Goodman-Bacon decomposition |
+| **40–60** | Get the right answer | group-time effects |
+| **60–75** | The event study | and how to read the pre-period |
+| **75–85** | What you cannot know | and why that matters |
+| **85–90** | Write it up | 250 words |
+
+## Stage 1 · Get the wrong answer — 15 min
+
+```python
+import essentials as ess
+import statsmodels.formula.api as smf
+
+d = ess.load("cat_cafe")
+twfe = smf.ols("dwell_min ~ has_cat + C(cafe_id) + C(quarter)", data=d).fit()
+```
+
+::: {.tight}
+1. Plot mean `dwell_min` by quarter, one line per cohort. Does anything look
+   wrong?
+2. Report the `has_cat` coefficient, its standard error, its $t$ and its $p$.
+3. Compare with `ess.cat_cafe_truth()`. What was planted?
+4. Write one sentence describing what a careless analyst would now publish.
+:::
+
+::: {.check}
+Do step 1 before step 2. The raw data looks entirely reasonable, and that is part
+of the lesson — nothing in the plot warns you.
+:::
+
+## Stage 2 · Find out why — 25 min
+
+```python
+import diff_diff as dd
+
+bacon = dd.BaconDecomposition().fit(
+    d, outcome="dwell_min", unit="cafe_id", time="quarter",
+    first_treat="cat_arrival_quarter")
+bacon.to_dataframe()
+```
+
+::: {.tight}
+1. Print the decomposition. How many 2×2 comparisons is TWFE averaging?
+2. Confirm the weighted sum reproduces the TWFE estimate. To how many decimals?
+3. Group the comparisons by type. What weight sits on each, and what is each
+   type's average estimate?
+4. Look at the `later_vs_earlier` rows. **Which cafés are serving as the control
+   group in those comparisons?**
+5. Explain in three or four sentences why that produces a negative number when
+   the true effects are positive and growing.
+:::
+
+::: {.warn}
+Step 5 is the single most important thing in this session. Write it out properly,
+in your own words — if you cannot, you do not have it yet.
+:::
+
+## Stage 3 · Get the right answer — 20 min
+
+```python
+cs = dd.CallawaySantAnna(control_group="not_yet_treated").fit(
+    d, outcome="dwell_min", unit="cafe_id", time="quarter",
+    first_treat="cat_arrival_quarter", aggregate="group")
+
+cs.overall_att
+cs.group_time_effects        # a dict keyed by (cohort, quarter)
+cs.group_effects
+```
+
+::: {.tight}
+1. Report the overall ATT. Compare its **sign** with TWFE's.
+2. Build a table of every $\text{ATT}(g,t)$ and merge it against
+   `ess.cat_cafe_truth()`.
+3. For the post-treatment cells: how many land within two standard errors of the
+   planted value?
+4. Report the per-cohort aggregates against the planted averages.
+5. What does `control_group="not_yet_treated"` change, mechanically?
+:::
+
+## Stage 4 · The event study — 15 min
+
+::: {.tight}
+1. Add an `event_time` column: quarter minus adoption quarter.
+2. Average the estimates by `event_time` and plot them with confidence intervals,
+   with the planted truth overlaid.
+3. Are the pre-treatment estimates flat? Report their mean and the largest
+   absolute value.
+4. **How many of the placebo cells are individually significant at 5%?** Now: how
+   many would you expect, given how many tests you just ran?
+:::
+
+::: {.step}
+Step 4 is a lesson about pre-trend tests generally. They are a multiple-testing
+problem, and reading them one star at a time will make you reject good designs.
+:::
+
+## Stage 5 · What you cannot know — 10 min
+
+::: {.tight}
+1. Some post-treatment cells come back as **NA**. Which, and how many?
+2. Why? Count how many cafés are untreated in quarter 11.
+3. TWFE reported a number for those same quarters. Where did it get it?
+4. Compute a **breakdown value**: how large a differential trend, in minutes per
+   quarter, would be needed to drive your estimate to zero? Compare it with the
+   pre-treatment trend you can actually measure.
+5. Write the design recommendation: what should the cafés have done differently
+   so this study could evaluate its own last phase?
+:::
+
+## Also worth trying, if you have time
+
+::: {.tight}
+- `dd.SunAbraham`, `dd.ImputationDiD` (Borusyak–Jaravel–Spiess), or
+  `dd.TwoStageDiD` (Gardner). Do they agree with Callaway–Sant'Anna? Report two
+  estimators, not one.
+- `control_group="never_treated"` instead. What happens, and why?
+- Add `covariates=["seats", "wifi_mbps"]` to the CS fit. Should it change
+  anything? Does it?
+:::
+
+## What you hand in
+
+250 words, plus your script:
+
+::: {.tight}
+- **The design**, first: who is treated, when, and what serves as control
+- The TWFE estimate, and the decomposition showing where it came from
+- The **weight on forbidden comparisons**, and their average estimate
+- Your group-time estimates against the planted truth
+- The event study, with the pre-period read as a set of tests
+- **What is not identified**, explicitly, and why
+- A **breakdown value**, not an assertion that trends look parallel
+:::
+
+::: {.get}
+And the standing rule: one output you identified as wrong, and how. This session
+hands you one on a plate.
+:::
+
+## What loses marks
+
+::: {.tight}
+- Reporting the TWFE estimate as the answer
+- Reporting the right answer without explaining the wrong one
+- "The parallel trends assumption holds" — it is untestable; bound it instead
+- Reading twelve placebo tests one star at a time
+- Treating the NA cells as a software problem
+- An event study with no pre-treatment periods shown
+- Any causal verb attached to a specification you have not decomposed
+:::
+
+## Two-minute report
+
+| | |
+|---|---|
+| **Two numbers** | the wrong one and the right one, with the reason |
+| **One weight** | the share on forbidden comparisons |
+| **One limit** | what your data cannot identify, and what to do about it |
+
+::: {.muted}
+And congratulations: you now have a toolkit that runs from a straight line to an
+estimator that knows the limits of its own identification. That last property is
+rarer than it should be.
+:::

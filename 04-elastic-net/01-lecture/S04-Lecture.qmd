@@ -1,0 +1,586 @@
+---
+title: "Session 4: Ridge, Lasso, Elastic Net"
+subtitle: "Getting it wrong on purpose, and getting a better answer"
+author: "Thierry Warin, PhD"
+institute: "HEC Montréal"
+format:
+  revealjs:
+    theme: [default, ../../theme/economist.scss]
+    embed-resources: true
+    slide-number: c/t
+    slide-level: 2
+    history: false
+    transition: none
+    navigation-mode: linear
+    controls: true
+    progress: true
+    width: 1280
+    height: 760
+    margin: 0.06
+    smaller: true
+    footer: "Essentials of Data Science in Python · Session 04 · Thierry Warin, PhD"
+---
+
+```{python}
+#| label: setup
+#| echo: false
+
+import sys, warnings
+sys.path.insert(0, "../..")
+sys.path.insert(0, "../../theme")
+warnings.filterwarnings("ignore")
+
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import (LinearRegression, Ridge, Lasso, ElasticNet,
+                                  RidgeCV, LassoCV, ElasticNetCV, lasso_path)
+from sklearn.model_selection import KFold, cross_val_score, train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import mean_squared_error
+from plotstyle import setup, CL
+import essentials as ess
+
+plt = setup()
+pd.set_option("display.width", 100)
+
+r = ess.load("secret_recipe")
+X = r.drop(columns=["bake_id", "taste_score"])
+y = r.taste_score.to_numpy()
+Xs = StandardScaler().fit_transform(X.values)
+names = X.columns
+TRUTH = ess._RECIPE_TRUTH
+kf = KFold(10, shuffle=True, random_state=0)
+
+def cv_mse(model):
+    return -cross_val_score(model, Xs, y, cv=kf,
+                            scoring="neg_mean_squared_error").mean()
+```
+
+## Outline · The hour ahead {.center .scrollable}
+
+1. Sixty rows, two hundred columns
+2. What OLS does here, and why it is useless
+3. Bias on purpose
+4. Ridge: shrink everything
+5. Lasso: shrink, and set some to zero
+6. Two ingredients that are the same ingredient
+7. Elastic net: the dial between them
+8. What cross-validation is and is not optimising
+
+## What session 4 is for {.scrollable}
+
+::::: columns
+
+:::: {.column width="33%"}
+
+### The mathematics
+
+- $X^\top X$ singular when $p > n$: no unique solution
+- Ridge shrinks by $1/(1+\lambda)$ in the SVD basis — **never to zero**
+- The $\ell_1$ ball has **corners**, and corners are where zeros come from
+- Soft-thresholding: $\hat\beta = \mathrm{sign}(z)(|z| - \lambda)_+$
+
+::::
+
+:::: {.column width="33%"}
+
+### The Python
+
+- `RidgeCV`, `LassoCV`, `ElasticNetCV`
+- `KFold(shuffle=True)`, and why the shuffle matters
+- `lasso_path` for the whole coefficient trajectory
+- `StandardScaler` — and why a penalty makes it compulsory
+
+::::
+
+:::: {.column width="33%"}
+
+### The judgement
+
+- Accept a biased estimator when it lowers total error
+- Never read a lasso's non-zero set as a list of true effects
+- Notice when two collinear variables carry only **one** identifiable quantity
+- Say which signals your sample size cannot support
+
+::::
+
+:::::
+
+# The problem {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### Sixty bakes. Two hundred ingredients. Seven that matter.
+:::
+
+## The data
+
+```{python}
+#| echo: true
+
+r = ess.load("secret_recipe")
+print(f"{r.shape[0]} bakes, {r.shape[1] - 2} candidate ingredients")
+print(r[["bake_id", "vanilla_extract", "sea_salt", "dutch_cocoa",
+         "taste_score"]].head())
+```
+
+::: {.muted}
+Every column is grams of an ingredient. Somewhere in the 200 is a short list that
+actually drives the taste score.
+:::
+
+## What least squares does here
+
+```{python}
+#| echo: true
+
+Xtr, Xte, ytr, yte = train_test_split(Xs, y, test_size=0.35, random_state=7)
+ols = LinearRegression().fit(Xtr, ytr)
+
+print(f"train rows {Xtr.shape[0]}, columns {Xtr.shape[1]}")
+print(f"training MSE   {mean_squared_error(ytr, ols.predict(Xtr)):.8f}")
+print(f"test MSE       {mean_squared_error(yte, ols.predict(Xte)):.2f}")
+print(f"variance of y  {y.var():.2f}")
+```
+
+::: {.warn}
+**Training error is exactly zero.** With more columns than rows the model passes
+through every point, because it has enough freedom to. It has memorised the
+noise, and on new bakes it does worse than predicting the mean would.
+:::
+
+## What "no unique solution" means
+
+$$ \hat\beta_{\text{OLS}} = (X^\top X)^{-1} X^\top y $$
+
+With $p > n$, $X^\top X$ is $200 \times 200$ with rank at most 60. It is singular
+and cannot be inverted.
+
+::: {.step}
+There are **infinitely many** coefficient vectors that fit the training data
+perfectly. The data cannot choose between them, so we have to add a rule that
+does. That rule is the penalty, and choosing it is what this session is about.
+:::
+
+# Bias on purpose {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### $\text{Error} = \text{Bias}^2 + \text{Variance} + \sigma^2$
+:::
+
+## The trade
+
+$$ \mathbb{E}\left[(y - \hat f(x))^2\right] = \text{Bias}^2 + \text{Variance} + \sigma^2 $$
+
+Least squares is **unbiased**, which sounds like a virtue. It buys that
+unbiasedness with variance, and when $p$ approaches $n$ the price becomes
+absurd.
+
+::: {.check}
+Every estimator in this session is **deliberately biased**. Each adds a penalty
+that pulls coefficients towards zero — knowing that is the wrong place for them —
+because the variance it saves is worth more than the bias it costs.
+:::
+
+## Standardise first, always
+
+A penalty adds up the coefficients. A coefficient's size depends on its
+variable's units, so an unstandardised penalty punishes whichever variable
+happens to be measured in small units.
+
+```{python}
+#| echo: true
+
+Xs = StandardScaler().fit_transform(X.values)     # mean 0, sd 1, every column
+print(f"column means {np.abs(Xs.mean(0)).max():.2e}, sds {Xs.std(0).min():.4f}")
+```
+
+::: {.warn}
+This is not a nicety. Forget it and your penalty is applied in arbitrary units,
+and the variables it selects are partly an artefact of how somebody chose to
+record them.
+:::
+
+# Ridge {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### Shrink everything, zero nothing
+:::
+
+## The estimator
+
+$$ \hat\beta_{\text{ridge}} = \arg\min_\beta \; \|y - X\beta\|^2 + \lambda \|\beta\|_2^2 $$
+
+which, unlike OLS, has a closed form that always exists:
+
+$$ \hat\beta_{\text{ridge}} = (X^\top X + \lambda I)^{-1} X^\top y $$
+
+::: {.step}
+Adding $\lambda$ to the diagonal makes a singular matrix invertible. Ridge did
+not merely improve the $p > n$ problem — it made it *solvable*.
+:::
+
+## Why it never reaches zero
+
+In the singular-value basis, ridge multiplies the $j$-th component of the OLS
+solution by
+
+$$ \frac{d_j^2}{d_j^2 + \lambda} $$
+
+::: {.tight}
+- That factor is **strictly between 0 and 1** for any finite $\lambda$.
+- Directions with little variance ($d_j$ small) are shrunk hardest — which is
+  exactly where OLS was most unstable.
+- It is never *equal* to zero, so ridge keeps all 200 coefficients, always.
+:::
+
+## Ridge on our data
+
+```{python}
+#| echo: true
+
+alphas = np.logspace(-2, 4, 25)
+ridge = RidgeCV(alphas=alphas, cv=kf).fit(Xs, y)
+coef = pd.Series(ridge.coef_, index=names)
+
+print(f"chosen lambda      {ridge.alpha_:.2f}")
+print(f"non-zero           {(coef.abs() > 1e-6).sum()} of {len(coef)}")
+print(f"above |0.1|        {(coef.abs() > 0.1).sum()}")
+print(f"CV MSE             {cv_mse(Ridge(alpha=ridge.alpha_)):.2f}")
+```
+
+::: {.warn}
+Two hundred non-zero coefficients, 135 of them large enough to notice. **Ridge
+has not told you which ingredients matter**, because it structurally cannot. It
+gives you a prediction and no list.
+:::
+
+# Lasso {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### Where the zeros come from
+:::
+
+## The estimator
+
+$$ \hat\beta_{\text{lasso}} = \arg\min_\beta \; \|y - X\beta\|^2 + \lambda \|\beta\|_1 $$
+
+One character has changed — $\ell_2$ to $\ell_1$ — and the behaviour is
+qualitatively different.
+
+## Corners produce zeros
+
+Both methods minimise the same squared error subject to a budget on $\beta$. The
+shape of the budget is what differs.
+
+::: {.tight}
+- The $\ell_2$ budget $\{\|\beta\|_2 \le t\}$ is a **circle**. A circle is smooth,
+  so the point where the error contours first touch it is generically off both
+  axes: no zeros.
+- The $\ell_1$ budget $\{\|\beta\|_1 \le t\}$ is a **diamond**, with corners **on
+  the axes**. Contours touching a corner give a solution with a coefficient
+  exactly zero.
+:::
+
+::: {.step}
+Sparsity is a fact about the geometry of the constraint region, not a numerical
+threshold applied afterwards.
+:::
+
+## Soft-thresholding, in one variable
+
+With one standardised predictor, the lasso solution is
+
+$$ \hat\beta = \operatorname{sign}(z)\left(|z| - \lambda\right)_+ $$
+
+where $z$ is the OLS estimate. Everything within $\lambda$ of zero **becomes**
+zero; everything else moves towards zero by exactly $\lambda$.
+
+```{python}
+#| echo: false
+#| fig-align: center
+
+z = np.linspace(-3, 3, 400)
+lam = 1.0
+fig, ax = plt.subplots(figsize=(5.6, 2.7))
+ax.plot(z, z, color=CL.muted, ls=":", lw=1.2, label="OLS")
+ax.plot(z, np.sign(z) * np.maximum(np.abs(z) - lam, 0),
+        color=CL.accent, lw=2, label="lasso")
+ax.plot(z, z / (1 + lam), color=CL.warn, lw=2, label="ridge")
+ax.axhline(0, color=CL.line, lw=0.8); ax.axvline(0, color=CL.line, lw=0.8)
+ax.legend(); ax.set_xlabel("OLS estimate"); ax.set_ylabel("penalised estimate")
+plt.show()
+```
+
+::: {.muted}
+Ridge is a rotation towards zero — always proportional, never arriving. The lasso
+has a flat stretch, and that flat stretch is variable selection.
+:::
+
+## The lasso on our data
+
+```{python}
+#| echo: true
+
+lasso = LassoCV(cv=kf, random_state=0, max_iter=200_000).fit(Xs, y)
+lc = pd.Series(lasso.coef_, index=names)
+sel = lc[lc.abs() > 1e-6]
+
+print(f"chosen lambda   {lasso.alpha_:.4f}")
+print(f"selected        {len(sel)} of {len(lc)} ingredients")
+print(f"CV MSE          {cv_mse(Lasso(alpha=lasso.alpha_, max_iter=200_000)):.2f}"
+      f"   (ridge: {cv_mse(Ridge(alpha=ridge.alpha_)):.2f})")
+print("\nlargest by absolute size:")
+print(sel.reindex(sel.abs().sort_values(ascending=False).index).head(8).round(3).to_string())
+```
+
+## Against the planted truth
+
+```{python}
+#| echo: false
+
+cmp = pd.DataFrame({
+    "planted": pd.Series(TRUTH),
+    "lasso": lc.reindex(TRUTH.keys()).round(3),
+})
+print(cmp.to_string())
+print(f"\nselected {len(sel)} ingredients; {len(TRUTH)} are real")
+```
+
+::: {.check}
+The four strongest signals come back with the right sign and pulled towards zero
+— which is what a penalty is *for*. The lasso predicts roughly three times
+better than ridge on cross-validated error, and unlike ridge it hands you a
+short list instead of 200 numbers.
+:::
+
+::: {.warn}
+Look at the last two rows. `baking_soda` is **exactly zero** and
+`dutch_cocoa` is next to it. Neither is a true zero.
+:::
+
+# The two leaveners {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### Two ingredients that are, statistically, one ingredient
+:::
+
+## What was planted
+
+```{python}
+#| echo: true
+
+print(f"corr(baking_soda, baking_powder) = "
+      f"{X.baking_soda.corr(X.baking_powder):.4f}")
+print(f"true effects: soda {TRUTH['baking_soda']:+.2f}, "
+      f"powder {TRUTH['baking_powder']:+.2f}   — identical")
+print(f"\nlasso:  soda {lc.baking_soda:+.3f}   powder {lc.baking_powder:+.3f}")
+```
+
+::: {.warn}
+The lasso zeroed one of two ingredients with **identical** true effects, and gave
+the survivor most of their combined weight. It does this in every
+cross-validation split, confidently, and nothing in the output hints that a
+second ingredient is hiding behind the first.
+:::
+
+## Why it has no choice
+
+::: {.step}
+The $\ell_1$ penalty charges for $|\beta_1| + |\beta_2|$. Two near-identical
+columns can deliver the same fit by loading everything onto one of them — which
+costs the same total but is a **corner** of the diamond, and corners are where
+the solution lands. Splitting evenly costs the same and is not a corner.
+:::
+
+::: {.muted}
+Ridge does the opposite: the $\ell_2$ penalty charges for $\beta_1^2 + \beta_2^2$,
+and that is minimised by splitting the load. Ridge would share it and select
+neither.
+:::
+
+# Elastic net {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### One penalty with both halves in it
+:::
+
+## The estimator
+
+$$ \hat\beta = \arg\min_\beta \|y - X\beta\|^2 + \lambda\left(\alpha\|\beta\|_1 + \tfrac{1-\alpha}{2}\|\beta\|_2^2\right) $$
+
+::: {.tight}
+- $\alpha = 1$ is the lasso. $\alpha = 0$ is ridge.
+- The $\ell_1$ part still produces exact zeros.
+- The $\ell_2$ part has **no reason to prefer either** of two identical columns,
+  so it shares between them.
+:::
+
+::: {.muted}
+In scikit-learn $\alpha$ is called `l1_ratio`. In `glmnet` it is called `alpha`,
+and scikit-learn's `alpha` is the overall $\lambda$. This has caused a great deal
+of confusion; check which library you are reading.
+:::
+
+## The grouping effect, measured
+
+```{python}
+#| echo: true
+
+enet = ElasticNetCV(l1_ratio=0.95, cv=kf, random_state=0,
+                    max_iter=200_000).fit(Xs, y)
+ec = pd.Series(enet.coef_, index=names)
+
+pair = ["baking_soda", "baking_powder"]
+print(pd.DataFrame({"planted": pd.Series(TRUTH).reindex(pair),
+                    "lasso": lc.reindex(pair).round(3),
+                    "elastic net": ec.reindex(pair).round(3)}).to_string())
+print(f"\npair total  —  lasso {lc[pair].sum():+.3f}   "
+      f"elastic net {ec[pair].sum():+.3f}   planted {sum(TRUTH[k] for k in pair):+.3f}")
+```
+
+::: {.check}
+The elastic net keeps both. That is the grouping effect, and it is the argument
+for the method.
+:::
+
+## But be careful what you claim
+
+```{python}
+#| echo: true
+
+for seed in range(5):
+    m = ElasticNetCV(l1_ratio=0.95, cv=KFold(10, shuffle=True, random_state=seed),
+                     random_state=0, max_iter=200_000).fit(Xs, y)
+    c = pd.Series(m.coef_, index=names)
+    print(f"CV seed {seed}:  soda {c.baking_soda:+.3f}   powder {c.baking_powder:+.3f}"
+          f"   sum {c[pair].sum():+.3f}")
+```
+
+::: {.warn}
+The **sum** is stable. The **split** is not — it moves with an arbitrary choice
+of cross-validation seed. Two collinear columns carry *one* identifiable quantity
+between them, and no penalty conjures a second. The elastic net's real service is
+telling you there are two ingredients; it cannot tell you how to divide the
+credit.
+:::
+
+## The whole path, in one picture
+
+```{python}
+#| echo: false
+#| fig-align: center
+
+lam, coefs, _ = lasso_path(Xs, y, n_alphas=120, eps=1e-3)
+fig, ax = plt.subplots(figsize=(7.4, 3.2))
+for j in range(coefs.shape[0]):
+    if names[j] in TRUTH:
+        ax.plot(np.log10(lam), coefs[j], lw=2, color=CL.accent, zorder=3)
+    else:
+        ax.plot(np.log10(lam), coefs[j], lw=0.6, color=CL.line, alpha=0.7)
+ax.axvline(np.log10(lasso.alpha_), color=CL.warn, ls="--", lw=1.3)
+ax.annotate("CV choice", (np.log10(lasso.alpha_), coefs.max() * 0.8),
+            (np.log10(lasso.alpha_) + 0.15, coefs.max() * 0.85),
+            color=CL.warn, fontsize=8, fontweight="600")
+ax.set_xlabel(r"$\log_{10}\lambda$"); ax.set_ylabel("coefficient")
+ax.set_title("blue = the seven planted ingredients, grey = the other 193")
+plt.show()
+```
+
+::: {.muted}
+Read it right to left, as the penalty relaxes. The planted ingredients enter
+first, which is the method working. Then everything else follows them in, which
+is the next slide.
+:::
+
+# What CV is optimising {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### Prediction. Not truth.
+:::
+
+## The lasso selected 25 ingredients. Seven are real.
+
+```{python}
+#| echo: false
+
+hits = [n for n in sel.index if n in TRUTH]
+print(f"selected            {len(sel)}")
+print(f"genuinely non-zero  {len(TRUTH)}")
+print(f"correctly found     {len(hits)}")
+print(f"false positives     {len(sel) - len(hits)}")
+print(f"missed              {sorted(set(TRUTH) - set(hits))}")
+```
+
+::: {.step}
+This is not a failure. Cross-validation tunes for **prediction**, and the penalty
+that predicts best is smaller than the penalty that selects best. Keeping a few
+extra small coefficients costs almost nothing in error and can help.
+:::
+
+::: {.get}
+**A lasso's non-zero set is not a list of true effects.** Reporting it as one —
+"the model identified 20 drivers of taste" — is the commonest misuse of this
+method, and it is a misuse of a correct model.
+:::
+
+## And the signal that got away
+
+```{python}
+#| echo: true
+
+weak = "dutch_cocoa"
+print(f"{weak}:  planted {TRUTH[weak]:+.2f}")
+print(f"            lasso {lc[weak]:+.3f}   elastic net {ec[weak]:+.3f}")
+print(f"\nsd of the outcome: {y.std():.2f}")
+```
+
+::: {.warn}
+The weakest planted effect is not recovered by anything, and at 60 observations it
+should not be — it sits below the detection floor. **No choice of method rescues
+a signal the sample size cannot support**, and a method that appears to has found
+noise.
+:::
+
+## Three limitations to state out loud
+
+::: {.tight}
+1. **Penalised coefficients are biased**, by design. Do not report them as
+   effect sizes without saying so.
+2. **The standard errors in the output are not valid** after a data-driven
+   selection. There is no honest $p$-value on a lasso coefficient without extra
+   machinery — post-selection inference, or a sample split.
+3. **Selection is unstable under collinearity.** Which of two correlated
+   variables survives is close to arbitrary, and it changes with a resample.
+:::
+
+::: {.muted}
+Limitation 2 is not academic. A published table of lasso-selected coefficients
+with stars beside them is reporting inference that was invalidated by the
+selection that produced the table.
+:::
+
+## Key takeaways
+
+::: {.tight}
+1. When $p > n$, OLS fits perfectly and predicts terribly. Training error of zero
+   is a symptom, not an achievement.
+2. Every method here is **biased on purpose**, and that is why it wins.
+3. Standardise before penalising, or the penalty is in arbitrary units.
+4. Ridge shrinks and never zeroes. The lasso zeroes, because the $\ell_1$ ball
+   has corners.
+5. The lasso must choose between collinear columns; the elastic net shares. But
+   the **split is not identified** — only the pair's total.
+6. Cross-validation optimises prediction. Its selected set is not a list of true
+   effects, and its coefficients have no valid $p$-values.
+:::
+
+## References
+
+- Hastie, Tibshirani & Friedman (2009). *The Elements of Statistical Learning*,
+  2nd ed. Springer. Ch. 3.4.
+- Zou, H. & Hastie, T. (2005). Regularization and variable selection via the
+  elastic net. *JRSS-B*, 67(2), 301–320.
+- Tibshirani, R. (1996). Regression shrinkage and selection via the lasso.
+  *JRSS-B*, 58(1), 267–288.
+- James, Witten, Hastie & Tibshirani (2021). *An Introduction to Statistical
+  Learning*, 2nd ed., ch. 6.

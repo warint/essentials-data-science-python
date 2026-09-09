@@ -1,0 +1,206 @@
+---
+title: "Session 5: Practice"
+subtitle: "The Bestiary"
+author: "Thierry Warin, PhD"
+institute: "HEC Montréal"
+format:
+  revealjs:
+    theme: [default, ../../theme/economist.scss]
+    embed-resources: true
+    slide-number: c/t
+    slide-level: 2
+    history: false
+    transition: none
+    navigation-mode: linear
+    controls: true
+    progress: true
+    width: 1280
+    height: 760
+    margin: 0.06
+    smaller: true
+    footer: "Essentials of Data Science in Python · Session 05 practice · Thierry Warin, PhD"
+---
+
+## Outline · The workshop {.center .scrollable}
+
+1. The brief
+2. Ninety minutes
+3. Stage 1 — compute the ceiling
+4. Stage 2 — the bias–variance curve
+5. Stage 3 — draw your boundary on the truth
+6. Stage 4 — the rare species
+7. Stage 5 — three useless columns
+8. What you hand in
+
+# The Bestiary {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### The only puzzle where you can see the right answer
+:::
+
+## The brief
+
+1,600 creatures, four species, five measurements. Build a classifier.
+
+::: {.step}
+This dataset is unusual: it was generated from known distributions, so
+`essentials.bestiary_posterior()` returns the **true class probabilities at any
+point**. You can compute the best achievable accuracy in advance, and you can
+draw the true decision boundary underneath your own.
+:::
+
+::: {.warn}
+Use that. The point is not to score well — it is to see *how* your classifier is
+wrong, which is a thing you almost never get to look at.
+:::
+
+## Ninety minutes
+
+| | | |
+|---|---|---|
+| **00–15** | Compute the ceiling | before fitting anything |
+| **15–35** | The bias–variance curve | train and test, across $k$ |
+| **35–55** | Draw your boundary on the truth | three values of $k$ |
+| **55–75** | The rare species | what accuracy concealed |
+| **75–85** | Three useless columns | what they cost, and why |
+| **85–90** | Write it up | 250 words |
+
+## Stage 1 · Compute the ceiling — 15 min
+
+```python
+import essentials as ess
+import numpy as np
+from sklearn.metrics import accuracy_score
+
+d = ess.load("bestiary")
+species = ess.bestiary_species()
+post = ess.bestiary_posterior(d.wing_span_cm, d.tail_length_cm)
+bayes = np.array(species)[post.argmax(1)]
+```
+
+::: {.tight}
+1. What is the Bayes accuracy on this sample? Write it at the top of your script.
+2. What is the Bayes **balanced** accuracy? Why do the two differ?
+3. Why is it not 1.0? Name **two** distinct reasons from the data-generating
+   process.
+4. If your test accuracy came out at 0.98, what would you conclude?
+:::
+
+## Stage 2 · The bias–variance curve — 20 min
+
+::: {.tight}
+1. Split into train and test, `stratify=y`. Standardise using the **training**
+   statistics only.
+2. For $k$ in 1, 3, 5, 9, 15, 25, 45, 75, 125, 250, 400: record training and test
+   accuracy.
+3. Plot both curves against $k$ on one figure, with the Bayes floor as a
+   horizontal line.
+4. Describe the two curves in one sentence each. They do **not** have the same
+   shape.
+:::
+
+::: {.check}
+Why `stratify=y`? Without it, a random split of a 2% class can put almost none of
+it in the test set — and your evaluation of the class you care about is then based
+on four creatures.
+:::
+
+## Stage 3 · Draw your boundary on the truth — 20 min
+
+```python
+GX, GT = np.meshgrid(np.linspace(...), np.linspace(...))
+truth = ess.bestiary_posterior(GX, GT).argmax(1).reshape(GX.shape)
+```
+
+::: {.tight}
+1. Build a mesh over the two real features.
+2. For $k = 1$, your best $k$, and $k = 400$: fill the mesh with your predictions
+   and **contour the true boundary on top**.
+3. Describe each panel. What specifically is $k = 1$ fitting? What has $k = 400$
+   lost?
+:::
+
+::: {.step}
+This is the only time in the course you get to see the answer. Look at it
+properly — most of what you will ever know about overfitting comes from this
+picture.
+:::
+
+## Stage 4 · The rare species — 20 min
+
+::: {.tight}
+1. Print the confusion matrix at your chosen $k$. Label it.
+2. Report per-class precision and recall with `classification_report`.
+3. Now the key measurement: take your predictions, **replace every
+   `ember_drake` prediction with your most common class**, and recompute
+   accuracy. How much did total blindness to the rare species cost?
+4. Say in one sentence what that number means for anyone optimising accuracy.
+5. Would you rather have high precision or high recall on `ember_drake`? Give a
+   scenario for each.
+:::
+
+::: {.warn}
+Step 3 is the one that changes how you read every classification result you will
+ever see.
+:::
+
+## Stage 5 · Three useless columns — 10 min
+
+`mass_g`, `antenna_mm` and `scale_count` contain no information about species.
+
+::: {.tight}
+1. Refit with all five features. Report accuracy at several $k$ against the
+   two-feature version.
+2. Explain the drop in terms of **distance**, specifically.
+3. Run `permutation_importance` on the five-feature model. Does it identify the
+   noise?
+4. Why would a penalised regression have coped better?
+:::
+
+## Also worth trying, if you have time
+
+::: {.tight}
+- Fit `QuadraticDiscriminantAnalysis`. It is the *correct* model family for this
+  generator. Does it beat $k$-NN, and by how much?
+- Fit `LogisticRegression`. A linear boundary on a curved problem — how much does
+  it actually lose? The answer is smaller than you expect, and worth a sentence.
+- Fit an unlimited-depth `DecisionTreeClassifier`. Which value of $k$ does its
+  behaviour resemble?
+:::
+
+## What you hand in
+
+250 words, plus your script:
+
+::: {.tight}
+- **The Bayes floor**, and two reasons it is not 1.0
+- Your chosen $k$, how you chose it, and **on which data**
+- The train/test curves, described
+- The boundary figure, with the truth overlaid
+- The **cost of ignoring the rare species**, in accuracy points
+- Whether you want precision or recall on it, and why
+- What the three noise columns cost, and why distance methods suffer
+:::
+
+::: {.get}
+And the standing rule: one output you identified as wrong, and how.
+:::
+
+## What loses marks
+
+::: {.tight}
+- Choosing $k$ on the test set
+- Standardising before splitting (the test statistics leak into training)
+- Reporting accuracy with no confusion matrix and no baseline
+- Reporting accuracy as if it described the rare class
+- "The model is 87% accurate" with no mention of the 86.25% ceiling
+- Using $k$-NN on unstandardised features
+:::
+
+## Two-minute report
+
+| | |
+|---|---|
+| **One ceiling** | and why it is not 1.0 |
+| **One picture** | your boundary against the true one |
+| **One cost** | what ignoring 2% of the data does to accuracy |

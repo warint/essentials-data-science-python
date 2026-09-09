@@ -1,0 +1,543 @@
+---
+title: "Session 1: Regression"
+subtitle: "Fitting a line, and finding out whether to believe it"
+author: "Thierry Warin, PhD"
+institute: "HEC Montréal"
+format:
+  revealjs:
+    theme: [default, ../../theme/economist.scss]
+    embed-resources: true
+    slide-number: c/t
+    slide-level: 2
+    history: false
+    transition: none
+    navigation-mode: linear
+    controls: true
+    progress: true
+    width: 1280
+    height: 760
+    margin: 0.06
+    smaller: true
+    footer: "Essentials of Data Science in Python · Session 01 · Thierry Warin, PhD"
+---
+
+<!-- The code cells below execute at render time against the course data, so the
+     numbers on these slides are the numbers a student's own machine produces. -->
+
+```{python}
+#| label: setup
+#| echo: false
+
+import sys, warnings
+sys.path.insert(0, "../..")
+sys.path.insert(0, "../../theme")
+warnings.filterwarnings("ignore")
+
+import numpy as np
+import pandas as pd
+import statsmodels.formula.api as smf
+from plotstyle import setup, CL
+import essentials as ess
+
+plt = setup()
+pd.set_option("display.width", 100)
+pd.set_option("display.max_columns", 12)
+
+d = ess.load("coasters")
+```
+
+## Outline · The hour ahead {.center .scrollable}
+
+1. The model, and what its parts mean
+2. Reading the output, one column at a time
+3. $R^2$, and the question it does not answer
+4. Residuals versus fitted: is the shape right?
+5. Fixing a curve: logs and what they buy
+6. Leverage, outliers, and influence
+7. What to report
+
+## What session 1 is for {.scrollable}
+
+::::: columns
+
+:::: {.column width="33%"}
+
+### The mathematics
+
+- Least squares as minimising $\sum (y_i - \hat y_i)^2$
+- Read a coefficient **in units**, with its standard error
+- Compute **leverage** from the hat matrix, and show it sums to $p$
+- Separate an outlier from an influential point with **Cook's distance**
+
+::::
+
+:::: {.column width="33%"}
+
+### The Python
+
+- Fit from a formula with `smf.ols`
+- Pull diagnostics from a fitted model with `.get_influence()`
+- Build the diagnostic plots yourself, rather than calling one function
+- Transform a variable inside the formula
+
+::::
+
+:::: {.column width="33%"}
+
+### The judgement
+
+- Distrust $R^2$ as evidence that a model is correct
+- Say what you looked for in a residual plot, not that it "looked fine"
+- Decide what to do about the six rows that move the whole result
+- Refuse a model whose residuals show it has missed the structure
+
+::::
+
+:::::
+
+# The model {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### A line, and the distance from it
+:::
+
+## What we are fitting
+
+$$ y_i = \beta_0 + \beta_1 x_i + \varepsilon_i $$
+
+Least squares picks the $\hat\beta_0, \hat\beta_1$ that make the sum of squared
+vertical distances as small as possible:
+
+$$ \hat\beta = \arg\min_{\beta} \sum_{i=1}^{n} \left(y_i - \beta_0 - \beta_1 x_i\right)^2 $$
+
+::: {.step}
+Squared, so that being 4 too high is four times worse than being 2 too high, not
+twice. **Vertical**, so the method assumes $x$ is known and $y$ is the thing with
+error in it.
+:::
+
+## Today's data
+
+84 roller coasters. Two of the columns are related by a law of physics, and the
+whole session is about whether a regression can find it.
+
+```{python}
+#| echo: true
+
+d = ess.load("coasters")
+print(d.shape)
+d[["coaster", "drop_m", "speed_kmh", "propulsion"]].head()
+```
+
+## Plot it before you fit anything
+
+```{python}
+#| echo: true
+#| fig-align: center
+
+fig, ax = plt.subplots(figsize=(7.2, 3.2))
+for prop, colour in [("gravity", CL.ink), ("launch", CL.warn)]:
+    sub = d[d.propulsion == prop]
+    ax.scatter(sub.drop_m, sub.speed_kmh, s=20, alpha=0.8,
+               color=colour, label=prop)
+ax.set_xlabel("Drop (m)"); ax.set_ylabel("Top speed (km/h)")
+ax.legend()
+plt.show()
+```
+
+## What the scatter already told us
+
+Two things, before a single model was fitted:
+
+::: {.tight}
+- The main cloud **bends**. It rises steeply at first and flattens out. A
+  straight line through it will not sit right.
+- Six points sit well above everything else: high speed from a small drop. They
+  are the ones marked `launch`.
+:::
+
+::: {.step}
+Fit the whole thing anyway and you get $R^2$ = `{python} f"{smf.ols('speed_kmh ~ drop_m', data=d).fit().rsquared:.2f}"` —
+mediocre, and the number gives no hint as to which of the two problems caused it.
+:::
+
+::: {.warn}
+So we set the six aside **provisionally**, and come back at the end of the
+session to justify it with a diagnostic rather than with a glance. Setting rows
+aside because you looked at a picture is a hypothesis, not a finding.
+:::
+
+## Fit the line
+
+```{python}
+#| echo: true
+
+g = d[d.propulsion == "gravity"].copy()      # 78 gravity-driven coasters
+lin = smf.ols("speed_kmh ~ drop_m", data=g).fit()
+print(lin.summary().tables[1])
+```
+
+::: {.muted}
+`speed_kmh ~ drop_m` reads "speed as a function of drop". The intercept is added
+for you.
+:::
+
+## Reading that, one column at a time
+
+```{python}
+#| echo: false
+
+b = lin.params["drop_m"]; se = lin.bse["drop_m"]
+lo, hi = lin.conf_int().loc["drop_m"]
+print(f"coefficient   {b:8.4f}   km/h per metre of drop")
+print(f"std error     {se:8.4f}   how much it would wobble on new data")
+print(f"t             {b/se:8.2f}   coefficient / std error")
+print(f"95% interval  [{lo:.3f}, {hi:.3f}]")
+```
+
+::: {.tight}
+- **The coefficient has units.** `{python} f"{b:.3f}"` km/h per metre of drop. A
+  coaster with a drop 10 m larger is predicted `{python} f"{10*b:.1f}"` km/h faster.
+- **The standard error is the honest part.** It says how much of that number is
+  the data and how much is luck.
+- **The $t$-statistic is a ratio.** It has no units, and on its own it tells you
+  nothing about whether the effect matters.
+:::
+
+## And now $R^2$
+
+```{python}
+#| echo: true
+
+print(f"R2      {lin.rsquared:.4f}")
+print(f"adj R2  {lin.rsquared_adj:.4f}")
+print(f"n       {int(lin.nobs)}")
+```
+
+::: {.check}
+Ninety-six per cent of the variance in top speed, from one variable. In most
+fields you would stop here and write it up.
+:::
+
+::: {.warn}
+This model is still wrong. Not imprecise — **wrong in shape**, and $R^2$ has no
+way of telling you so. We removed the six rows that were obviously a different
+mechanism, and the remaining problem is the one $R^2$ cannot see.
+:::
+
+# Is the shape right? {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### Residuals versus fitted
+:::
+
+## The one plot to draw first
+
+A residual is what the model failed to explain: $e_i = y_i - \hat y_i$.
+
+Plot the residuals against the fitted values. If the model has the shape right,
+there is **no pattern** — the residuals are a formless band around zero. Any
+structure you can see is signal the model left on the table.
+
+```{python}
+#| echo: true
+#| fig-align: center
+
+fig, ax = plt.subplots(figsize=(7.2, 3.2))
+ax.scatter(lin.fittedvalues, lin.resid, s=16, alpha=0.75, color=CL.ink)
+ax.axhline(0, color=CL.muted, lw=1)
+ax.set_xlabel("Fitted top speed (km/h)")
+ax.set_ylabel("Residual (km/h)")
+plt.show()
+```
+
+## What that plot is telling you
+
+The band is not formless. It rises, peaks, and comes back down — an arch. Bin
+the residuals and the arch is unmistakable:
+
+```{python}
+#| echo: true
+
+bands = pd.cut(g.drop_m, [0, 25, 45, 65, 85, 105, 200])
+print(g.assign(resid=lin.resid).groupby(bands, observed=True)["resid"]
+       .agg(["mean", "count"]).round(2))
+```
+
+::: {.step}
+Small drops: the model over-predicts. Middling drops: it under-predicts. Large
+drops: it over-predicts again. A straight line is being asked to trace a curve,
+and it is splitting the difference.
+:::
+
+## Confirm it with a test, not just an eye
+
+```{python}
+#| echo: true
+
+quad = smf.ols("speed_kmh ~ drop_m + I(drop_m**2)", data=g).fit()
+t = quad.tvalues["I(drop_m ** 2)"]
+print(f"quadratic term:  t = {t:.2f},  p = {quad.pvalues['I(drop_m ** 2)']:.2e}")
+print(f"linear R2 {lin.rsquared:.4f}  ->  quadratic R2 {quad.rsquared:.4f}")
+```
+
+::: {.warn}
+$p \approx 10^{-12}$. The curvature is not a matter of taste. `I(...)` means
+"treat what is inside as arithmetic, not as formula syntax" — without it, `**`
+would be read as an interaction.
+:::
+
+# Fixing the curve {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### Logs, and the exponent they reveal
+:::
+
+## Where the curve comes from
+
+A car that falls a height $h$ converts potential energy into kinetic energy:
+
+$$ mgh = \tfrac{1}{2}mv^2 \quad\Longrightarrow\quad v = \sqrt{2gh} $$
+
+Speed goes as the **square root** of the drop. That is why a straight line
+could not fit it, and no amount of extra data would have helped.
+
+::: {.step}
+The fix is not a better line. It is a different functional form.
+:::
+
+## Logs turn a power law into a straight line
+
+If $v = c\,h^{k}$ then taking logs of both sides gives
+
+$$ \log v = \log c + k \log h $$
+
+which is a straight line **whose slope is the exponent**. So regress
+$\log v$ on $\log h$ and read $k$ off directly.
+
+```{python}
+#| echo: true
+
+g["log_speed"] = np.log(g.speed_kmh)
+g["log_drop"]  = np.log(g.drop_m)
+
+power = smf.ols("log_speed ~ log_drop", data=g).fit()
+k, klo, khi = power.params["log_drop"], *power.conf_int().loc["log_drop"]
+print(f"exponent  k = {k:.4f}   95% CI [{klo:.4f}, {khi:.4f}]")
+print(f"R2 = {power.rsquared:.4f}")
+```
+
+## Read that interval
+
+```{python}
+#| echo: false
+
+print(f"theory says      k = 0.5      (v proportional to sqrt(h))")
+print(f"the data says    k = {k:.4f}   95% CI [{klo:.4f}, {khi:.4f}]")
+print(f"and the constant   c = {np.exp(power.params['Intercept']):.2f}")
+print(f"frictionless      3.6*sqrt(2g) = {3.6*np.sqrt(2*9.81):.2f}")
+```
+
+::: {.check}
+The confidence interval contains 0.5 and excludes 1. The regression has
+recovered a law of physics from a spreadsheet of theme-park statistics.
+:::
+
+::: {.muted}
+The constant comes in below the frictionless value because real track loses
+energy. Friction costs speed; it does not change the exponent.
+:::
+
+## The two models, side by side
+
+```{python}
+#| echo: false
+#| fig-align: center
+
+xs = np.linspace(g.drop_m.min(), g.drop_m.max(), 200)
+fig, axes = plt.subplots(1, 2, figsize=(9.6, 3.3))
+
+axes[0].scatter(g.drop_m, g.speed_kmh, s=14, alpha=0.7, color=CL.ink)
+axes[0].plot(xs, lin.params["Intercept"] + lin.params["drop_m"] * xs,
+             color=CL.warn, lw=2)
+axes[0].set_title(f"straight line — $R^2$ = {lin.rsquared:.3f}")
+
+axes[1].scatter(g.drop_m, g.speed_kmh, s=14, alpha=0.7, color=CL.ink)
+axes[1].plot(xs, np.exp(power.params["Intercept"]) * xs ** k,
+             color=CL.good, lw=2)
+axes[1].set_title(f"power law — exponent {k:.3f}")
+
+for ax in axes:
+    ax.set_xlabel("Drop (m)"); ax.set_ylabel("Top speed (km/h)")
+plt.show()
+```
+
+::: {.muted}
+Both fit well. Only one of them means something.
+:::
+
+# Which rows are in charge? {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### Leverage, outliers, influence
+:::
+
+## Three different things
+
+| | |
+|---|---|
+| **Outlier** | unusual $y$, given its $x$. Badly predicted. |
+| **Leverage point** | unusual $x$. Has the *power* to move the line. |
+| **Influential** | actually moves it. Needs both. |
+
+::: {.step}
+A point far from the centre of $x$ but sitting exactly on the line does no
+damage. A badly predicted point in the middle of the data does very little
+either. The damage is done by points that are **both**.
+:::
+
+## Leverage, and the fact that it sums to $p$
+
+Leverage is the diagonal of the hat matrix
+$H = X(X^\top X)^{-1}X^\top$, and $h_{ii}$ is how much
+$\hat y_i$ responds to $y_i$. Its total is fixed:
+
+$$ \sum_i h_{ii} = \operatorname{trace}(H) = p $$
+
+```{python}
+#| echo: true
+
+full = smf.ols("log_speed ~ log_drop",
+               data=d.assign(log_speed=np.log(d.speed_kmh),
+                             log_drop=np.log(d.drop_m))).fit()
+inf = full.get_influence()
+h = inf.hat_matrix_diag
+
+print(f"sum of leverages   {h.sum():.6f}   (p = {int(full.df_model + 1)})")
+print(f"mean leverage      {h.mean():.4f}   = p/n")
+print(f"2p/n screen        {2 * 2 / len(d):.4f}   {(h > 2*2/len(d)).sum()} above it")
+```
+
+::: {.muted}
+There is a fixed budget of influence, and every observation gets a share. Adding
+rows does not create more; it divides the same total more finely.
+:::
+
+## Cook's distance
+
+Cook's distance asks the question you actually care about: **if I deleted this
+row, how far would all the fitted values move?**
+
+$$ D_i = \frac{\sum_j (\hat y_j - \hat y_{j(i)})^2}{p\,\hat\sigma^2} $$
+
+It combines leverage with the size of the residual, which is why it is the one
+number to look at rather than either on its own.
+
+```{python}
+#| echo: true
+
+cooks = inf.cooks_distance[0]
+print(f"largest Cook's D   {cooks.max():.4f}")
+print(f"above 4/n ({4/len(d):.4f}):  {(cooks > 4/len(d)).sum()} of {len(d)} rows")
+```
+
+## Now go and look at the rows
+
+```{python}
+#| echo: true
+#| fig-align: center
+
+top = np.argsort(cooks)[-6:][::-1]
+print(d.iloc[top][["coaster", "drop_m", "speed_kmh", "propulsion"]].to_string(index=False))
+
+fig, ax = plt.subplots(figsize=(7.2, 2.9))
+colours = [CL.warn if p == "launch" else CL.ink for p in d.propulsion]
+ax.vlines(range(len(cooks)), 0, cooks, color=colours, lw=1.4)
+ax.axhline(4 / len(d), color=CL.muted, ls="--", lw=1)
+ax.set_xlabel("Observation"); ax.set_ylabel("Cook's distance")
+plt.show()
+```
+
+## What the diagnostic found
+
+Five of the six most influential observations are **launched** coasters —
+propelled by hydraulics or linear motors instead of being dropped.
+
+::: {.step}
+Energy conservation says nothing about them. They reach 240 km/h from a 40-metre
+structure because a motor put the energy in. They are not outliers in the sense
+of bad measurements. They are **a different physical system**, and they should
+never have been in the regression.
+:::
+
+::: {.warn}
+This is the sequence to internalise: a diagnostic points at rows → you go and
+read the rows → the rows tell you the model was mis-specified. The diagnostic
+did not tell you to delete anything. It told you where to look.
+:::
+
+## What keeping them costs
+
+```{python}
+#| echo: true
+
+print(f"gravity only (n={len(g)}):  k = {k:.4f}")
+print(f"all 84 coasters:        k = {full.params['log_drop']:.4f}")
+```
+
+::: {.warn}
+Six rows out of 84 — seven per cent of the data — move the exponent from 0.50 to
+0.37, and 0.37 corresponds to no law of anything. The interval around it is
+narrow and confidently wrong.
+:::
+
+::: {.check}
+And this is the justification we owed from the opening slide. We set those rows
+aside because a picture suggested it; we keep them aside because Cook's distance
+identified them, the `propulsion` column explains them, and the physics says
+they belong to a different model.
+:::
+
+::: {.muted}
+Deleting rows is a modelling decision that has to be argued for. "They are a
+different mechanism, and here is the column that says so" is an argument.
+"They were far from the line" is not.
+:::
+
+## What to report
+
+::: {.tight}
+- The coefficient, **in units**, with its standard error or interval
+- The functional form, and **why** that one — not just that it fit better
+- What you looked for in the residuals, and what you found
+- Which observations you investigated, what they turned out to be, and what you
+  did about them
+- What the result does **not** license you to claim
+:::
+
+::: {.get}
+$R^2$ is the least informative number in the output, and it is the one most
+often reported alone.
+:::
+
+## Key takeaways
+
+::: {.tight}
+1. A coefficient is a **quantity with units**. Say them.
+2. $R^2$ measures closeness, not correctness. A model can be very close and the
+   wrong shape.
+3. **Residuals versus fitted, always.** Curvature there means the form is wrong,
+   and no amount of data fixes it.
+4. Logs turn a power law into a line whose **slope is the exponent**.
+5. Leverage is capacity; Cook's distance is damage. Investigate the rows the
+   diagnostics point at — then decide, and say what you decided.
+:::
+
+## References
+
+- James, G., Witten, D., Hastie, T., & Tibshirani, R. (2021). *An Introduction to
+  Statistical Learning* (2nd ed.). Springer. Chapter 3.
+- Kutner, M., Nachtsheim, C., Neter, J., & Li, W. (2005). *Applied Linear
+  Statistical Models* (5th ed.). McGraw-Hill Irwin. Chapters 3 and 10.
+- Wooldridge, J. (2019). *Introductory Econometrics: A Modern Approach* (7th
+  ed.). Cengage. Chapters 2, 3 and 9.

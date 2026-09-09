@@ -1,0 +1,617 @@
+---
+title: "Session 6: Causal Inference"
+subtitle: "Where difference-in-differences goes wrong, and what replaced it"
+author: "Thierry Warin, PhD"
+institute: "HEC Montréal"
+format:
+  revealjs:
+    theme: [default, ../../theme/economist.scss]
+    embed-resources: true
+    slide-number: c/t
+    slide-level: 2
+    history: false
+    transition: none
+    navigation-mode: linear
+    controls: true
+    progress: true
+    width: 1280
+    height: 760
+    margin: 0.06
+    smaller: true
+    footer: "Essentials of Data Science in Python · Session 06 · Thierry Warin, PhD"
+---
+
+```{python}
+#| label: setup
+#| echo: false
+
+import sys, warnings
+sys.path.insert(0, "../..")
+sys.path.insert(0, "../../theme")
+warnings.filterwarnings("ignore")
+
+import numpy as np
+import pandas as pd
+import statsmodels.formula.api as smf
+from plotstyle import setup, CL
+import essentials as ess
+import diff_diff as dd
+
+plt = setup()
+pd.set_option("display.width", 110)
+
+d = ess.load("cat_cafe")
+TRUTH = ess.cat_cafe_truth()
+
+twfe = smf.ols("dwell_min ~ has_cat + C(cafe_id) + C(quarter)", data=d).fit()
+bacon = dd.BaconDecomposition().fit(
+    d, outcome="dwell_min", unit="cafe_id", time="quarter",
+    first_treat="cat_arrival_quarter")
+cs = dd.CallawaySantAnna(control_group="not_yet_treated").fit(
+    d, outcome="dwell_min", unit="cafe_id", time="quarter",
+    first_treat="cat_arrival_quarter", aggregate="group")
+
+cells = pd.DataFrame([
+    {"cohort": g, "quarter": t, "event_time": t - g,
+     "est": v["effect"], "se": v["se"]}
+    for (g, t), v in cs.group_time_effects.items()
+]).merge(TRUTH, on=["cohort", "quarter"], how="left")
+cells["true_att"] = cells.true_att.fillna(0.0)
+```
+
+## Outline · The hour ahead {.center .scrollable}
+
+1. The brief, and the estimator everyone reaches for
+2. The answer it gives, and the answer that was planted
+3. Two-way fixed effects, decomposed
+4. Forbidden comparisons
+5. Group-time effects: Callaway and Sant'Anna
+6. The event study
+7. What is *not* identified, and why that is a feature
+8. How wrong would parallel trends have to be?
+
+## What session 6 is for {.scrollable}
+
+::::: columns
+
+:::: {.column width="33%"}
+
+### The mathematics
+
+- $\text{ATT} = \mathbb{E}[Y(1) - Y(0) \mid D = 1]$, and the missing half
+- TWFE is a **weighted average of 2×2 comparisons**, with some weights negative
+- $\text{ATT}(g,t)$: one estimate per cohort per period
+- A breakdown value: the violation that would overturn the sign
+
+::::
+
+:::: {.column width="33%"}
+
+### The Python
+
+- The interaction in `smf.ols` **is** the 2×2 estimate
+- `dd.BaconDecomposition` — where a TWFE number came from
+- `dd.CallawaySantAnna` with `control_group="not_yet_treated"`
+- Building an event study from group-time cells
+
+::::
+
+:::: {.column width="33%"}
+
+### The judgement
+
+- Distrust a single treatment dummy under staggered adoption
+- Name your control group for **every** comparison being made
+- Prefer an estimator that returns NA over one that invents a number
+- Report how large a violation would have to be, not that trends "look parallel"
+
+::::
+
+:::::
+
+# The brief {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### 186 cafés adopt a resident cat. Did it work?
+:::
+
+## The data
+
+```{python}
+#| echo: true
+
+d = ess.load("cat_cafe")
+print(d.groupby("cat_arrival_quarter").cafe_id.nunique().to_string())
+print(f"\n{d.cafe_id.nunique()} cafés × {d.quarter.nunique()} quarters "
+      f"= {len(d)} rows")
+print(f"never-treated cafés: {(d.cat_arrival_quarter == 0).sum()}")
+```
+
+::: {.muted}
+`dwell_min` is average customer dwell time. `has_cat` is 1 from the quarter the
+cat arrives onwards. Every café is eventually treated — hold on to that.
+:::
+
+## What the raw data looks like
+
+```{python}
+#| echo: false
+#| fig-align: center
+
+fig, ax = plt.subplots(figsize=(7.4, 3.3))
+for g, colour in zip([4, 7, 10], [CL.accent, CL.good, "#7B4FA8"]):
+    m = d[d.cat_arrival_quarter == g].groupby("quarter").dwell_min.mean()
+    ax.plot(m.index, m.values, color=colour, lw=2, label=f"cohort {g}")
+    ax.axvline(g, color=colour, ls=":", lw=1, alpha=0.7)
+ax.set_xlabel("Quarter"); ax.set_ylabel("Mean dwell time (min)")
+ax.legend()
+plt.show()
+```
+
+::: {.step}
+Three cohorts, three adoption dates. Every line bends upwards after its own
+dotted line. Nothing here looks controversial.
+:::
+
+## The estimator everyone reaches for
+
+Unit fixed effects, time fixed effects, one treatment dummy:
+
+$$ Y_{it} = \alpha_i + \gamma_t + \beta\, D_{it} + \varepsilon_{it} $$
+
+```{python}
+#| echo: true
+
+twfe = smf.ols("dwell_min ~ has_cat + C(cafe_id) + C(quarter)", data=d).fit()
+
+b = twfe.params["has_cat"]
+print(f"has_cat  {b:+.4f}   se {twfe.bse['has_cat']:.4f}   "
+      f"t {twfe.tvalues['has_cat']:+.2f}   p {twfe.pvalues['has_cat']:.1e}")
+```
+
+::: {.warn}
+**Negative.** The cat drove customers away, by two minutes a visit, with a
+$t$-statistic of −4.4 and $p = 10^{-5}$. Three stars. This is the specification
+in a large share of published difference-in-differences work.
+:::
+
+## What was actually planted
+
+```{python}
+#| echo: true
+
+print(TRUTH.groupby("cohort").true_att.agg(["min", "max", "mean"]).round(2).to_string())
+print(f"\nevery planted effect is POSITIVE, mean +{TRUTH.true_att.mean():.2f}")
+print(f"two-way fixed effects reports  {b:+.3f}")
+```
+
+::: {.check}
+Every true effect is positive and growing. The estimator returned the **wrong
+sign** with a small standard error. Not a noisy zero — a confident, significant,
+backwards answer.
+:::
+
+::: {.get}
+This is not a contrived failure. It is the central finding of the
+difference-in-differences literature since about 2018, and the rest of the hour
+is why it happens and what to do instead.
+:::
+
+# Decomposing it {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### Where that number came from
+:::
+
+## TWFE is a weighted average of 2×2s
+
+Goodman-Bacon (2021) showed that with staggered adoption, a two-way fixed effects
+estimate is **exactly** a weighted average of every 2×2 difference-in-differences
+you could form from the data.
+
+```{python}
+#| echo: true
+
+bacon = dd.BaconDecomposition().fit(
+    d, outcome="dwell_min", unit="cafe_id", time="quarter",
+    first_treat="cat_arrival_quarter")
+
+print(bacon.to_dataframe()[["treated_group", "control_group", "comparison_type",
+                            "estimate", "weight"]].round(4).to_string(index=False))
+```
+
+## Read the comparison types
+
+```{python}
+#| echo: false
+
+df = bacon.to_dataframe()
+for kind in df.comparison_type.unique():
+    s = df[df.comparison_type == kind]
+    w = s.weight.sum()
+    avg = np.average(s.estimate, weights=s.weight)
+    print(f"{kind:20s}  weight {w:.4f}   average estimate {avg:+8.3f}   "
+          f"contribution {w * avg:+8.3f}")
+print(f"\n{'total':20s}  weight {df.weight.sum():.4f}"
+      f"{'':32s}contribution {(df.weight * df.estimate).sum():+8.3f}")
+print(f"TWFE estimate: {bacon.twfe_estimate:+.4f}   "
+      f"decomposition error: {bacon.decomposition_error:.2e}")
+```
+
+::: {.check}
+The arithmetic closes exactly. Half the weight sits on comparisons averaging
+**+8.5**; the other half on comparisons averaging **−12.6**. The two nearly
+cancel, and what survives is negative.
+:::
+
+## The forbidden comparisons
+
+::: {.step}
+Look at the `later_vs_earlier` rows. In those, the **later** cohort is the treated
+group and the **earlier** cohort is the control group — a control group that
+already has a cat.
+:::
+
+```{python}
+#| echo: false
+
+forb = df[df.comparison_type == "later_vs_earlier"]
+print(forb[["treated_group", "control_group", "estimate", "weight",
+            "time_start", "time_end"]].round(4).to_string(index=False))
+print(f"\n{bacon.total_weight_later_vs_earlier:.1%} of the total weight")
+```
+
+::: {.warn}
+Every one of them is **negative**, and none of them is a treatment effect.
+:::
+
+## Why they come out negative
+
+Suppose cohort 4's effect is still growing in quarter 8, and we use cohort 4 as
+the control group for cohort 7.
+
+::: {.tight}
+1. Cohort 7's outcome rises, because its cat just arrived.
+2. Cohort 4's outcome **also** rises — because *its* effect is still growing.
+3. Difference-in-differences subtracts the control's change from the treated
+   group's change.
+4. So it subtracts cohort 4's ongoing treatment effect, and books it as evidence
+   that treatment does **nothing** — or, if the control's growth is faster,
+   as evidence of harm.
+:::
+
+::: {.get}
+The control group's own treatment effect is being subtracted from the treated
+group's. That is the whole bug, and one treatment dummy cannot see it.
+:::
+
+## Two conditions, both needed
+
+::: {.tight}
+- **Staggered adoption.** With one common treatment date there are no
+  already-treated controls and TWFE is fine.
+- **Effects that change over time or differ across cohorts.** With one constant
+  effect everywhere, subtracting the control's effect subtracts the same number
+  from both sides and it cancels.
+:::
+
+::: {.warn}
+Both hold in this data — and both hold in most real policy rollouts, which is why
+this matters. **Dynamic effects are the normal case.** Almost nothing works fully
+on its first day.
+:::
+
+# The fix {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### Never use an already-treated unit as a control
+:::
+
+## Group-time average treatment effects
+
+Callaway and Sant'Anna (2021) refuse to pool. Instead of one $\beta$, estimate
+one effect for **each cohort $g$ in each period $t$**:
+
+$$ \text{ATT}(g, t) = \mathbb{E}\left[Y_t(g) - Y_t(0) \mid G = g\right] $$
+
+Each is a clean 2×2, using as controls only units that are **not yet treated** at
+time $t$ — never the already-treated.
+
+```{python}
+#| echo: true
+
+cs = dd.CallawaySantAnna(control_group="not_yet_treated").fit(
+    d, outcome="dwell_min", unit="cafe_id", time="quarter",
+    first_treat="cat_arrival_quarter", aggregate="group")
+
+print(f"overall ATT   {cs.overall_att:+.4f}")
+print(f"TWFE          {twfe.params['has_cat']:+.4f}")
+```
+
+## Cell by cell, against the planted truth
+
+```{python}
+#| echo: false
+
+post = cells[(cells.event_time >= 0) & cells.est.notna()].sort_values(
+    ["cohort", "quarter"])
+show = post[["cohort", "quarter", "est", "se", "true_att"]].copy()
+show["error"] = show.est - show.true_att
+show["within_2se"] = show.error.abs() <= 2 * show.se
+print(show.round(3).to_string(index=False))
+print(f"\nmean absolute error {show.error.abs().mean():.3f}   "
+      f"within 2 se: {int(show.within_2se.sum())}/{len(show)}")
+```
+
+::: {.check}
+Every identified cell lands within two standard errors of the number that was
+planted.
+:::
+
+## And aggregated by cohort
+
+```{python}
+#| echo: true
+
+for g, v in cs.group_effects.items():
+    ident = cells[(cells.cohort == g) & (cells.event_time >= 0) & cells.est.notna()]
+    print(f"cohort {g:2d}:  CS {v['effect']:+7.3f} (se {v['se']:.3f})   "
+          f"planted {ident.true_att.mean():+7.3f}   "
+          f"over {len(ident)} identified quarters")
+```
+
+::: {.muted}
+Cohort 7 comes back at +3.009 against a planted +3.000. Cohort 4 at +13.47
+against +14.00.
+:::
+
+# The event study {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### Let the pre-period speak for the design
+:::
+
+## Averaging by time since adoption
+
+```{python}
+#| echo: true
+
+ok = cells[cells.est.notna()]
+ev = pd.DataFrame([
+    {"event_time": e,
+     "n_cohorts": len(g),
+     "est": g.est.mean(),
+     "se": np.sqrt((g.se ** 2).sum()) / len(g),
+     "planted": g.true_att.mean()}
+    for e, g in ok.groupby("event_time")
+])
+print(ev.round(3).to_string(index=False))
+```
+
+## Drawn
+
+```{python}
+#| echo: false
+#| fig-align: center
+
+fig, ax = plt.subplots(figsize=(7.4, 3.3))
+ax.axhline(0, color=CL.muted, lw=1)
+ax.axvline(-0.5, color=CL.warn, ls="--", lw=1.2)
+ax.plot(ev.event_time, ev.planted, color=CL.warn, lw=1.6, ls=":",
+        label="planted truth")
+ax.errorbar(ev.event_time, ev.est, yerr=1.96 * ev.se, fmt="o", ms=4,
+            color=CL.ink, capsize=2, lw=1.2, label="estimated ATT")
+ax.set_xlabel("Quarters since the cat arrived"); ax.set_ylabel("Effect (min)")
+ax.legend()
+plt.show()
+```
+
+::: {.step}
+Flat and indistinguishable from zero before adoption; rising steadily after, and
+tracking the planted line. That is what a credible design looks like.
+:::
+
+## How to read the pre-period honestly
+
+```{python}
+#| echo: true
+
+pre = cells[(cells.event_time < 0) & cells.est.notna()]
+print(f"placebo cells        {len(pre)}")
+print(f"mean estimate        {pre.est.mean():+.4f}")
+print(f"largest |estimate|   {pre.est.abs().max():.4f}")
+print(f"individually significant at 5%: "
+      f"{int((pre.est.abs() > 1.96 * pre.se).sum())} of {len(pre)}")
+```
+
+::: {.warn}
+One of the twelve placebo cells is individually significant. At a 5% level, on
+twelve tests, you *expect* about one false rejection — so this is what a design
+with genuinely parallel trends looks like, not evidence against it.
+
+**Pre-trend tests are a multiple-testing problem**, and reading them one star at
+a time will make you reject good designs and, with low power, accept bad ones.
+:::
+
+# What is not identified {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### An estimator that returns NA is doing you a favour
+:::
+
+## Nine cells come back empty
+
+```{python}
+#| echo: true
+
+missing = cells[(cells.event_time >= 0) & cells.est.isna()]
+print(missing[["cohort", "quarter", "true_att"]].to_string(index=False))
+```
+
+::: {.step}
+Everything from quarter 10 onwards, and cohort 10 entirely. By quarter 10 every
+café in the sample has a cat, so **there is no not-yet-treated unit left**.
+Nothing identifies those effects.
+:::
+
+## This is the most important slide in the session
+
+::: {.tight}
+- Callaway–Sant'Anna returns **NA** for those cells, because the data cannot
+  answer.
+- Two-way fixed effects reported a number for them — with three stars — by
+  quietly using already-treated cafés as controls.
+:::
+
+::: {.get}
+**An estimator that refuses is more useful than one that invents.** The nine NAs
+are not a shortcoming of the method; they are a correct description of what this
+research design can and cannot support.
+:::
+
+::: {.warn}
+And it is a lesson about design, not software. If you plan a rollout where
+everything is treated by the end of your data, you have planned a study that
+cannot evaluate its own last phase. Keeping a control group untreated is a
+decision made before any data exists.
+:::
+
+# How wrong could it be? {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### Sensitivity, instead of a parallel-trends assertion
+:::
+
+## Stop testing the assumption. Bound it.
+
+Parallel trends is untestable, so Rambachan and Roth (2023) propose a better
+question:
+
+::: {.step}
+**How large would a violation have to be before my conclusion changes?**
+:::
+
+Suppose the treated cohort was on a differential trend of $\delta$ minutes per
+quarter. It contaminates $\text{ATT}(g,t)$ by roughly
+$\delta \times (t - g + 1)$. Solve for the $\delta$ that drives the estimate to
+zero — the **breakdown value**.
+
+## Computing it
+
+```{python}
+#| echo: true
+
+for g, v in cs.group_effects.items():
+    n_q = len(cells[(cells.cohort == g) & (cells.event_time >= 0)
+                    & cells.est.notna()])
+    mean_exposure = np.arange(1, n_q + 1).mean()
+    print(f"cohort {g:2d}:  ATT {v['effect']:+7.3f}   "
+          f"mean exposure {mean_exposure:.1f} quarters   "
+          f"breakdown δ = {v['effect'] / mean_exposure:+.3f} min/quarter")
+
+slope = np.polyfit(pre.event_time, pre.est, 1)[0]
+print(f"\nobserved pre-treatment trend slope: {slope:+.4f} min/quarter")
+```
+
+## Which gives you a sentence you can defend
+
+::: {.check}
+*"To explain away the cohort-4 effect, the treated cafés would have to have been
+on a differential trend of 3.85 minutes per quarter. The trend we can measure
+before adoption is 0.04 minutes per quarter — nearly ninety times smaller. A
+violation of the required size would have been unmissable in the pre-period."*
+:::
+
+::: {.muted}
+That is a far stronger claim than "pre-trends look parallel", and it is the form
+the current literature expects. `diff_diff` implements the full Rambachan–Roth
+procedure as `dd.HonestDiD`; the arithmetic above is the same idea, done by hand
+so you can see what it rests on.
+:::
+
+## The rest of the toolkit
+
+The same problem produced several estimators. They mostly agree, and knowing they
+exist matters more than knowing which to prefer:
+
+| | |
+|---|---|
+| **Callaway & Sant'Anna** (2021) | group-time ATTs, not-yet-treated controls |
+| **Sun & Abraham** (2021) | interaction-weighted event study |
+| **Borusyak, Jaravel & Spiess** (2024) | impute $Y(0)$ from untreated observations |
+| **de Chaisemartin & D'Haultfœuille** (2020) | robust to treatment switching off |
+| **Gardner** (2022) | two-stage: remove the fixed effects, then estimate |
+| **Arkhangelsky et al.** (2021) | synthetic DiD — weights units *and* periods |
+
+::: {.muted}
+All of these are in `diff_diff`. Try two, and report both.
+:::
+
+## What to report
+
+::: {.tight}
+- The **design** first: who is treated, when, and what serves as the control
+- A **decomposition** if you use TWFE at all, showing the forbidden weight
+- **Group-time effects**, or a stated reason for pooling
+- An **event study**, with the pre-period read as a set of tests rather than one
+- What is **not identified**, explicitly
+- A **breakdown value**, not an assertion that trends look parallel
+:::
+
+::: {.get}
+A DiD result with no event study, no decomposition and no named control group is
+an interaction coefficient wearing the word "causal".
+:::
+
+## Key takeaways
+
+::: {.tight}
+1. The interaction in a 2×2 **is** the DiD estimate. Everything else is that idea
+   under complications.
+2. Under staggered adoption, TWFE is a weighted average of 2×2s — and **some
+   weights are negative**.
+3. The bug is **already-treated units used as controls**. When effects grow, the
+   control's own effect gets subtracted from the treated group's.
+4. It needs staggered adoption **and** dynamic or heterogeneous effects. Both are
+   the normal case.
+5. Group-time estimators recover the truth by never making forbidden
+   comparisons.
+6. Read pre-trends as **multiple tests**, not one star at a time.
+7. **An estimator that returns NA is doing you a favour.**
+8. Report a breakdown value. "Trends look parallel" is not a robustness check.
+:::
+
+## Where this leaves you
+
+::: {.step}
+You now have a toolkit that runs from a single straight line to an estimator that
+knows the limits of its own identification. The through-line has been the same in
+all six sessions: **the fit statistic is not the diagnostic, and the confident
+answer is the one to check.**
+:::
+
+::: {.muted}
+Session 1's regression fitted at $R^2 = 0.96$ and reported a meaningless slope.
+This session's estimator reported the wrong sign at $p = 10^{-5}$. In both cases
+the output looked excellent. In both cases the way to find out was to ask what
+the method was actually comparing.
+:::
+
+## References
+
+- Goodman-Bacon, A. (2021). Difference-in-differences with variation in treatment
+  timing. *Journal of Econometrics*, 225(2), 254–277.
+- Callaway, B. & Sant'Anna, P. (2021). Difference-in-differences with multiple
+  time periods. *Journal of Econometrics*, 225(2), 200–230.
+- Sun, L. & Abraham, S. (2021). Estimating dynamic treatment effects in event
+  studies with heterogeneous treatment effects. *Journal of Econometrics*,
+  225(2), 175–199.
+- de Chaisemartin, C. & D'Haultfœuille, X. (2020). Two-way fixed effects
+  estimators with heterogeneous treatment effects. *American Economic Review*,
+  110(9), 2964–2996.
+- Rambachan, A. & Roth, J. (2023). A more credible approach to parallel trends.
+  *Review of Economic Studies*, 90(5), 2555–2591.
+- Borusyak, K., Jaravel, X. & Spiess, J. (2024). Revisiting event-study designs.
+  *Review of Economic Studies*, 91(6), 3253–3285.
+- Roth, J., Sant'Anna, P., Bilinski, A. & Poe, J. (2023). What's trending in
+  difference-in-differences? *Journal of Econometrics*, 235(2), 2218–2244.

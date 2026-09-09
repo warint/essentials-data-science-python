@@ -1,0 +1,169 @@
+---
+title: "Session 4: Before the session"
+subtitle: "More columns than rows"
+author: "Thierry Warin, PhD"
+institute: "HEC Montréal"
+format:
+  revealjs:
+    theme: [default, ../../theme/economist.scss]
+    embed-resources: true
+    slide-number: c/t
+    slide-level: 2
+    history: false
+    transition: none
+    navigation-mode: linear
+    controls: true
+    progress: true
+    width: 1280
+    height: 760
+    margin: 0.06
+    smaller: true
+    footer: "Essentials of Data Science in Python · Session 04 pre-session · Thierry Warin, PhD"
+---
+
+## Outline · Before class {.center .scrollable}
+
+1. What to do, and how long it takes
+2. The shape of the problem
+3. Bias and variance
+4. Cross-validation
+5. Load the data
+6. Self-check
+
+# Before the session {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### More columns than rows
+:::
+
+## What to do, and how long it takes
+
+| | | |
+|---|---|---|
+| **1** | Read the bias–variance section | 20 min |
+| **2** | Read the cross-validation section | 15 min |
+| **3** | Load `secret_recipe` and answer three questions | 15 min |
+| **4** | Attempt the self-check | 10 min |
+
+## 1 · The shape of the problem
+
+Every model so far had many more rows than columns. This session starts with the
+opposite: **60 rows, 200 columns.**
+
+::: {.step}
+When $p > n$, the matrix $X^\top X$ is singular. There is no unique least-squares
+solution — there are infinitely many, and every one of them fits the training
+data **perfectly**, with zero residuals.
+:::
+
+::: {.warn}
+This is not a numerical inconvenience. A model that fits perfectly has learnt the
+noise, and it will predict new data badly. The way out is to *stop* asking for
+the best fit, and deliberately accept a worse one.
+:::
+
+## 2 · Bias and variance
+
+Take the expected squared prediction error at a point and decompose it:
+
+$$ \mathbb{E}\left[(y - \hat f(x))^2\right] = \underbrace{\text{Bias}^2}_{\text{wrong on average}} + \underbrace{\text{Variance}}_{\text{unstable}} + \underbrace{\sigma^2}_{\text{irreducible}} $$
+
+| | |
+|---|---|
+| **Bias** | how far the average fit is from the truth. High for models too simple to represent it. |
+| **Variance** | how much the fit moves if you resample the data. High for flexible models. |
+| **$\sigma^2$** | noise. No method removes it, and no method should appear to. |
+
+## The trade you are about to make
+
+::: {.step}
+Least squares is **unbiased**. That sounds like a virtue, and with $p$ close to
+$n$ it is a disaster: unbiasedness is bought with enormous variance, and total
+error is what you care about.
+:::
+
+::: {.check}
+Every method in this session **adds bias on purpose** to buy a larger reduction
+in variance. A deliberately wrong estimator that predicts better is not a
+paradox; it is the whole design.
+:::
+
+## 3 · Cross-validation
+
+You cannot choose how much to shrink using the data you fitted on: more
+flexibility always fits better. So hold data back.
+
+**$k$-fold cross-validation.** Split the rows into $k$ parts. For each part: fit
+on the other $k-1$, predict the held-out part, record the error. Average.
+
+```python
+from sklearn.model_selection import KFold, cross_val_score
+
+kf = KFold(10, shuffle=True, random_state=0)
+cross_val_score(model, X, y, cv=kf, scoring="neg_mean_squared_error")
+```
+
+::: {.warn}
+`shuffle=True` matters. Without it, `KFold` takes contiguous blocks, and if your
+rows are sorted by anything at all the folds are not exchangeable.
+:::
+
+## What cross-validation is optimising
+
+::: {.step}
+It estimates **prediction** error. That is worth saying twice, because this
+session's puzzle turns on it: the penalty that predicts best is *not* the penalty
+that identifies the right variables. Cross-validation will hand you a model with
+too many variables in it, and it will be right to.
+:::
+
+## 4 · Load the data
+
+```python
+import essentials as ess
+
+r = ess.load("secret_recipe")
+r.shape                     # (60, 202)
+```
+
+60 bakes. 200 candidate ingredients, measured in grams. One `taste_score`.
+
+::: {.tight}
+Answer before class:
+
+1. How many ingredient columns are there, and how many bakes?
+2. Try `LinearRegression().fit(X, y)` and then look at the training $R^2$. What
+   do you get, and why should that alarm you?
+3. Compute the correlation matrix of the ingredient columns and find the largest
+   off-diagonal correlation. Which two ingredients, and how correlated?
+:::
+
+## 5 · Self-check
+
+::: {.tight}
+1. A model has zero training error. What do you know about its test error?
+2. Two estimators: A is unbiased with variance 100; B has bias 2 and variance 10.
+   Which has lower expected squared error?
+3. You cross-validate to pick a penalty, then report the selected model's
+   $p$-values. What is wrong with that?
+:::
+
+::: {.muted}
+Answer 2: A gives $0 + 100 = 100$; B gives $4 + 10 = 14$. The biased estimator
+wins by a factor of seven, and that is not a trick question — it is this session.
+:::
+
+## What the session will ask of you
+
+::: {.tight}
+- Say why OLS fails when $p > n$, and what "fails" means precisely
+- Fit ridge, lasso and elastic net, and choose their penalty by cross-validation
+- Explain why the lasso can produce exact zeros and ridge cannot
+- Recognise what a penalty does to two correlated predictors
+- Distinguish a set selected for prediction from a set of true effects
+:::
+
+::: {.get}
+**Arrive with:** the three data questions answered · bias–variance read ·
+the self-check attempted.
+:::

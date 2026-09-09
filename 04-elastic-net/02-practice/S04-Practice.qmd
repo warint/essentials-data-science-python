@@ -1,0 +1,201 @@
+---
+title: "Session 4: Practice"
+subtitle: "The Secret Recipe"
+author: "Thierry Warin, PhD"
+institute: "HEC Montréal"
+format:
+  revealjs:
+    theme: [default, ../../theme/economist.scss]
+    embed-resources: true
+    slide-number: c/t
+    slide-level: 2
+    history: false
+    transition: none
+    navigation-mode: linear
+    controls: true
+    progress: true
+    width: 1280
+    height: 760
+    margin: 0.06
+    smaller: true
+    footer: "Essentials of Data Science in Python · Session 04 practice · Thierry Warin, PhD"
+---
+
+## Outline · The workshop {.center .scrollable}
+
+1. The brief
+2. Ninety minutes
+3. Stage 1 — watch OLS fail
+4. Stage 2 — ridge
+5. Stage 3 — lasso
+6. Stage 4 — the two leaveners
+7. Stage 5 — what you can and cannot claim
+8. What you hand in
+
+# The Secret Recipe {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### Sixty bakes. Two hundred ingredients. Name the ones that matter.
+:::
+
+## The brief
+
+A bakery has run 60 experimental bakes, recording grams of each of 200 candidate
+ingredients and a taste score. Only a handful of the ingredients actually do
+anything.
+
+::: {.step}
+**Deliverable: a named shortlist**, with the sign and rough size of each
+ingredient's effect, and an honest statement of which ones you are confident
+about and which you are not.
+:::
+
+::: {.warn}
+There is a planted list. Two of its members are a **pair of near-identical
+ingredients**, and one member is a signal your sample size cannot detect. Both of
+those facts are part of the answer.
+:::
+
+## Ninety minutes
+
+| | | |
+|---|---|---|
+| **00–15** | Watch OLS fail | and understand precisely how |
+| **15–30** | Ridge | and what it refuses to tell you |
+| **30–50** | Lasso | and the shortlist it gives you |
+| **50–70** | The two leaveners | and the elastic net |
+| **70–80** | What you cannot claim | the honest part |
+| **80–90** | Write it up | 250 words |
+
+## Stage 1 · Watch OLS fail — 15 min
+
+```python
+import essentials as ess
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+r = ess.load("secret_recipe")
+X = r.drop(columns=["bake_id", "taste_score"])
+y = r.taste_score.to_numpy()
+Xs = StandardScaler().fit_transform(X.values)
+```
+
+::: {.tight}
+1. Split into train and test. Fit `LinearRegression` on the training rows.
+2. Report **training** MSE and **test** MSE. Put them side by side.
+3. Compare test MSE with the variance of `y`. Which is bigger?
+4. Explain in one sentence why the training error came out where it did.
+:::
+
+::: {.check}
+Do not skip step 3. A model that predicts worse than the mean of the outcome is
+worse than useless, and this one does.
+:::
+
+## Stage 2 · Ridge — 15 min
+
+```python
+from sklearn.linear_model import RidgeCV
+from sklearn.model_selection import KFold
+import numpy as np
+
+kf = KFold(10, shuffle=True, random_state=0)
+ridge = RidgeCV(alphas=np.logspace(-2, 4, 25), cv=kf).fit(Xs, y)
+```
+
+::: {.tight}
+1. How many of the 200 coefficients are exactly zero?
+2. How many exceed 0.1 in absolute value?
+3. Report the cross-validated MSE.
+4. Now answer the client's question: **which ingredients matter?** Say why ridge
+   structurally cannot answer it.
+:::
+
+## Stage 3 · Lasso — 20 min
+
+```python
+from sklearn.linear_model import LassoCV, lasso_path
+
+lasso = LassoCV(cv=kf, random_state=0, max_iter=200_000).fit(Xs, y)
+```
+
+::: {.tight}
+1. How many ingredients did it select? Print them, sorted by absolute size.
+2. Report cross-validated MSE. Compare with ridge.
+3. Plot the coefficient path with `lasso_path`. Read it right to left, as the
+   penalty relaxes. Which ingredients enter first?
+4. **Is your selected set the right size?** You do not know the truth yet, but
+   you can reason about it: what is cross-validation optimising, and is that the
+   same thing as picking the right variables?
+:::
+
+## Stage 4 · The two leaveners — 20 min
+
+::: {.tight}
+1. Find the largest off-diagonal correlation in `X`. Which two ingredients?
+2. What did the lasso give each of them?
+3. Fit `ElasticNetCV(l1_ratio=0.95, ...)`. What does it give each of them?
+4. **Now the real question.** Re-fit the elastic net with five different
+   `KFold` random seeds. Print both coefficients and their **sum** each time.
+   Which of the three numbers is stable?
+:::
+
+::: {.warn}
+Step 4 is what separates a group that has understood the elastic net from a group
+that has heard it is better. The answer changes what you are entitled to write
+down.
+:::
+
+## Stage 5 · What you cannot claim — 10 min
+
+::: {.tight}
+1. Which of your selected ingredients would you actually report to the bakery,
+   and which would you flag as uncertain?
+2. Your penalised coefficients are biased. In which direction, and why?
+3. Can you put a $p$-value on any of them? Explain.
+4. Is there an ingredient you suspect is real but cannot demonstrate? How would
+   you find out?
+:::
+
+::: {.step}
+Question 4 has an answer in this data, and finding it is worth more than any
+number of correctly selected variables.
+:::
+
+## What you hand in
+
+250 words, plus your script:
+
+::: {.tight}
+- **Your shortlist**, with signs and rough sizes
+- Training and test MSE for OLS, and one sentence on why
+- Cross-validated MSE for ridge, lasso and elastic net
+- The correlated pair, what each method did with it, and **which quantity is
+  identified**
+- One ingredient you believe is real and cannot demonstrate, with your reasoning
+- Why you cannot attach $p$-values to any of this
+:::
+
+::: {.get}
+And the standing rule: one output you identified as wrong, and how.
+:::
+
+## What loses marks
+
+::: {.tight}
+- Fitting a penalised model on unstandardised columns
+- Reporting the lasso's selected set as "the ingredients that matter"
+- Reporting penalised coefficients as effect sizes with no mention of shrinkage
+- Quoting $p$-values or stars on a cross-validated model
+- Saying the elastic net "found both" without checking whether the split is stable
+- Claiming the method missed nothing
+:::
+
+## Two-minute report
+
+| | |
+|---|---|
+| **One shortlist** | with the uncertain members flagged |
+| **One pair** | and which quantity about it is identified |
+| **One absence** | a signal you think is there and cannot prove |

@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.ruff_cache/
+
+# Quarto build cache and rendered decks. The .qmd source is committed; the
+# renders are not — GitHub will not display an HTML file when you click it, and
+# each self-contained deck is several megabytes.
+#   Regenerate with: scripts/render.sh
+.quarto/
+*_files/
+*.html
+
+# Generated data. Every dataset in this course is built from a fixed seed by
+# essentials.py, so the cache is reproducible rather than precious. Deleting it
+# costs a second.
+data/*.parquet
+data/*.csv
+
+.DS_Store

@@ -1,0 +1,527 @@
+---
+title: "Session 3: Logistic Regression"
+subtitle: "The model gives you a probability. The decision is still yours."
+author: "Thierry Warin, PhD"
+institute: "HEC Montréal"
+format:
+  revealjs:
+    theme: [default, ../../theme/economist.scss]
+    embed-resources: true
+    slide-number: c/t
+    slide-level: 2
+    history: false
+    transition: none
+    navigation-mode: linear
+    controls: true
+    progress: true
+    width: 1280
+    height: 760
+    margin: 0.06
+    smaller: true
+    footer: "Essentials of Data Science in Python · Session 03 · Thierry Warin, PhD"
+---
+
+```{python}
+#| label: setup
+#| echo: false
+
+import sys, warnings
+sys.path.insert(0, "../..")
+sys.path.insert(0, "../../theme")
+warnings.filterwarnings("ignore")
+
+import numpy as np
+import pandas as pd
+import statsmodels.formula.api as smf
+from sklearn.metrics import confusion_matrix, roc_auc_score, roc_curve
+from plotstyle import setup, CL
+import essentials as ess
+
+plt = setup()
+pd.set_option("display.width", 100)
+
+d = ess.load("mushrooms")
+
+F = ("poisonous ~ cap_diameter_cm + stem_height_cm + odor_index + ring_present"
+     " + volva_present + C(spore_print, Treatment('brown'))"
+     " + C(gill_spacing, Treatment('close')) + C(habitat, Treatment('grassland'))")
+fit = smf.logit(F, data=d).fit(disp=0)
+p_hat = fit.predict(d)
+
+C_FN, C_FP = 50, 1          # a hospital visit against a discarded mushroom
+
+def outcomes(t):
+    tn, fp, fn, tp = confusion_matrix(d.poisonous, (p_hat > t).astype(int)).ravel()
+    return dict(t=t, acc=(tp + tn) / len(d), missed=fn, discarded=(tp + fp) / len(d),
+                loss=C_FN * fn + C_FP * fp)
+```
+
+## Outline · The hour ahead {.center .scrollable}
+
+1. The model, and the odds ratio
+2. Fitting it, and reading it
+3. Inference: Wald, and the likelihood-ratio test
+4. The confusion matrix, and what accuracy hides
+5. The threshold is a decision, not a default
+6. Ordinal outcomes
+7. What to report
+
+## What session 3 is for {.scrollable}
+
+::::: columns
+
+:::: {.column width="33%"}
+
+### The mathematics
+
+- Model the **logit**, not the probability
+- $e^{\beta}$ is an **odds ratio**, not a probability ratio
+- The likelihood-ratio test: $2(\ell_1 - \ell_0) \sim \chi^2_{\Delta k}$
+- Expected loss is minimised at $t^\star = c_{FP}/(c_{FP} + c_{FN})$
+
+::::
+
+:::: {.column width="33%"}
+
+### The Python
+
+- `smf.logit` and `.predict` — which returns **probabilities**, not classes
+- `np.exp` on a coefficient to get an odds ratio
+- `confusion_matrix` and `classification_report`
+- `roc_curve`, and choosing a point on it
+
+::::
+
+:::: {.column width="33%"}
+
+### The judgement
+
+- Refuse accuracy as a headline number on imbalanced data
+- Write the two costs down before choosing a threshold
+- Say which error you chose to make more of, and why
+- Report an odds ratio without implying it is a probability
+
+::::
+
+:::::
+
+# The model {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### 1,400 mushrooms. Which ones would you eat?
+:::
+
+## The data
+
+```{python}
+#| echo: true
+
+d = ess.load("mushrooms")
+print(f"{len(d)} mushrooms, {d.poisonous.mean():.1%} poisonous")
+print(d.toxicity.value_counts().reindex(
+    ["edible", "upset stomach", "hospital", "fatal"]).to_string())
+```
+
+::: {.muted}
+`poisonous` is the binary outcome. `toxicity` is the same risk graded, and we come
+back to it at the end.
+:::
+
+## What we fit, and why
+
+A linear model on a 0/1 outcome produces predicted probabilities above 1 and
+below 0. So model the **log-odds**, which are free to be any real number:
+
+$$ \log\frac{p}{1-p} = \beta_0 + \beta_1 x_1 + \cdots + \beta_k x_k $$
+
+and invert to recover a probability:
+
+$$ p = \frac{1}{1 + e^{-\eta}}, \qquad \eta = \beta_0 + \textstyle\sum_j \beta_j x_j $$
+
+::: {.step}
+There is no closed-form solution. The coefficients are found by **maximum
+likelihood** — numerically, by iteration — which is why the output reports a
+log-likelihood rather than an $R^2$.
+:::
+
+## Fitting it
+
+```{python}
+#| echo: true
+
+F = ("poisonous ~ cap_diameter_cm + stem_height_cm + odor_index + ring_present"
+     " + volva_present + C(spore_print, Treatment('brown'))"
+     " + C(gill_spacing, Treatment('close')) + C(habitat, Treatment('grassland'))")
+
+fit = smf.logit(F, data=d).fit(disp=0)
+print(fit.summary().tables[1])
+```
+
+## Read it as odds ratios
+
+```{python}
+#| echo: true
+
+odds = pd.DataFrame({
+    "coefficient": fit.params,
+    "odds ratio": np.exp(fit.params),
+}).drop("Intercept").sort_values("odds ratio", ascending=False)
+print(odds.round(3).to_string())
+```
+
+## One feature is doing most of the work
+
+```{python}
+#| echo: false
+
+b = fit.params["volva_present"]
+print(f"volva_present   coefficient {b:+.3f}   odds ratio x{np.exp(b):.0f}")
+print(f"\nshare poisonous, with a volva:     {d[d.volva_present==1].poisonous.mean():.1%}")
+print(f"share poisonous, without one:      {d[d.volva_present==0].poisonous.mean():.1%}")
+```
+
+::: {.step}
+A volva is the membranous sac at the base of the stem that marks the genus
+responsible for most fatal mushroom poisonings. The model found it without being
+told, and it multiplies the odds by about seventy.
+:::
+
+::: {.warn}
+It multiplies the **odds**, not the probability. A mushroom already at $p = 0.95$
+cannot become 70 times more likely to be poisonous. Odds ratios are constant
+across the range; probability changes are not.
+:::
+
+## The same coefficient, in probability terms
+
+```{python}
+#| echo: true
+
+for base_p in (0.01, 0.10, 0.50, 0.90):
+    base_odds = base_p / (1 - base_p)
+    new_odds = base_odds * np.exp(b)
+    new_p = new_odds / (1 + new_odds)
+    print(f"p = {base_p:.2f}  ->  {new_p:.4f}   "
+          f"(a rise of {new_p - base_p:+.4f})")
+```
+
+::: {.muted}
+Same odds ratio, four different probability changes. This is why "the effect" of
+a logistic coefficient is not a single number, and why reporting marginal effects
+at chosen values is often clearer than reporting the coefficient.
+:::
+
+# Inference {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### Two tests, and when to use each
+:::
+
+## One coefficient: the Wald test
+
+The $z$-statistic in the output is $\hat\beta / \mathrm{se}(\hat\beta)$, compared
+against a normal rather than a $t$ distribution — maximum likelihood gives
+asymptotic standard errors.
+
+```{python}
+#| echo: true
+
+print(fit.summary2().tables[1].loc[
+    ["volva_present", "ring_present", "odor_index", "cap_diameter_cm"],
+    ["Coef.", "Std.Err.", "z", "P>|z|"]].round(4).to_string())
+```
+
+## Several at once: the likelihood-ratio test
+
+To test whether a **group** of variables belongs — all three habitat levels, say —
+compare log-likelihoods:
+
+$$ 2\left(\ell_{\text{full}} - \ell_{\text{restricted}}\right) \sim \chi^2_{\Delta k} $$
+
+```{python}
+#| echo: true
+
+from scipy import stats
+
+reduced = smf.logit(
+    F.replace(" + C(habitat, Treatment('grassland'))", ""), data=d).fit(disp=0)
+
+lr = 2 * (fit.llf - reduced.llf)
+df = int(fit.df_model - reduced.df_model)
+print(f"LR statistic {lr:.2f} on {df} df,  p = {stats.chi2.sf(lr, df):.2e}")
+print(f"pseudo R2 {reduced.prsquared:.4f} -> {fit.prsquared:.4f}")
+```
+
+::: {.warn}
+McFadden's pseudo-$R^2$ is not a share of variance and is not comparable to a
+linear model's $R^2$. Values of 0.2 to 0.4 are considered excellent. Do not
+report it as though it were $R^2$.
+:::
+
+# The confusion matrix {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### What accuracy hides
+:::
+
+## `.predict` gives probabilities, not classes
+
+```{python}
+#| echo: true
+
+p_hat = fit.predict(d)
+print(p_hat.describe().round(4).to_string())
+```
+
+::: {.step}
+Turning a probability into a decision requires a **threshold**, and the model has
+no opinion about what it should be. Choosing 0.5 is a choice, not a default —
+and on this data it is the wrong one.
+:::
+
+## The baseline you have to beat
+
+```{python}
+#| echo: false
+
+print(f"'call everything edible':  accuracy {1 - d.poisonous.mean():.1%}")
+print(f"                           poisonous mushrooms eaten: "
+      f"{int(d.poisonous.sum())} of {int(d.poisonous.sum())}")
+```
+
+::: {.warn}
+Seventy-one per cent accurate, from a rule that requires no data, no model and no
+thought — and that will eventually kill you. **Any accuracy figure you report has
+to be read against this number.**
+:::
+
+## The four cells at $t = 0.5$
+
+```{python}
+#| echo: true
+
+tn, fp, fn, tp = confusion_matrix(d.poisonous, (p_hat > 0.5).astype(int)).ravel()
+print(pd.DataFrame([[tn, fp], [fn, tp]],
+                   index=["truly edible", "truly poisonous"],
+                   columns=["called edible", "called poisonous"]).to_string())
+print(f"\naccuracy {(tp+tn)/len(d):.3f}   AUC {roc_auc_score(d.poisonous, p_hat):.4f}")
+print(f"poisonous mushrooms called edible: {fn} of {fn+tp} ({fn/(fn+tp):.1%})")
+```
+
+::: {.warn}
+Accuracy 0.877 — a clear improvement on the baseline. And it puts
+`{python} f"{fn}"` poisonous mushrooms on your plate. **One meal in four.**
+:::
+
+# The threshold is a decision {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### Write the costs down first
+:::
+
+## The two errors are not the same size
+
+| | |
+|---|---|
+| **False negative** | you call it edible, it is poisonous. A hospital visit. |
+| **False positive** | you call it poisonous, it was edible. A discarded mushroom. |
+
+::: {.step}
+Say a hospital visit is 50 times worse than losing a mushroom. Then expected loss
+is $c_{FN} \times FN + c_{FP} \times FP$, and it is minimised at
+
+$$ t^\star = \frac{c_{FP}}{c_{FP} + c_{FN}} = \frac{1}{51} = 0.0196 $$
+:::
+
+::: {.muted}
+Accuracy is the special case where the two costs are equal. It is a strange
+assumption, and it is almost never stated out loud.
+:::
+
+## Does the theory hold on our data?
+
+```{python}
+#| echo: true
+
+grid = pd.DataFrame([outcomes(t) for t in
+                     np.concatenate([[0.002, 0.005, 0.01, 0.0196, 0.05],
+                                     np.linspace(0.1, 0.9, 9)])])
+print(grid.assign(acc=grid.acc.round(3), discarded=grid.discarded.round(3))
+        .to_string(index=False))
+```
+
+## The loss curve
+
+```{python}
+#| echo: false
+#| fig-align: center
+
+ts = np.linspace(0.002, 0.95, 300)
+loss = [outcomes(t)["loss"] for t in ts]
+best = ts[int(np.argmin(loss))]
+
+fig, ax = plt.subplots(figsize=(7.2, 3.0))
+ax.plot(ts, loss, color=CL.ink)
+ax.axvline(1 / 51, color=CL.good, ls="--", lw=1.4)
+ax.axvline(0.5, color=CL.warn, ls="--", lw=1.4)
+ax.annotate(f"theory: {1/51:.3f}", (1/51, max(loss)*0.82), (0.09, max(loss)*0.86),
+            color=CL.good, fontsize=8, fontweight="600")
+ax.annotate("t = 0.5", (0.5, max(loss)*0.5), (0.55, max(loss)*0.62),
+            color=CL.warn, fontsize=8, fontweight="600")
+ax.set_xlabel("Threshold"); ax.set_ylabel(f"Expected loss ({C_FN}:1)")
+plt.show()
+
+lo = min(t for t, l in zip(ts, loss) if l <= min(loss) * 1.05)
+hi = max(t for t, l in zip(ts, loss) if l <= min(loss) * 1.05)
+print(f"theory       t = {1/51:.4f}   loss {outcomes(1/51)['loss']:.0f}")
+print(f"empirical    t = {best:.4f}   loss {min(loss):.0f}")
+print(f"within 5% of the minimum:  t in [{lo:.4f}, {hi:.4f}]")
+```
+
+::: {.step}
+The two do not coincide exactly, and they should not: with 1,400 discrete cases
+the loss is a **step function**, so its minimum is a flat region rather than a
+point. Theory names 0.0196; the empirical floor runs from about 0.021 to 0.031,
+and the loss at the theoretical value is within 3% of the best achievable.
+:::
+
+::: {.muted}
+The formula is a guide to the right neighbourhood, not a value to quote to four
+decimal places. What matters is that it puts you two orders of magnitude away
+from 0.5.
+:::
+
+## Read the two rows that matter
+
+```{python}
+#| echo: false
+
+a, s = outcomes(0.5), outcomes(1 / 51)
+print(f"t = 0.5000   accuracy {a['acc']:.3f}   missed {a['missed']:3d}   "
+      f"discarded {a['discarded']:.0%}   loss {a['loss']:.0f}")
+print(f"t = 0.0196   accuracy {s['acc']:.3f}   missed {s['missed']:3d}   "
+      f"discarded {s['discarded']:.0%}   loss {s['loss']:.0f}")
+```
+
+::: {.check}
+The cost-optimal rule has **worse accuracy** — 0.585 against 0.877 — and cuts
+expected loss by a factor of eight. It discards 70% of the basket and misses one
+poisonous mushroom in four hundred.
+:::
+
+::: {.get}
+That is the session in two lines. The model that scores worse on the conventional
+metric is the one you would actually carry into the woods.
+:::
+
+## The ROC curve is the whole menu
+
+```{python}
+#| echo: false
+#| fig-align: center
+
+fpr, tpr, thr = roc_curve(d.poisonous, p_hat)
+fig, ax = plt.subplots(figsize=(5.4, 3.4))
+ax.plot(fpr, tpr, color=CL.ink)
+ax.plot([0, 1], [0, 1], color=CL.muted, ls=":", lw=1)
+for t, colour, label in [(0.5, CL.warn, "t = 0.5"), (1/51, CL.good, "cost-optimal")]:
+    i = int(np.argmin(np.abs(thr - t)))
+    ax.plot(fpr[i], tpr[i], marker="o", ms=7, color=colour)
+    ax.annotate(label, (fpr[i], tpr[i]), (fpr[i] + 0.06, tpr[i] - 0.11),
+                color=colour, fontsize=8, fontweight="600")
+ax.set_xlabel("False positive rate"); ax.set_ylabel("True positive rate")
+ax.set_title(f"AUC = {roc_auc_score(d.poisonous, p_hat):.4f}")
+plt.show()
+```
+
+::: {.muted}
+AUC summarises the curve over **every** threshold, which is why it is a good
+measure of the model and a bad basis for a decision. You do not deploy a curve;
+you deploy a point on it.
+:::
+
+# Ordinal outcomes {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### When the categories are ordered
+:::
+
+## Edible, upset stomach, hospital, fatal
+
+Those four are **ordered**, and collapsing them to a binary throws that away. An
+ordinal (proportional-odds) model uses one set of coefficients and a set of
+cut-points:
+
+$$ \log\frac{\Pr(Y \le j)}{\Pr(Y > j)} = \alpha_j - \textstyle\sum_k \beta_k x_k $$
+
+```{python}
+#| echo: true
+
+from statsmodels.miscmodels.ordinal_model import OrderedModel
+
+sub = d.dropna(subset=["toxicity"]).copy()
+X = pd.get_dummies(
+    sub[["odor_index", "volva_present", "ring_present", "spore_print"]],
+    columns=["spore_print"], drop_first=True, dtype=float)
+
+ord_fit = OrderedModel(sub.toxicity.cat.codes, X, distr="logit").fit(
+    method="bfgs", disp=0)
+print(ord_fit.params.round(4).to_string())
+```
+
+## What that model assumes
+
+::: {.step}
+**One coefficient per variable, shared across all the thresholds.** The effect of
+a volva on the odds of "at least upset stomach" is assumed identical to its
+effect on the odds of "fatal". That is the proportional-odds assumption, and it
+is what buys you the parsimony.
+:::
+
+::: {.warn}
+If it is false — if a feature predicts mild illness but not death — the model
+will average the two and report something true of neither. Check it by fitting
+separate binary logits at each cut-point and comparing the coefficients. If they
+diverge, use a multinomial model and give up the ordering.
+:::
+
+## What to report
+
+::: {.tight}
+- Coefficients **as odds ratios**, with intervals
+- The **confusion matrix**, not accuracy alone — and always against the
+  majority-class baseline
+- The **threshold you chose and the costs that justify it**
+- Which error you deliberately made more of
+- AUC for the model; a chosen point on the ROC curve for the decision
+:::
+
+::: {.get}
+A classifier reported without its threshold, or a threshold reported without its
+costs, is an unfinished piece of work.
+:::
+
+## Key takeaways
+
+::: {.tight}
+1. Model the log-odds; recover probabilities by inverting.
+2. $e^{\beta}$ is an **odds ratio**. It is constant; the probability change it
+   implies is not.
+3. **Accuracy is a trap on imbalanced data.** Always quote the majority-class
+   baseline beside it.
+4. The threshold is a decision that belongs to the costs, not to the model.
+   $t^\star = c_{FP}/(c_{FP} + c_{FN})$.
+5. The best decision rule can have the worse accuracy. If that sounds wrong, the
+   metric is wrong.
+6. Ordinal models buy parsimony with the proportional-odds assumption. Check it.
+:::
+
+## References
+
+- James, Witten, Hastie & Tibshirani (2021). *An Introduction to Statistical
+  Learning*, 2nd ed., ch. 4.
+- Hosmer, D., Lemeshow, S. & Sturdivant, R. (2013). *Applied Logistic
+  Regression*, 3rd ed. Wiley.
+- Agresti, A. (2019). *An Introduction to Categorical Data Analysis*, 3rd ed. Wiley.
+- Provost, F. & Fawcett, T. (2013). *Data Science for Business*. O'Reilly. Ch. 7–8
+  on cost-sensitive evaluation.

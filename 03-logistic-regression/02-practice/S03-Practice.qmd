@@ -1,0 +1,193 @@
+---
+title: "Session 3: Practice"
+subtitle: "The Mushroom Forager"
+author: "Thierry Warin, PhD"
+institute: "HEC Montréal"
+format:
+  revealjs:
+    theme: [default, ../../theme/economist.scss]
+    embed-resources: true
+    slide-number: c/t
+    slide-level: 2
+    history: false
+    transition: none
+    navigation-mode: linear
+    controls: true
+    progress: true
+    width: 1280
+    height: 760
+    margin: 0.06
+    smaller: true
+    footer: "Essentials of Data Science in Python · Session 03 practice · Thierry Warin, PhD"
+---
+
+## Outline · The workshop {.center .scrollable}
+
+1. The brief
+2. Ninety minutes
+3. Stage 1 — the baseline you must beat
+4. Stage 2 — fit and read
+5. Stage 3 — the confusion matrix
+6. Stage 4 — choose your threshold
+7. Stage 5 — the graded outcome
+8. What you hand in
+
+# The Mushroom Forager {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### Hand in a rule you would actually eat from.
+:::
+
+## The brief
+
+1,400 mushrooms from one forest, each with nine measurable features and a
+verdict. Your job is a **decision rule**: given a mushroom, eat it or discard it.
+
+::: {.step}
+The deliverable is not a model. It is a rule with a **threshold**, plus the two
+costs that justify that threshold, plus the number of poisonous mushrooms your
+rule would let through.
+:::
+
+::: {.warn}
+A rule that maximises accuracy will kill you. That is not a figure of speech
+about this dataset — it is the arithmetic, and finding it is stage 4.
+:::
+
+## Ninety minutes
+
+| | | |
+|---|---|---|
+| **00–10** | The baseline | the number every result is read against |
+| **10–30** | Fit, and read it as odds ratios | which feature dominates? |
+| **30–50** | The confusion matrix | at $t = 0.5$, and what it costs |
+| **50–75** | Choose a threshold from costs | and defend it |
+| **75–85** | The graded outcome | ordinal, if you get there |
+| **85–90** | Write it up | 250 words |
+
+## Stage 1 · The baseline — 10 min
+
+```python
+import essentials as ess
+d = ess.load("mushrooms")
+```
+
+::: {.tight}
+1. What share of mushrooms are poisonous?
+2. If you predicted "edible" every time, what would your accuracy be?
+3. How many poisonous mushrooms would that rule feed you?
+:::
+
+::: {.check}
+Write that accuracy at the top of your script. Every accuracy figure you produce
+today has to be reported next to it, or it means nothing.
+:::
+
+## Stage 2 · Fit, and read — 20 min
+
+```python
+import statsmodels.formula.api as smf
+import numpy as np
+
+fit = smf.logit("poisonous ~ ...", data=d).fit()
+np.exp(fit.params)          # odds ratios
+```
+
+::: {.tight}
+1. Fit a logistic regression using all nine features. Treat the categorical ones
+   with `C(...)`.
+2. Report the coefficients **as odds ratios**, sorted.
+3. One feature dominates. Which, and by how much? Look it up afterwards — it has
+   a name and a reason.
+4. Take that feature's odds ratio and work out what it does to a mushroom at
+   $p = 0.01$, and to one at $p = 0.90$. Explain the difference.
+:::
+
+## Stage 3 · The confusion matrix — 20 min
+
+```python
+from sklearn.metrics import confusion_matrix, roc_auc_score
+
+p_hat = fit.predict(d)                        # probabilities, not classes
+confusion_matrix(d.poisonous, (p_hat > 0.5).astype(int))
+```
+
+::: {.tight}
+1. Build the matrix at $t = 0.5$. Label the four cells in words.
+2. Report accuracy, and put the stage 1 baseline next to it.
+3. **How many poisonous mushrooms did this rule call edible?** Express it as one
+   meal in how many.
+4. Report AUC. Say in one sentence why AUC cannot tell you what threshold to use.
+:::
+
+## Stage 4 · Choose your threshold — 25 min
+
+This stage carries the most marks.
+
+::: {.tight}
+1. Write down two costs: $c_{FN}$ for eating a poisonous mushroom, $c_{FP}$ for
+   discarding an edible one. **Justify them in a sentence.**
+2. Compute expected loss $c_{FN}\!\cdot\!FN + c_{FP}\!\cdot\!FP$ across a grid of
+   thresholds, and plot it.
+3. Where is the minimum? Compare it with $c_{FP}/(c_{FP} + c_{FN})$.
+4. Report accuracy, mushrooms missed, and share of basket discarded at your
+   chosen threshold and at 0.5.
+5. Say which error you chose to make more of, and why.
+:::
+
+::: {.warn}
+Your chosen rule will have **worse accuracy** than the $t = 0.5$ rule. If that
+bothers you, say so in the write-up and then explain why you are doing it anyway.
+:::
+
+## Stage 5 · The graded outcome — 10 min
+
+`toxicity` grades the same risk: edible, upset stomach, hospital, fatal.
+
+::: {.tight}
+1. Fit an ordinal model with `OrderedModel(..., distr="logit")`.
+2. What does the proportional-odds assumption claim about your dominant feature?
+3. Test it roughly: fit separate binary logits at each cut-point and compare the
+   coefficients. Do they look like the same number?
+:::
+
+::: {.muted}
+If they diverge badly, the ordinal model is averaging effects that differ, and a
+multinomial model is the honest fallback — at the cost of giving up the ordering.
+:::
+
+## What you hand in
+
+250 words, plus your script:
+
+::: {.tight}
+- **Your rule**: the threshold, and the two costs that justify it
+- The majority-class baseline, and your accuracy beside it
+- The confusion matrix at your threshold **and** at 0.5
+- How many poisonous mushrooms your rule lets through, per hundred meals
+- The dominant feature, its odds ratio, and what it turns out to be
+- One thing this analysis does **not** license you to claim
+:::
+
+::: {.get}
+And the standing rule: one output you identified as wrong, and how.
+:::
+
+## What loses marks
+
+::: {.tight}
+- Reporting accuracy without the majority-class baseline
+- Using $t = 0.5$ without noticing it is a choice
+- Choosing a threshold without writing the costs down
+- Describing an odds ratio as though it were a probability ratio
+- Reporting AUC as if it settled the decision
+- "The model is 88% accurate" as a headline, on data that is 71% one class
+:::
+
+## Two-minute report
+
+| | |
+|---|---|
+| **One rule** | the threshold, and the costs behind it |
+| **One error** | the one you chose to make more of, and why |
+| **One number** | poisonous mushrooms per hundred meals |

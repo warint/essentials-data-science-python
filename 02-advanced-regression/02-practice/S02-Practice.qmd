@@ -1,0 +1,193 @@
+---
+title: "Session 2: Practice"
+subtitle: "The Sourdough Optimum"
+author: "Thierry Warin, PhD"
+institute: "HEC Montréal"
+format:
+  revealjs:
+    theme: [default, ../../theme/economist.scss]
+    embed-resources: true
+    slide-number: c/t
+    slide-level: 2
+    history: false
+    transition: none
+    navigation-mode: linear
+    controls: true
+    progress: true
+    width: 1280
+    height: 760
+    margin: 0.06
+    smaller: true
+    footer: "Essentials of Data Science in Python · Session 02 practice · Thierry Warin, PhD"
+---
+
+## Outline · The workshop {.center .scrollable}
+
+1. The brief
+2. Ninety minutes
+3. Stage 1 — the naive recommendation
+4. Stage 2 — find the hill
+5. Stage 3 — find the tilt
+6. Stage 4 — find the bakers
+7. Stage 5 — how sure are you?
+8. What you hand in
+
+# The Sourdough Optimum {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### Hand in a recipe. It has to be the right one.
+:::
+
+## The brief
+
+240 loaves from eight bakers. For each: the hydration of the dough, the oven
+temperature, the age of the starter, the flour, and how far it rose.
+
+::: {.step}
+**Deliverable: a recipe.** One hydration percentage and one oven temperature,
+with an honest statement of how precisely you know them.
+:::
+
+::: {.warn}
+There is a planted optimum. It is an interior point, not an edge, and it can only
+be recovered by a model that has all three of the right pieces in it. Get one
+piece wrong and you will hand in a confident recommendation that is several
+points out.
+:::
+
+## Ninety minutes
+
+| | | |
+|---|---|---|
+| **00–10** | The naive model, and its advice | write it down |
+| **10–30** | Find the hill | quadratic terms |
+| **30–50** | Find the tilt | the interaction |
+| **50–70** | Find the bakers | fixed effects |
+| **70–80** | How sure are you? | an interval, not a point |
+| **80–90** | Write it up | 250 words |
+
+## Stage 1 · The naive recommendation — 10 min
+
+```python
+import essentials as ess
+import statsmodels.formula.api as smf
+
+d = ess.load("sourdough")
+flat = smf.ols("rise_mm ~ hydration_pct + oven_c", data=d).fit()
+```
+
+::: {.tight}
+1. What recipe does this model recommend? Maximise its prediction over the range
+   of the data and see where it puts you.
+2. Where did the answer land, relative to the design?
+3. Say in one sentence why a linear model can **never** do anything else.
+:::
+
+## Stage 2 · Find the hill — 20 min
+
+::: {.tight}
+1. Add `I(hydration_pct**2)`. Is the coefficient negative?
+2. Compute the peak from the coefficients: $x^\star = -\beta_1 / 2\beta_2$.
+3. Now do the same for oven temperature.
+4. Report what one extra point of hydration is worth **at 65%, at 80%, and at
+   92%**. The three numbers are not the same. Explain why.
+:::
+
+::: {.check}
+Question 4 is the one that shows whether you understand what you fitted. Once a
+squared term is in the model, there is no such thing as "the effect of
+hydration" — only its effect *at a value*.
+:::
+
+## Stage 3 · Find the tilt — 20 min
+
+::: {.tight}
+1. Add `hydration_pct:oven_c`. Report the coefficient and its $t$.
+2. Using the coefficients, compute the **best oven temperature at 65% hydration**
+   and **at 90% hydration**. How far apart are they?
+3. State, in one sentence, what an additive model gets wrong about this dough.
+:::
+
+::: {.muted}
+Hint for 2: differentiate with respect to `oven_c` and set to zero. The
+hydration term does not disappear — that is the whole point.
+:::
+
+## Stage 4 · Find the bakers — 20 min
+
+::: {.tight}
+1. Print the mean `hydration_pct` **and** mean `rise_mm` by baker. Look at the
+   two columns together before you fit anything.
+2. What do you notice? State the confounding in one sentence.
+3. Add `C(baker)`. Report the optimum before and after.
+4. Report the $R^2$ of the model **without** baker effects.
+:::
+
+::: {.warn}
+Step 4 is the point of the whole session. A model can explain ninety per cent of
+the variance, have every coefficient significant, and give advice four percentage
+points wrong — with nothing in its own output to warn you.
+:::
+
+## Stage 5 · How sure are you? — 10 min
+
+::: {.tight}
+1. Use `.get_prediction(...).summary_frame()` to put a confidence band on the
+   predicted rise across a range of hydration, holding temperature at your
+   estimated optimum.
+2. Over what range of hydration is the predicted rise **indistinguishable** from
+   its maximum?
+3. Rewrite your recommendation as a range.
+:::
+
+::: {.step}
+A peak estimated from data is flat near the top. "86.7%" implies a precision you
+do not have; "somewhere between 84 and 89%" is what you actually know.
+:::
+
+## Also worth trying, if you have time
+
+::: {.tight}
+- Add `starter_age_days` and `flour`. What happens to $R^2$? To adjusted $R^2$?
+  To AIC? What does that tell you about the two variables?
+- Compare your models on AIC. Then say why the model you are reporting was
+  chosen by **you**, and not by the data.
+- Fit `hydration_pct*oven_c` instead of `hydration_pct:oven_c` and compare. Which
+  one did you actually want, and why?
+:::
+
+## What you hand in
+
+250 words, plus your script:
+
+::: {.tight}
+- **The recipe**: hydration and temperature, as a range
+- The interaction coefficient, and the two conditional temperatures it implies
+- The optimum with and without baker fixed effects, and the $R^2$ of the model
+  without them
+- One sentence on what fixed effects cost you here
+- One thing this analysis does **not** license you to claim
+:::
+
+::: {.get}
+And the standing rule: one output you identified as wrong, and how.
+:::
+
+## What loses marks
+
+::: {.tight}
+- A recommendation at the edge of the design, handed in without comment
+- Interpreting a main effect as "the effect of" when a squared term or an
+  interaction is in the model
+- Reporting an optimum to two decimal places with no interval
+- Adding `C(baker)` because the slides did, with no statement of what changed
+- Choosing a model on AIC and reporting it as though the data had chosen it
+:::
+
+## Two-minute report
+
+| | |
+|---|---|
+| **One recipe** | as a range, with the temperature it is conditional on |
+| **One confounder** | the baker problem, in one sentence |
+| **One cost** | what the fixed effects took away from you |

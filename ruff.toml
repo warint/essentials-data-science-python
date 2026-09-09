@@ -1,0 +1,27 @@
+# Linting for the course code.
+#
+#     ruff check .
+#
+# The rules are chosen for teaching code, which has different priorities from
+# library code: it is read far more often than it is reused, and it is allowed
+# to be explicit where a library would be clever.
+
+target-version = "py312"
+line-length = 88
+extend-exclude = [".venv", "data", "_site", ".quarto"]
+
+[lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "NPY", "PD"]
+ignore = [
+    "E501",     # line length is enforced by the formatter, not by errors
+    "PD011",    # .values is what students will see in every tutorial
+    "SIM108",   # a ternary is not always clearer than an if/else
+]
+
+[lint.per-file-ignores]
+# The starter scripts are deliberately incomplete: they import what the student
+# will need and leave TODOs, so unused imports are the point.
+"*/02-practice/starter/*.py" = ["F401", "E402"]
+# essentials.py and the verifier reach into each other's private constants on
+# purpose — the planted answers are shared between the generator and its tests.
+"scripts/verify_puzzles.py" = ["E402", "SLF001", "B023"]

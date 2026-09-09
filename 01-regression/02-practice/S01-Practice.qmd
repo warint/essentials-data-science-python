@@ -1,0 +1,193 @@
+---
+title: "Session 1: Practice"
+subtitle: "The Roller Coaster Problem"
+author: "Thierry Warin, PhD"
+institute: "HEC Montréal"
+format:
+  revealjs:
+    theme: [default, ../../theme/economist.scss]
+    embed-resources: true
+    slide-number: c/t
+    slide-level: 2
+    history: false
+    transition: none
+    navigation-mode: linear
+    controls: true
+    progress: true
+    width: 1280
+    height: 760
+    margin: 0.06
+    smaller: true
+    footer: "Essentials of Data Science in Python · Session 01 practice · Thierry Warin, PhD"
+---
+
+## Outline · The workshop {.center .scrollable}
+
+1. The brief
+2. Ninety minutes
+3. Stage 1 — look, and fit
+4. Stage 2 — diagnose
+5. Stage 3 — find the law
+6. Stage 4 — investigate the rows
+7. What you hand in
+8. What loses marks
+
+# The Roller Coaster Problem {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### There is a law of physics hiding in this spreadsheet. Find its exponent.
+:::
+
+## The brief
+
+You have 84 roller coasters. For each one: the height of its first drop, its top
+speed, its length, how many inversions it has, and how long the queue was when
+somebody measured it.
+
+::: {.step}
+Two of those columns are connected by a physical law of the form
+$v = c\,h^{k}$. **Your job is to report $k$**, with an interval, and to say what
+$c$ turned out to be.
+:::
+
+::: {.warn}
+There is a specific right answer. It is a number you can look up in a physics
+textbook, and you will know when you have it. Do not look it up first — the
+point is to recover it from data.
+:::
+
+## Ninety minutes
+
+| | | |
+|---|---|---|
+| **00–15** | Look, and fit the obvious model | and write down its $R^2$ |
+| **15–35** | Diagnose it | residuals, and what they show |
+| **35–60** | Find the functional form | and estimate the exponent |
+| **60–80** | Find the rows in charge | and decide what to do about them |
+| **80–90** | Write it up | 250 words |
+
+::: {.muted}
+Start from `starter/session01_starter.py`. It loads the data and gets out of the
+way.
+:::
+
+## Stage 1 · Look, and fit — 15 min
+
+```python
+import essentials as ess
+
+d = ess.load("coasters")
+```
+
+::: {.tight}
+1. Plot top speed against drop height. Actually plot it, before fitting.
+2. Fit `speed_kmh ~ drop_m` and write down the coefficient **in its units**.
+3. Write down $R^2$.
+:::
+
+::: {.check}
+Keep that $R^2$ written down somewhere. You are going to need it later, when it
+turns out to have been no help at all.
+:::
+
+## Stage 2 · Diagnose it — 20 min
+
+::: {.tight}
+1. Plot residuals against fitted values.
+2. Say **in a sentence** what structure you can see. Not "looks fine" — name the
+   shape, and name what you were looking for.
+3. Bin the residuals by drop height and take the mean in each bin. Does the sign
+   of the mean residual change as you move across the range?
+4. Add a squared term and test it. What does the $p$-value say?
+:::
+
+::: {.warn}
+If your answer to 2 is that there is no structure, look again. There is, and it
+is not subtle once you know to look for a change of sign.
+:::
+
+## Stage 3 · Find the law — 25 min
+
+You are looking for $v = c\,h^{k}$. Taking logs of both sides gives you
+something you already know how to fit.
+
+::: {.step}
+$$\log v = \log c + k \log h$$
+
+The **slope** of that regression is the exponent. The exponential of the
+intercept is $c$.
+:::
+
+::: {.tight}
+1. Fit it. Report $k$ with a 95% confidence interval.
+2. Report $c$.
+3. Does your interval contain a simple fraction? Which one?
+4. Now say what physical statement that fraction corresponds to.
+:::
+
+## Stage 4 · Find the rows in charge — 20 min
+
+```python
+inf = fit.get_influence()
+leverage = inf.hat_matrix_diag
+cooks    = inf.cooks_distance[0]
+```
+
+::: {.tight}
+1. Confirm that the leverages sum to $p$. They do, exactly. Say why.
+2. Find the six observations with the largest Cook's distance.
+3. **Go and read those rows.** Print them. What do they have in common?
+4. Re-estimate $k$ with and without them. Report both numbers.
+5. Decide whether to keep them, and write down the argument — not the decision.
+:::
+
+::: {.check}
+This stage carries the most marks. A group that can explain *why* those rows
+behave differently has understood the session; a group that deleted them because
+they were far from the line has not.
+:::
+
+## What you hand in
+
+250 words, plus your script. It must contain:
+
+::: {.tight}
+- **The exponent**, with an interval, and the constant
+- The physical law you recovered, stated in one sentence
+- The $R^2$ of your first model, and one sentence on why it was misleading
+- The six rows, what they turned out to be, and your decision about them
+- One thing this analysis does **not** license you to claim
+:::
+
+::: {.get}
+And the standing rule: one model output — from a language model, or from your own
+regression — that you identified as wrong, and how you established that.
+:::
+
+## What loses marks
+
+::: {.tight}
+- Reporting a coefficient with no units
+- Reporting $R^2$ with no diagnostic plot
+- "The residuals looked fine" with no statement of what you looked for
+- Deleting influential observations without naming them
+- Reporting the exponent as 0.37 — which is what you get if you keep all 84 rows,
+  and which corresponds to no law of anything
+:::
+
+::: {.warn}
+And, everywhere in this course: an association described in causal language.
+Session 6 is where we earn the right to that verb.
+:::
+
+## Two-minute report
+
+| | |
+|---|---|
+| **One number** | the exponent, with its interval |
+| **One diagnostic** | what you plotted, and what it showed |
+| **One decision** | the rows you set aside, and the argument for it |
+
+::: {.muted}
+The presenter is drawn at random when your group is called. All of you prepare.
+:::

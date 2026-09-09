@@ -1,0 +1,162 @@
+---
+title: "Session 2: Before the session"
+subtitle: "A straight line was never going to be enough"
+author: "Thierry Warin, PhD"
+institute: "HEC Montréal"
+format:
+  revealjs:
+    theme: [default, ../../theme/economist.scss]
+    embed-resources: true
+    slide-number: c/t
+    slide-level: 2
+    history: false
+    transition: none
+    navigation-mode: linear
+    controls: true
+    progress: true
+    width: 1280
+    height: 760
+    margin: 0.06
+    smaller: true
+    footer: "Essentials of Data Science in Python · Session 02 pre-session · Thierry Warin, PhD"
+---
+
+## Outline · Before class {.center .scrollable}
+
+1. What to do, and how long it takes
+2. Load the data, and look at it
+3. Three shapes a line cannot make
+4. Self-check
+5. What the session will ask of you
+
+# Before the session {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### A straight line was never going to be enough
+:::
+
+## What to do, and how long it takes
+
+| | | |
+|---|---|---|
+| **1** | Load `sourdough` and answer the four questions below | 20 min |
+| **2** | Read the three shapes | 15 min |
+| **3** | Attempt the self-check | 10 min |
+
+::: {.check}
+Session 1 ended by fixing a curve with a log. This session is about the cases a
+single transformation cannot reach: a genuine optimum, an effect that depends on
+another variable, and a group difference you have not measured.
+:::
+
+## 1 · Load the data, and look at it
+
+```python
+import essentials as ess
+
+d = ess.load("sourdough")
+d.shape
+d.head()
+```
+
+240 loaves. Eight bakers, thirty loaves each. For every loaf: the hydration of
+the dough, the oven temperature, how old the starter was, the flour, and how far
+the loaf rose.
+
+::: {.tight}
+Answer these in Python before class:
+
+1. What is the mean rise, and the mean rise **by baker**?
+2. Plot `rise_mm` against `hydration_pct`. What shape is it?
+3. Now plot the same thing coloured by `baker`. What changed?
+4. What is the mean `hydration_pct` **by baker**? Are the bakers working in the
+   same part of the design?
+:::
+
+## Why question 4 matters
+
+::: {.step}
+If each baker works at a different hydration, then "hydration" and "which baker"
+are partly the same variable. Any effect you attribute to one could belong to the
+other, and the regression has no way to tell them apart unless you let it.
+:::
+
+::: {.warn}
+That is the trap in this session's data, and it costs about four percentage
+points of hydration in the final answer. Come to class knowing the bakers are
+not interchangeable.
+:::
+
+## 2 · Three shapes a line cannot make
+
+### A hill
+
+Rise increases with hydration, then decreases. There is a **best** value, and a
+straight line will tell you the best value is at whichever edge of the data it is
+sloping towards.
+
+::: {.muted}
+The fix: a squared term. $y = \beta_0 + \beta_1 x + \beta_2 x^2$, with
+$\beta_2 < 0$ for a hill. The peak sits at $-\beta_1 / 2\beta_2$.
+:::
+
+## Three shapes a line cannot make (cont.)
+
+### A slope that depends on something else
+
+The best oven temperature might be different for wet dough than for dry dough.
+That is not two separate effects — it is one effect *conditional on* the other.
+
+::: {.muted}
+The fix: an interaction. `hydration_pct:oven_c` in a formula, or
+`hydration_pct*oven_c` for the two main effects and the interaction together.
+:::
+
+### A level that differs by group
+
+One baker's loaves rise 9 mm more than another's, for reasons no column records:
+their oven, their hands, their kitchen.
+
+::: {.muted}
+The fix: fixed effects. `C(baker)` adds one dummy per baker and one intercept
+each, and the other coefficients are then estimated **within** bakers.
+:::
+
+## 3 · Self-check
+
+On paper.
+
+::: {.tight}
+1. A regression gives `rise ~ hydration` a coefficient of +0.8. Someone concludes
+   "wetter dough always rises more". What would you need to check before
+   believing that?
+2. In `y ~ x + z + x:z`, what does the coefficient on `x` now mean? Be precise —
+   it is no longer "the effect of x".
+3. You add `C(baker)` to a model and the hydration coefficient changes a lot.
+   What have you learnt?
+:::
+
+::: {.muted}
+Question 2 is the one people get wrong for years. With an interaction present,
+the coefficient on `x` is the effect of `x` **when `z` is zero** — which may not
+be a value `z` can take.
+:::
+
+## What the session will ask of you
+
+::: {.tight}
+- Fit and interpret a quadratic, and locate its optimum from the coefficients
+- Fit and interpret an interaction, and say what the main effects now mean
+- Add fixed effects, and explain what changed and why
+- Compare non-nested models on AIC, and say why that is not model selection
+- Recognise when a group variable is confounded with a variable of interest
+:::
+
+::: {.get}
+**Arrive with:** the four data questions answered · the three shapes read ·
+the self-check attempted.
+:::
+
+::: {.muted}
+Session 2: [`README.md`](../README.md) · the notes: [`chapter.md`](../chapter.md)
+:::

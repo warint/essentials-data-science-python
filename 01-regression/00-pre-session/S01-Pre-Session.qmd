@@ -1,0 +1,281 @@
+---
+title: "Session 1: Before the session"
+subtitle: "Set up the machine, then meet the straight line"
+author: "Thierry Warin, PhD"
+institute: "HEC Montréal"
+format:
+  revealjs:
+    theme: [default, ../../theme/economist.scss]
+    embed-resources: true
+    slide-number: c/t
+    slide-level: 2
+    history: false
+    transition: none
+    navigation-mode: linear
+    controls: true
+    progress: true
+    width: 1280
+    height: 760
+    margin: 0.06
+    smaller: true
+    footer: "Essentials of Data Science in Python · Session 01 pre-session · Thierry Warin, PhD"
+---
+
+## Outline · Before the first class {.center .scrollable}
+
+1. What to do, and how long it takes
+2. Install Python
+3. Make a virtual environment
+4. Get the course, and check it works
+5. Enough pandas to start
+6. Enough inference to read a coefficient
+7. Self-check
+8. What session 1 will ask of you
+
+# Before the session {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### Set up the machine, then meet the straight line
+:::
+
+## This one is longer than the others
+
+This is the only pre-session that installs anything. Sessions 2 to 6 assume
+everything below is working, and none of them will ask you to install again.
+
+| | | |
+|---|---|---|
+| **1** | Install Python and make a virtual environment | 40 min |
+| **2** | Clone the course and run the verification suite | 10 min |
+| **3** | Work through the pandas section, at the keyboard | 30 min |
+| **4** | Read the inference section | 20 min |
+| **5** | Attempt the self-check | 15 min |
+
+::: {.warn}
+Budget two hours, once. Doing it in the ten minutes before class does not work,
+and every subsequent session depends on it.
+:::
+
+## 1 · Install Python
+
+You want **3.12 or 3.13**. Anything older than 3.10 will fail on syntax used
+throughout the course.
+
+**macOS** — check what you have, then install if needed:
+
+```bash
+python3 --version
+brew install python@3.12          # if Homebrew is installed
+```
+
+**Windows** — download the installer from [python.org](https://www.python.org/downloads/).
+
+::: {.warn}
+On Windows, tick **"Add python.exe to PATH"** on the first screen of the
+installer. If you miss it, `python` will not be a command your terminal knows,
+and the error message will not tell you why.
+:::
+
+**Linux** — you already have it. `python3 --version` to confirm.
+
+## 2 · Make a virtual environment
+
+A virtual environment is a folder holding one project's packages. It exists so
+that installing something for this course cannot break something else on your
+machine.
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate          # macOS and Linux
+.venv\Scripts\activate             # Windows
+```
+
+Your prompt now starts with `(.venv)`. That is the whole signal that it worked.
+
+::: {.warn}
+You must activate it **every time you open a new terminal**. Ninety per cent of
+"it says the module is not installed" is a terminal where nobody ran `activate`.
+:::
+
+## 3 · Get the course, and check it works
+
+```bash
+git clone https://github.com/warint/essentials-data-science-python.git
+cd essentials-data-science-python
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+Then run the suite that checks the course data is intact:
+
+```bash
+python scripts/verify_puzzles.py
+```
+
+::: {.check}
+You should see 39 lines beginning `[  ok  ]` and, at the end,
+**All planted answers are present and all traps still spring.**
+:::
+
+::: {.muted}
+It takes about twenty seconds. If a line says `FAIL`, bring the output to class —
+that is a bug in the course, not in your setup.
+:::
+
+## What that suite just did
+
+It generated all six course datasets and checked that each one still contains
+the answer it is supposed to contain.
+
+Every dataset in this course is **built on your machine from a fixed seed**.
+Nothing is downloaded. Three things follow, and they shape how the sessions run:
+
+::: {.tight}
+- The practice works with the wifi off.
+- Your numbers and your neighbour's numbers are **identical**, so if you
+  disagree, one of you has made an analytical mistake — which is the useful kind
+  of argument.
+- There is a **right answer**, and you can check whether you found it.
+:::
+
+## 4 · Enough pandas to start
+
+Do this at the keyboard, not by reading. Activate the environment, then:
+
+```python
+import essentials as ess
+
+ess.catalog()                     # the six datasets, and what each one asks
+d = ess.load("coasters")          # session 1's data
+```
+
+Now look at it. These five are the ones you will use constantly:
+
+```python
+d.shape                           # (rows, columns)
+d.head()                          # the first five rows
+d.dtypes                          # what type each column is
+d.describe()                      # count, mean, sd, quartiles, per column
+d.columns.tolist()                # the names, as a list
+```
+
+## Selecting and filtering
+
+```python
+d["drop_m"]                       # one column, as a Series
+d[["drop_m", "speed_kmh"]]        # two columns, as a DataFrame
+
+d[d.drop_m > 100]                 # rows where the drop exceeds 100 m
+d[d.propulsion == "gravity"]      # rows matching a string
+d.query("drop_m > 100")           # the same filter, more readable
+```
+
+::: {.warn}
+`d["drop_m"]` gives a Series; `d[["drop_m"]]` gives a one-column DataFrame. They
+print almost identically and behave differently. The double bracket means
+*"a list of columns"*, and the list happens to have one item in it.
+:::
+
+## Grouping, sorting, and new columns
+
+```python
+d.groupby("propulsion")["speed_kmh"].mean()      # a mean per group
+d.groupby("propulsion").size()                   # how many in each group
+
+d.sort_values("speed_kmh", ascending=False).head(5)
+
+d["speed_ms"] = d.speed_kmh / 3.6                # a new column
+```
+
+::: {.check}
+Before class, answer these three from the data, in Python:
+how many coasters are there · what is the mean top speed by `propulsion` ·
+which single coaster has the largest `drop_m`.
+:::
+
+## 5 · Enough inference to read a coefficient
+
+A regression hands you three numbers per variable. You need to know what each
+one is before you can be told a fourth.
+
+| | |
+|---|---|
+| **Coefficient** | how much $y$ moves per one-unit move in $x$ — **in the units of $y$** |
+| **Standard error** | how much that estimate would wobble if you collected the data again |
+| **$t$-statistic** | the coefficient divided by its standard error: how many wobbles from zero |
+
+::: {.step}
+A coefficient is a quantity with units. A $t$-statistic is a ratio, and has
+none. Reporting the second without the first is the most common way to say
+nothing at all.
+:::
+
+## The $p$-value, stated carefully
+
+> If the true effect were **exactly zero**, and I repeated this whole study many
+> times, what fraction of those studies would produce a coefficient at least
+> this far from zero?
+
+That is the $p$-value. It is a statement about *data under an assumption*, not
+about the probability that the assumption is true.
+
+::: {.warn}
+It does not tell you the effect is large. It does not tell you the effect is
+real. With 2,000 rows, an effect too small to care about will clear $p < 0.05$
+comfortably — and you would still be right not to care.
+:::
+
+## What $R^2$ is, and what it is not
+
+$R^2$ is the share of the variance in $y$ that your fitted values reproduce.
+It runs from 0 to 1, and it rises whenever you add a variable — including a
+variable made of pure noise.
+
+::: {.step}
+$R^2$ measures how *close* the line is to the points. It says nothing about
+whether the line is the **right shape**.
+:::
+
+::: {.warn}
+Session 1's puzzle is built precisely on that gap: a model with $R^2 = 0.96$
+that gets the answer wrong, sitting next to a model that gets it right. If you
+learn one thing before class, learn to distrust that number on its own.
+:::
+
+## 6 · Self-check
+
+On paper. If you cannot answer these, that is what the session is for.
+
+::: {.tight}
+1. A regression of salary on years of experience gives a coefficient of 2,400.
+   What are its units, and what does the number mean in a sentence?
+2. Two studies estimate the same effect. One reports $p = 0.04$, the other
+   $p = 0.002$. What can you conclude about which effect is larger?
+3. You add a column of random numbers to a regression. What happens to $R^2$,
+   and why?
+:::
+
+::: {.muted}
+Answer 2 is the interesting one, and the answer is "nothing at all".
+:::
+
+## What session 1 will ask of you
+
+By the end of the session you should be able to:
+
+::: {.tight}
+- Fit a linear model from a formula and read every column of its output
+- Say what a residuals-versus-fitted plot reveals, and what you looked for
+- Compute leverage, and say which observations can move the line
+- Separate an outlier from an **influential** point using Cook's distance
+- Recognise when a straight line is fitting a curved relationship, and fix it
+:::
+
+::: {.get}
+**Arrive with:** the environment activated · `verify_puzzles.py` passing ·
+the three pandas questions answered · the self-check attempted on paper.
+:::
+
+::: {.muted}
+Session 1: [`README.md`](../README.md) · the notes: [`chapter.md`](../chapter.md)
+:::

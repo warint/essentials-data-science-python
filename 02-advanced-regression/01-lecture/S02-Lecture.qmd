@@ -1,0 +1,476 @@
+---
+title: "Session 2: Advanced Regression"
+subtitle: "Curves, interactions, and the groups you did not measure"
+author: "Thierry Warin, PhD"
+institute: "HEC Montréal"
+format:
+  revealjs:
+    theme: [default, ../../theme/economist.scss]
+    embed-resources: true
+    slide-number: c/t
+    slide-level: 2
+    history: false
+    transition: none
+    navigation-mode: linear
+    controls: true
+    progress: true
+    width: 1280
+    height: 760
+    margin: 0.06
+    smaller: true
+    footer: "Essentials of Data Science in Python · Session 02 · Thierry Warin, PhD"
+---
+
+```{python}
+#| label: setup
+#| echo: false
+
+import sys, warnings
+sys.path.insert(0, "../..")
+sys.path.insert(0, "../../theme")
+warnings.filterwarnings("ignore")
+
+import numpy as np
+import pandas as pd
+import statsmodels.formula.api as smf
+from scipy.optimize import minimize
+from plotstyle import setup, CL
+import essentials as ess
+
+plt = setup()
+pd.set_option("display.width", 100)
+
+d = ess.load("sourdough")
+H_TRUE, T_TRUE = ess.sourdough_optimum()
+
+FULL = ("rise_mm ~ hydration_pct + I(hydration_pct**2) + oven_c"
+        " + I(oven_c**2) + hydration_pct:oven_c + C(baker)")
+
+def peak(fit, baker="D"):
+    """Numerically locate the maximum of a fitted surface over the design."""
+    def neg(z):
+        row = pd.DataFrame([{"hydration_pct": z[0], "oven_c": z[1], "baker": baker}])
+        return -fit.predict(row).iloc[0]
+    r = minimize(neg, [75, 225], bounds=[(55, 95), (190, 260)])
+    return r.x[0], r.x[1]
+```
+
+## Outline · The hour ahead {.center .scrollable}
+
+1. The brief: find the best recipe
+2. A line finds the wrong answer, confidently
+3. Curves: the quadratic, and where its peak is
+4. Interactions: when one effect depends on another
+5. Fixed effects: the groups you did not measure
+6. Putting it together
+7. Comparing models, and what AIC is not
+
+## What session 2 is for {.scrollable}
+
+::::: columns
+
+:::: {.column width="33%"}
+
+### The mathematics
+
+- A quadratic has its optimum at $-\beta_1/2\beta_2$
+- With an interaction, $\partial y/\partial x$ **depends on $z$**
+- Fixed effects estimate *within* groups, not across them
+- AIC trades fit against parameter count: $-2\log L + 2k$
+
+::::
+
+:::: {.column width="33%"}
+
+### The Python
+
+- `I(x**2)` for arithmetic inside a formula
+- `x*z` for main effects plus interaction; `x:z` for the interaction alone
+- `C(group)` for a full set of dummies
+- Locate an optimum from the coefficients, and check it numerically
+
+::::
+
+:::: {.column width="33%"}
+
+### The judgement
+
+- Say what a main effect means once an interaction is present
+- Notice when a group variable is confounded with your variable of interest
+- Report an optimum as a **region**, not a point
+- Refuse to read AIC as though the data had chosen the model
+
+::::
+
+:::::
+
+# The brief {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### 240 loaves. Find the recipe that makes them rise.
+:::
+
+## The data
+
+```{python}
+#| echo: true
+
+d = ess.load("sourdough")
+print(d.shape)
+d.head()
+```
+
+::: {.muted}
+Eight bakers, thirty loaves each. Hydration is the water-to-flour ratio; rise is
+how far the loaf came up, in millimetres.
+:::
+
+## The obvious model, and its confident wrong answer
+
+```{python}
+#| echo: true
+
+flat = smf.ols("rise_mm ~ hydration_pct + oven_c", data=d).fit()
+print(flat.params.round(4))
+print(f"\nR2 = {flat.rsquared:.4f}")
+```
+
+```{python}
+#| echo: false
+
+hf, tf = peak(smf.ols("rise_mm ~ hydration_pct + oven_c + C(baker)", data=d).fit())
+print(f"best recipe according to this model:  hydration {hf:.1f}%,  oven {tf:.0f} C")
+print("...which is the top-right corner of the design.")
+```
+
+::: {.warn}
+Both coefficients are positive, so the model's advice is "as wet and as hot as
+possible". A linear model **cannot** report an interior optimum — it always
+points at an edge. If your answer is at the boundary of your data, suspect the
+model before you believe the recommendation.
+:::
+
+# Curves {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### Where the hill peaks
+:::
+
+## Adding a squared term
+
+$$ y = \beta_0 + \beta_1 x + \beta_2 x^2 + \varepsilon $$
+
+Differentiate and set to zero: the turning point is at
+
+$$ x^\star = -\frac{\beta_1}{2\beta_2} $$
+
+and it is a **maximum** when $\beta_2 < 0$.
+
+```{python}
+#| echo: true
+
+quad = smf.ols("rise_mm ~ hydration_pct + I(hydration_pct**2)", data=d).fit()
+b1 = quad.params["hydration_pct"]
+b2 = quad.params["I(hydration_pct ** 2)"]
+
+print(f"b1 = {b1:+.4f},  b2 = {b2:+.5f}   (b2 < 0, so it is a hill)")
+print(f"peak at -b1/2b2 = {-b1 / (2*b2):.2f} % hydration")
+print(f"R2 {flat.rsquared:.4f} -> {quad.rsquared:.4f}")
+```
+
+## What a quadratic coefficient means
+
+::: {.step}
+Once $x^2$ is in the model, **$\beta_1$ is no longer "the effect of $x$"**. The
+slope now varies with $x$:
+
+$$ \frac{\partial y}{\partial x} = \beta_1 + 2\beta_2 x $$
+:::
+
+```{python}
+#| echo: true
+
+for h in (65, 75, 85, 92):
+    print(f"at {h}% hydration, one more point of water is worth "
+          f"{b1 + 2*b2*h:+.3f} mm")
+```
+
+::: {.muted}
+Positive on the way up, negative past the peak. Reporting $\beta_1$ alone would
+be reporting the slope at a hydration of zero — a dough made entirely of flour.
+:::
+
+# Interactions {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### When one effect depends on another
+:::
+
+## The question an interaction answers
+
+Is the best oven temperature the same for wet dough as for dry dough?
+
+$$ y = \beta_0 + \beta_1 x + \beta_2 z + \beta_3 xz + \varepsilon
+\qquad\Longrightarrow\qquad
+\frac{\partial y}{\partial z} = \beta_2 + \beta_3 x $$
+
+::: {.step}
+$\beta_3$ is the amount by which the effect of temperature **changes per unit of
+hydration**. If it is zero, the two variables act independently and you can give
+one recommendation for each. If it is not, you cannot.
+:::
+
+::: {.muted}
+In a formula: `x:z` is the interaction alone, `x*z` expands to
+`x + z + x:z`. Prefer `x*z` — an interaction without its main effects is almost
+never what you meant.
+:::
+
+## Is there one here?
+
+```{python}
+#| echo: true
+
+full = smf.ols(FULL, data=d).fit()
+b3 = full.params["hydration_pct:oven_c"]
+print(f"interaction  {b3:+.5f}   t = {full.tvalues['hydration_pct:oven_c']:.2f}"
+      f"   p = {full.pvalues['hydration_pct:oven_c']:.1e}")
+```
+
+```{python}
+#| echo: false
+
+bt  = full.params["oven_c"]
+btt = full.params["I(oven_c ** 2)"]
+print("\nbest oven temperature, conditional on hydration:")
+for h in (65, 75, 85, 90):
+    t_star = -(bt + b3 * h) / (2 * btt)
+    print(f"   {h}% hydration  ->  {t_star:6.1f} C")
+```
+
+::: {.warn}
+Nine degrees between the driest and the wettest dough. An additive model gives
+the *same* temperature for both, and that is the specific thing it gets wrong.
+:::
+
+## Seeing the tilt
+
+```{python}
+#| echo: false
+#| fig-align: center
+
+hs = np.linspace(58, 94, 60)
+ts = np.linspace(195, 258, 60)
+HH, TT = np.meshgrid(hs, ts)
+grid = pd.DataFrame({"hydration_pct": HH.ravel(), "oven_c": TT.ravel(), "baker": "D"})
+Z = full.predict(grid).to_numpy().reshape(HH.shape)
+
+fig, ax = plt.subplots(figsize=(7.4, 3.4))
+cs = ax.contour(HH, TT, Z, levels=12, colors=CL.muted, linewidths=0.7)
+ax.clabel(cs, inline=True, fontsize=6, fmt="%.0f")
+ax.contourf(HH, TT, Z, levels=24, cmap="YlOrBr", alpha=0.45)
+ax.plot(H_TRUE, T_TRUE, marker="*", ms=16, color=CL.warn)
+ax.annotate("planted optimum", (H_TRUE, T_TRUE), (H_TRUE - 17, T_TRUE + 9),
+            color=CL.warn, fontsize=8, fontweight="600")
+ax.set_xlabel("Hydration (%)"); ax.set_ylabel("Oven temperature (C)")
+plt.show()
+```
+
+::: {.muted}
+The ridge runs diagonally. That diagonal *is* the interaction: wetter dough wants
+a hotter oven.
+:::
+
+# Fixed effects {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### The groups you did not measure
+:::
+
+## The bakers are not interchangeable
+
+```{python}
+#| echo: true
+
+print(d.groupby("baker")[["hydration_pct", "rise_mm"]].mean().round(1))
+```
+
+::: {.warn}
+Look at the two columns together. The bakers who work wettest get the *lowest*
+rise — not because water hurts, but because those happen to be the less skilled
+bakers. Hydration and skill move together, and the regression cannot separate
+them unless you tell it that bakers exist.
+:::
+
+## What `C(baker)` does
+
+It adds one dummy per baker (minus a reference), giving each their own intercept.
+The other coefficients are then estimated **within** bakers: from variation in
+hydration *among that baker's own loaves*, where skill is held constant because
+it is the same person.
+
+```{python}
+#| echo: true
+
+no_fe = FULL.replace(" + C(baker)", "")
+m_nofe = smf.ols(no_fe, data=d).fit()
+
+h_nofe, t_nofe = peak(m_nofe)
+h_fe,  t_fe    = peak(full)
+
+print(f"without baker effects:  {h_nofe:5.2f}% hydration   R2 = {m_nofe.rsquared:.3f}")
+print(f"with baker effects:     {h_fe:5.2f}% hydration   R2 = {full.rsquared:.3f}")
+print(f"planted answer:         {H_TRUE:5.2f}%")
+```
+
+## Read those three numbers again
+
+```{python}
+#| echo: false
+
+print(f"the model without baker effects is off by {h_nofe - H_TRUE:+.2f} percentage points")
+print(f"and it reports R2 = {m_nofe.rsquared:.3f}")
+```
+
+::: {.warn}
+Ninety per cent of the variance explained, every coefficient significant, and a
+recommendation four points of hydration wrong. **Nothing in that model's own
+output reveals the problem.** The only way to find it was to know the bakers
+were confounded with the treatment and to control for them.
+:::
+
+::: {.step}
+This is omitted variable bias with a name you can act on. The omitted variable
+was not unobservable — it was sitting in a column called `baker`.
+:::
+
+## What fixed effects cost you
+
+::: {.tight}
+- **Seven parameters** for eight bakers. On 240 rows that is affordable; on 24 it
+  would not be.
+- **Between-baker information is discarded.** You can no longer ask whether
+  wetter bakers do better, because that comparison is exactly what you removed.
+- **Anything constant within a baker is unidentified.** If a baker always used
+  the same flour, its effect and theirs are indistinguishable.
+:::
+
+::: {.muted}
+Fixed effects are not free and are not always right. They are the correct tool
+when you want the within-group effect and suspect the between-group comparison is
+contaminated.
+:::
+
+# Putting it together {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### Four models, one answer each
+:::
+
+## The ladder
+
+```{python}
+#| echo: false
+
+rows = []
+for label, formula in [
+    ("linear, with baker FE", "rise_mm ~ hydration_pct + oven_c + C(baker)"),
+    ("+ quadratics, no interaction", FULL.replace(" + hydration_pct:oven_c", "")),
+    ("+ interaction, no baker FE", no_fe),
+    ("everything", FULL),
+]:
+    m = smf.ols(formula, data=d).fit()
+    h, t = peak(m)
+    rows.append({"model": label, "R2": round(m.rsquared, 3),
+                 "AIC": round(m.aic, 1), "hydration*": round(h, 2),
+                 "oven*": round(t, 1), "error (pp)": round(h - H_TRUE, 2)})
+print(pd.DataFrame(rows).to_string(index=False))
+print(f"\nplanted optimum: {H_TRUE:.2f}% hydration, {T_TRUE:.1f} C")
+```
+
+::: {.check}
+The full model lands `{python} f"{abs(peak(full)[0]-H_TRUE):.2f}"` percentage
+points from the planted answer. Every incomplete model is confidently wrong in a
+different direction.
+:::
+
+## Report a region, not a point
+
+An optimum estimated from data has uncertainty, and quoting it to two decimal
+places implies a precision you do not have.
+
+```{python}
+#| echo: true
+#| fig-align: center
+
+pred = full.get_prediction(pd.DataFrame(
+    {"hydration_pct": np.linspace(70, 95, 60), "oven_c": T_TRUE, "baker": "D"}
+)).summary_frame()
+
+hs2 = np.linspace(70, 95, 60)
+fig, ax = plt.subplots(figsize=(7.2, 2.9))
+ax.plot(hs2, pred["mean"], color=CL.accent)
+ax.fill_between(hs2, pred["mean_ci_lower"], pred["mean_ci_upper"],
+                color=CL.accent, alpha=0.18)
+ax.axvline(H_TRUE, color=CL.warn, ls="--", lw=1)
+ax.set_xlabel("Hydration (%)"); ax.set_ylabel("Predicted rise (mm)")
+plt.show()
+```
+
+::: {.muted}
+The peak is flat. Anything from roughly 84% to 89% is indistinguishable, and
+that — not a single number — is the honest recommendation.
+:::
+
+## Comparing models, and what AIC is not
+
+$$ \mathrm{AIC} = -2\log L + 2k $$
+
+Fit, penalised for parameters. Lower is better, and **only relative** — an AIC
+of 1,204 means nothing on its own.
+
+```{python}
+#| echo: true
+
+nested_test = smf.ols(FULL.replace(" + hydration_pct:oven_c", ""), data=d).fit()
+f_stat, p_val, _ = nested_test.compare_f_test(full)
+print(f"F-test for adding the interaction: F = {f_stat:.2f}, p = {p_val:.2e}")
+print(f"AIC {nested_test.aic:.1f} -> {full.aic:.1f}")
+```
+
+::: {.warn}
+Two rules. Compare AIC only on **identical rows** — drop a missing value in one
+model and the comparison is void. And use the F-test only for **nested** models;
+AIC is what you have when they are not.
+:::
+
+::: {.get}
+A model chosen by AIC was chosen by you, using AIC. Reporting it as though the
+data selected it — and then reporting its $p$-values as though you had not
+looked — is the most common quiet misuse of model comparison.
+:::
+
+## Key takeaways
+
+::: {.tight}
+1. A linear model **cannot** report an interior optimum. If the answer is at the
+   edge of your data, suspect the model.
+2. With $x^2$ present, $\beta_1$ is the slope at $x = 0$. With an interaction
+   present, $\beta_1$ is the effect when the other variable is zero. Both are
+   usually meaningless values.
+3. **An interaction means you cannot give one recommendation.** The advice
+   depends on the other variable.
+4. Fixed effects buy you the within-group effect, and they cost parameters,
+   between-group information, and anything constant within a group.
+5. A model can explain 90% of the variance and give advice four points wrong,
+   with nothing in its own output to warn you.
+:::
+
+## References
+
+- Wooldridge, J. (2019). *Introductory Econometrics*, 7th ed. Cengage. Ch. 6, 7, 14.
+- Angrist, J. & Pischke, J.-S. (2009). *Mostly Harmless Econometrics*. Princeton
+  University Press. Ch. 3.
+- Kutner, M. et al. (2005). *Applied Linear Statistical Models*, 5th ed. Ch. 8.
+- Brambor, T., Clark, W. & Golder, M. (2006). Understanding interaction models:
+  improving empirical analyses. *Political Analysis*, 14(1), 63–82.

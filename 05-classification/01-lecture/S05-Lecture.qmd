@@ -1,0 +1,543 @@
+---
+title: "Session 5: Classification"
+subtitle: "A boundary you can check against the truth"
+author: "Thierry Warin, PhD"
+institute: "HEC Montréal"
+format:
+  revealjs:
+    theme: [default, ../../theme/economist.scss]
+    embed-resources: true
+    slide-number: c/t
+    slide-level: 2
+    history: false
+    transition: none
+    navigation-mode: linear
+    controls: true
+    progress: true
+    width: 1280
+    height: 760
+    margin: 0.06
+    smaller: true
+    footer: "Essentials of Data Science in Python · Session 05 · Thierry Warin, PhD"
+---
+
+```{python}
+#| label: setup
+#| echo: false
+
+import sys, warnings
+sys.path.insert(0, "../..")
+sys.path.insert(0, "../../theme")
+warnings.filterwarnings("ignore")
+
+import numpy as np
+import pandas as pd
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+from sklearn.model_selection import GridSearchCV, KFold, train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import (accuracy_score, balanced_accuracy_score,
+                             classification_report, confusion_matrix)
+from plotstyle import setup, CL
+import essentials as ess
+
+plt = setup()
+pd.set_option("display.width", 100)
+
+d = ess.load("bestiary")
+SPECIES = ess.bestiary_species()
+y = d.species.astype(str).to_numpy()
+X2 = d[["wing_span_cm", "tail_length_cm"]].to_numpy()
+XN = d[["wing_span_cm", "tail_length_cm", "mass_g",
+        "antenna_mm", "scale_count"]].to_numpy()
+
+post = ess.bestiary_posterior(d.wing_span_cm, d.tail_length_cm)
+BAYES = accuracy_score(y, np.array(SPECIES)[post.argmax(1)])
+
+Xtr, Xte, ytr, yte = train_test_split(X2, y, test_size=0.3, random_state=1,
+                                      stratify=y)
+sc = StandardScaler().fit(Xtr)
+A, B = sc.transform(Xtr), sc.transform(Xte)
+LABS = sorted(set(y))
+```
+
+## Outline · The hour ahead {.center .scrollable}
+
+1. Four species, and a floor no method can beat
+2. $k$-nearest neighbours
+3. Bias and variance, made visible
+4. Choosing $k$ honestly
+5. The confusion matrix, and the 2% species
+6. Precision, recall, and which one you need
+7. What three useless columns cost
+
+## What session 5 is for {.scrollable}
+
+::::: columns
+
+:::: {.column width="33%"}
+
+### The mathematics
+
+- The **Bayes classifier**: $\arg\max_j \Pr(Y=j \mid x)$, and its irreducible rate
+- $k$-NN estimates that posterior by local averaging
+- $k$ controls the bias–variance trade directly
+- Distance in an irrelevant dimension is still distance
+
+::::
+
+:::: {.column width="33%"}
+
+### The Python
+
+- `KNeighborsClassifier`, and why `StandardScaler` is compulsory
+- `GridSearchCV` over $k$, on training data only
+- `confusion_matrix` and `classification_report`
+- Drawing a decision boundary on a mesh
+
+::::
+
+:::: {.column width="33%"}
+
+### The judgement
+
+- Use a known ceiling to detect leakage rather than to celebrate
+- Refuse accuracy as a headline on imbalanced classes
+- Choose between precision and recall from the problem, not the metric
+- Say what a method cannot do, not just how it scored
+
+::::
+
+:::::
+
+# The floor {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### Know the best possible score before you fit anything
+:::
+
+## The data
+
+```{python}
+#| echo: true
+
+d = ess.load("bestiary")
+print(d.species.value_counts().to_string())
+print(f"\nrarest species: {(d.species == 'ember_drake').mean():.2%} of records")
+```
+
+::: {.muted}
+Two measurements carry real information — wing span and tail length. `mass_g`,
+`antenna_mm` and `scale_count` are noise, and we come back to them at the end.
+:::
+
+## What the classes look like
+
+```{python}
+#| echo: false
+#| fig-align: center
+
+fig, ax = plt.subplots(figsize=(7.2, 3.4))
+for sp, colour in zip(SPECIES, [CL.accent, CL.warn, CL.good, "#7B4FA8"]):
+    s = d[d.species == sp]
+    ax.scatter(s.wing_span_cm, s.tail_length_cm, s=11, alpha=0.65,
+               color=colour, label=sp)
+ax.set_xlabel("Wing span (cm)"); ax.set_ylabel("Tail length (cm)")
+ax.legend(markerscale=1.6)
+plt.show()
+```
+
+::: {.step}
+The clouds overlap. That overlap is not a measurement problem — it is the reason
+perfect classification is impossible here, and it puts a hard ceiling on every
+method in this session.
+:::
+
+## The Bayes classifier
+
+If you knew the true class probabilities at every point, the best rule would be
+to predict the most likely class:
+
+$$ \hat y(x) = \arg\max_j \Pr(Y = j \mid X = x) $$
+
+This data is generated from four known Gaussians with known priors, so that
+posterior is **computable**:
+
+```{python}
+#| echo: true
+
+post = ess.bestiary_posterior(d.wing_span_cm, d.tail_length_cm)
+bayes_pred = np.array(SPECIES)[post.argmax(1)]
+
+print(f"Bayes accuracy          {accuracy_score(y, bayes_pred):.4f}")
+print(f"Bayes balanced accuracy {balanced_accuracy_score(y, bayes_pred):.4f}")
+```
+
+## What that number is for
+
+::: {.check}
+**0.8625 is the ceiling.** No classifier — not a neural network, not a billion
+rows — can do better on this data, because the classes genuinely overlap and 7%
+of the field identifications are wrong.
+:::
+
+::: {.warn}
+So a test accuracy of 0.99 would not be an achievement. It would be a **bug
+report**: test rows leaking into training, or a feature that encodes the answer.
+
+Most real problems do not hand you the floor. Estimating one anyway — from a
+simple baseline, from measurement reliability, from what a human expert achieves
+— turns an unanchored score into a number you can interpret.
+:::
+
+# $k$-nearest neighbours {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### The training data is the model
+:::
+
+## The whole algorithm
+
+To classify a new point: find the $k$ closest training points, take a vote.
+
+$$ \hat{\Pr}(Y = j \mid x) = \frac{1}{k}\sum_{i \in N_k(x)} \mathbb{1}(y_i = j) $$
+
+::: {.tight}
+- **No fitting.** No coefficients, no likelihood, no optimisation.
+- **No functional form.** It never assumes linearity, or normality, or anything.
+- **Everything is stored.** Prediction costs a search over the training set.
+:::
+
+## Standardise, or the units decide for you
+
+```{python}
+#| echo: true
+
+print("raw scales:")
+print(d[["wing_span_cm", "tail_length_cm", "mass_g", "scale_count"]]
+      .std().round(2).to_string())
+```
+
+::: {.warn}
+`mass_g` has a standard deviation nearly forty times that of tail length. In
+Euclidean distance it would swamp everything else — and it is **pure noise**. A
+distance-based method with unstandardised features is measuring whatever happens
+to have the biggest numbers.
+:::
+
+## $k = 1$ against $k = 400$
+
+```{python}
+#| echo: true
+
+for k in (1, 5, 15, 45, 125, 400):
+    m = KNeighborsClassifier(k).fit(A, ytr)
+    print(f"k = {k:4d}   train {m.score(A, ytr):.3f}   test {m.score(B, yte):.3f}")
+print(f"\nBayes floor: {BAYES:.3f}")
+```
+
+::: {.step}
+Read the two columns as a pair. At $k = 1$ the model knows the training data
+perfectly and generalises worst. At $k = 400$ it has stopped distinguishing
+anything. The best test score sits in the middle, just about at the floor.
+:::
+
+# Made visible {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### Your boundary, drawn on top of the true one
+:::
+
+## Three boundaries, and the truth underneath
+
+```{python}
+#| echo: false
+#| fig-align: center
+
+xs = np.linspace(d.wing_span_cm.min(), d.wing_span_cm.max(), 240)
+ts = np.linspace(d.tail_length_cm.min(), d.tail_length_cm.max(), 240)
+GX, GT = np.meshgrid(xs, ts)
+mesh = np.column_stack([GX.ravel(), GT.ravel()])
+truth = ess.bestiary_posterior(GX, GT).argmax(1).reshape(GX.shape)
+
+fig, axes = plt.subplots(1, 3, figsize=(9.8, 3.0))
+for ax, k in zip(axes, (1, 45, 400)):
+    m = KNeighborsClassifier(k).fit(A, ytr)
+    zz = pd.Categorical(m.predict(sc.transform(mesh)),
+                        categories=SPECIES).codes.reshape(GX.shape)
+    ax.contourf(GX, GT, zz, levels=[-.5, .5, 1.5, 2.5, 3.5],
+                colors=[CL.accent, CL.warn, CL.good, "#7B4FA8"], alpha=0.22)
+    ax.contour(GX, GT, truth, levels=[.5, 1.5, 2.5],
+               colors=[CL.ink], linewidths=1.4)
+    ax.set_title(f"k = {k}   test {m.score(B, yte):.3f}")
+    ax.set_xlabel("Wing span"); ax.set_ylabel("Tail length" if k == 1 else "")
+plt.show()
+```
+
+::: {.muted}
+Colour is what the classifier learnt; the black lines are the **true** boundary.
+:::
+
+## Read those three panels
+
+::: {.tight}
+- **$k = 1$** — the colour regions are shattered into islands, many of them a
+  single mislabelled creature. The classifier has learnt the 7% label noise.
+  Perfect on training data, worst on new data. **Variance.**
+- **$k = 45$** — the coloured regions follow the black lines closely. This is
+  what "close to the truth" looks like.
+- **$k = 400$** — smooth, and in the wrong place. The rare species has vanished
+  entirely from the map. **Bias.**
+:::
+
+::: {.check}
+The bias–variance trade is not an abstraction here. It is three pictures, and you
+can see which one is right because the answer is drawn underneath.
+:::
+
+## Choosing $k$ honestly
+
+You cannot choose $k$ on the test set — that would make the test score an
+estimate of nothing. Cross-validate **within the training data**:
+
+```{python}
+#| echo: true
+
+grid = GridSearchCV(KNeighborsClassifier(),
+                    {"n_neighbors": list(range(1, 151, 2))},
+                    cv=KFold(10, shuffle=True, random_state=0)).fit(A, ytr)
+
+print(f"best k by CV      {grid.best_params_['n_neighbors']}")
+print(f"CV accuracy       {grid.best_score_:.4f}")
+print(f"test accuracy     {grid.score(B, yte):.4f}")
+print(f"Bayes floor       {BAYES:.4f}")
+```
+
+::: {.muted}
+CV picked 21, not the 45 that happened to win on the test set. Both land within a
+percentage point of the floor, and the difference between them is noise. Picking
+the $k$ that maximised the test score would have been cheating for nothing.
+:::
+
+## Other estimators, same data
+
+```{python}
+#| echo: true
+
+for label, model in [
+    ("logistic regression (linear boundary)", LogisticRegression(max_iter=5000)),
+    ("QDA (curved — the correct family)", QuadraticDiscriminantAnalysis()),
+    ("decision tree, depth 3", DecisionTreeClassifier(max_depth=3, random_state=0)),
+    ("decision tree, unlimited", DecisionTreeClassifier(random_state=0)),
+    ("k-NN, k = 45", KNeighborsClassifier(45)),
+]:
+    model.fit(A, ytr)
+    print(f"{label:40s} train {model.score(A, ytr):.3f}  test {model.score(B, yte):.3f}")
+```
+
+## What that table says
+
+::: {.tight}
+- **QDA is the right family** — the data really is a mixture of Gaussians with
+  unequal covariances — and it lands at 0.875, at the floor. It wins by *knowing
+  the answer's shape*.
+- **$k$-NN gets there too**, at 0.873, **without knowing anything**. That is the
+  case for a non-parametric method.
+- **The linear boundary loses almost nothing** (0.867). Worth noticing: curvature
+  only costs you where the data actually is, and here it barely is.
+- **The unlimited tree is $k=1$ again**: train 0.999, test 0.765.
+:::
+
+::: {.warn}
+Two models can score identically for opposite reasons. Reporting only the score
+hides which.
+:::
+
+# The 2% species {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### What accuracy conceals
+:::
+
+## The confusion matrix
+
+```{python}
+#| echo: true
+
+knn = KNeighborsClassifier(45).fit(A, ytr)
+pred = knn.predict(B)
+
+print(pd.DataFrame(confusion_matrix(yte, pred, labels=LABS),
+                   index=[f"true {l}" for l in LABS],
+                   columns=[f"-> {l}" for l in LABS]).to_string())
+print(f"\naccuracy {accuracy_score(yte, pred):.4f}")
+```
+
+## The number that ends the argument
+
+```{python}
+#| echo: true
+
+blind = np.where(pred == "ember_drake", "thornback", pred)
+print(f"the model as fitted              {accuracy_score(yte, pred):.4f}")
+print(f"the same model, ember drakes      "
+      f"{accuracy_score(yte, blind):.4f}   <- never predicts the rare species")
+print(f"difference                       "
+      f"{accuracy_score(yte, pred) - accuracy_score(yte, blind):.4f}")
+```
+
+::: {.warn}
+**Total blindness to the rare species costs 1.7 percentage points of accuracy.**
+If accuracy is your objective, the optimiser has almost no reason to find it — and
+if the rare species is the one you built the classifier for, accuracy is measuring
+the wrong thing.
+:::
+
+## Precision and recall, per class
+
+```{python}
+#| echo: true
+
+print(classification_report(yte, pred, labels=LABS, zero_division=0, digits=3))
+```
+
+## Which of those two do you need?
+
+| | | |
+|---|---|---|
+| **Precision** | $TP/(TP+FP)$ | of the ones I flagged, how many deserved it? |
+| **Recall** | $TP/(TP+FN)$ | of the ones that existed, how many did I find? |
+
+::: {.step}
+For `ember_drake`: **precision 1.000, recall 0.800**. Every drake it named was a
+drake; it found four in five. Whether that is a good classifier depends entirely
+on what happens next.
+:::
+
+::: {.tight}
+- Cataloguing a rare species for conservation → **recall**. A missed drake is a
+  drake that goes unprotected; a false alarm costs a field visit.
+- Triggering an expensive intervention → **precision**. A false alarm wastes the
+  budget.
+:::
+
+::: {.muted}
+`macro avg` gives each class equal weight regardless of size; `weighted avg`
+reproduces accuracy. On imbalanced data the macro average — or balanced accuracy —
+is usually the honest headline.
+:::
+
+# Irrelevant features {background-color="#E3120B" style="color:#F7F4ED"}
+
+::: {style="margin-top: 1.0em; color:#F7F4ED"}
+### Three columns of nothing, and what they cost
+:::
+
+## Adding noise, measured
+
+```{python}
+#| echo: true
+
+Ntr, Nte, nytr, nyte = train_test_split(XN, y, test_size=0.3, random_state=1,
+                                        stratify=y)
+nsc = StandardScaler().fit(Ntr)
+
+for k in (5, 15, 45, 125):
+    two = KNeighborsClassifier(k).fit(A, ytr).score(B, yte)
+    five = KNeighborsClassifier(k).fit(nsc.transform(Ntr), nytr
+                                       ).score(nsc.transform(Nte), nyte)
+    print(f"k = {k:4d}   2 real features {two:.3f}   "
+          f"+ 3 noise columns {five:.3f}   ({five - two:+.3f})")
+```
+
+::: {.warn}
+`mass_g`, `antenna_mm` and `scale_count` contain **no information about species
+whatsoever**, and adding them costs nearly three percentage points at the optimal
+$k$.
+:::
+
+## Why noise hurts a distance method
+
+::: {.step}
+$k$-NN asks "who is nearby?" In five dimensions, two creatures of the same
+species can be pushed apart by nothing more than a difference in mass — and
+distance in an irrelevant dimension is still distance. The neighbourhood fills up
+with the wrong neighbours.
+:::
+
+::: {.tight}
+- This is the **curse of dimensionality** in miniature. As dimensions grow, all
+  points become roughly equidistant and "nearby" stops meaning anything.
+- A regression would have shrunk those coefficients towards zero. $k$-NN has no
+  coefficients, so **it cannot ignore a feature you give it**.
+- Which is why feature selection matters more for distance methods than for
+  penalised linear ones.
+:::
+
+## Importance without coefficients
+
+$k$-NN has nothing to report as an effect size. To find out what a feature is
+worth, **scramble it** and see what breaks:
+
+```{python}
+#| echo: true
+
+from sklearn.inspection import permutation_importance
+
+m5 = KNeighborsClassifier(45).fit(nsc.transform(Ntr), nytr)
+imp = permutation_importance(m5, nsc.transform(Nte), nyte,
+                             n_repeats=12, random_state=0)
+cols = ["wing_span_cm", "tail_length_cm", "mass_g", "antenna_mm", "scale_count"]
+print(pd.Series(imp.importances_mean, index=cols)
+        .sort_values(ascending=False).round(4).to_string())
+```
+
+::: {.check}
+The two real features carry all the importance; the three noise columns sit at
+roughly zero. Permutation importance is model-agnostic — it works for anything
+with a `.predict`, which is exactly what you need when there are no coefficients.
+:::
+
+## What to report
+
+::: {.tight}
+- The **confusion matrix**, always. Accuracy alone is not a result.
+- Accuracy against a **baseline** — the majority class, and a floor if you can
+  estimate one.
+- **Per-class precision and recall**, and which one your problem needs.
+- How the hyperparameter was chosen, and on **which** data.
+- What the model cannot do.
+:::
+
+::: {.get}
+A single accuracy figure, with no baseline, no confusion matrix and no statement
+of how the hyperparameter was chosen, is not a finding. It is a number.
+:::
+
+## Key takeaways
+
+::: {.tight}
+1. Know the **ceiling** if you can compute one. It turns a high score from good
+   news into a question.
+2. $k$-NN has no fit, no form and no coefficients. The training data is the model.
+3. $k$ is the bias–variance dial: $k=1$ is memorisation, $k=n$ is the majority
+   class.
+4. **Standardise.** A distance method with mixed units is measuring the units.
+5. Accuracy hides rare classes. Ignoring a 2% class costs 1.7 points; the
+   confusion matrix shows it and accuracy does not.
+6. Precision or recall — the problem decides, not the metric.
+7. Irrelevant features hurt distance methods badly, and $k$-NN cannot ignore
+   them.
+:::
+
+## References
+
+- James, Witten, Hastie & Tibshirani (2021). *An Introduction to Statistical
+  Learning*, 2nd ed., ch. 2 and 4.
+- Hastie, Tibshirani & Friedman (2009). *The Elements of Statistical Learning*,
+  2nd ed., ch. 13.
+- Provost, F. & Fawcett, T. (2013). *Data Science for Business*. O'Reilly. Ch. 7–8.
+- Breiman, L. (2001). Statistical modeling: the two cultures.
+  *Statistical Science*, 16(3), 199–231.

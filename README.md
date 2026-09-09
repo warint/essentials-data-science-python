@@ -51,6 +51,40 @@ Each session ships three things:
 - `01-lecture/` — the deck, plus `chapter.md`: prose notes that read on their own.
 - `02-practice/` — a ninety-minute workshop, a starter script, and the answer key.
 
+## The companion volume
+
+The written treatment of every method here is
+**[*Quantitative Methods in International Business with Python*](https://warint.github.io/quantitative-methods/book/)**
+(Warin). Each pre-session assigns the relevant chapters:
+
+| Session | Chapters |
+|---|---|
+| 1 · Regression | [2 · Exploratory Data Analysis, and the First Model](https://warint.github.io/quantitative-methods/book/session-02.html) · [3 · Regression: Adequacy, Validity, and Robustness](https://warint.github.io/quantitative-methods/book/session-03.html) |
+| 2 · Advanced regression | [6 · Regression: Advanced Considerations](https://warint.github.io/quantitative-methods/book/session-06.html) |
+| 3 · Logistic regression | [4 · Logistic Regression: Binary, Ordinal, and Multinomial](https://warint.github.io/quantitative-methods/book/session-04.html) |
+| 4 · Elastic net | [5 · Regularisation: Ridge, Lasso, and the Elastic Net](https://warint.github.io/quantitative-methods/book/session-05.html) · [8](https://warint.github.io/quantitative-methods/book/session-08.html) for bias–variance |
+| 5 · Classification | [8 · K-Nearest Neighbours and the Bias–Variance Trade-off](https://warint.github.io/quantitative-methods/book/session-08.html) |
+| 6 · Causal inference | [10 · Causal Inference I](https://warint.github.io/quantitative-methods/book/session-10.html) · [11 · Causal Inference II: Difference-in-Differences](https://warint.github.io/quantitative-methods/book/session-11.html) |
+
+The book carries the derivations; this repository carries the puzzles that break
+them. Session 6's lecture deliberately starts where chapter 11 stops.
+
+## The toolchain
+
+Four tools, all open source, none requiring an account, and after setup none
+requiring a network connection:
+
+| | | |
+|---|---|---|
+| **[VS Codium](https://vscodium.com)** | the editor | VS Code with the telemetry removed |
+| **Python 3.12+** | in a virtual environment | one per project |
+| **[Ollama](https://ollama.com) + Qwen 2.5 Coder** | a language model | running **on your machine** |
+| **Continue** | that model in the editor | selection plus a keystroke |
+
+Session 1's [pre-session](01-regression/00-pre-session/) installs all four and
+explains why each was chosen over the obvious alternative. Budget three hours
+once; none of it is repeated.
+
 ## Getting started
 
 ```bash
@@ -79,10 +113,9 @@ rather than precious.
 
 ## Prerequisites
 
-Session 1's [pre-session](01-regression/00-pre-session/) carries the setup:
-installing Python, making a virtual environment, enough pandas to load and shape
-a frame, and enough inference to read a standard error. Budget two hours for it
-once. Everything after that assumes it.
+Session 1's [pre-session](01-regression/00-pre-session/) carries the setup: the
+four tools above, enough pandas to load and shape a frame, and enough inference
+to read a standard error. Everything after that assumes it.
 
 You do not need prior statistics. You do need to be willing to be wrong in
 public, because five of the six sessions are built around a method that fails.

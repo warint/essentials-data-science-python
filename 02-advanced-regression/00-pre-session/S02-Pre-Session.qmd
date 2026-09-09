@@ -26,7 +26,8 @@ format:
 1. What to do, and how long it takes
 2. Load the data, and look at it
 3. Three shapes a line cannot make
-4. Self-check
+4. Readings
+5. Self-check
 5. What the session will ask of you
 
 # Before the session {background-color="#E3120B" style="color:#F7F4ED"}
@@ -39,9 +40,10 @@ format:
 
 | | | |
 |---|---|---|
-| **1** | Load `sourdough` and answer the four questions below | 20 min |
-| **2** | Read the three shapes | 15 min |
-| **3** | Attempt the self-check | 10 min |
+| **1** | Read chapter 6 of the book | 45 min |
+| **2** | Load `sourdough` and answer the four questions below | 20 min |
+| **3** | Read the three shapes | 15 min |
+| **4** | Attempt the self-check | 10 min |
 
 ::: {.check}
 Session 1 ended by fixing a curve with a log. This session is about the cases a
@@ -122,6 +124,24 @@ The fix: fixed effects. `C(baker)` adds one dummy per baker and one intercept
 each, and the other coefficients are then estimated **within** bakers.
 :::
 
+## Readings
+
+From *Quantitative Methods in International Business with Python* (Warin):
+[warint.github.io/quantitative-methods/book](https://warint.github.io/quantitative-methods/book/)
+
+::: {.tight}
+| | | |
+|---|---|---|
+| **Ch. 6** | [Regression: Advanced Considerations](https://warint.github.io/quantitative-methods/book/session-06.html) | read fully |
+| **Ch. 3** | [Regression: Adequacy, Validity, and Robustness](https://warint.github.io/quantitative-methods/book/session-03.html) | revisit §on model comparison |
+:::
+
+::: {.step}
+Chapter 6 is this session: non-linearity, interactions, fixed effects and panel
+structure, and comparing models on AIC. The revisit of chapter 3 is for the
+model-comparison rules, which we will use and which are easy to break.
+:::
+
 ## 3 · Self-check
 
 On paper.
@@ -153,8 +173,8 @@ be a value `z` can take.
 :::
 
 ::: {.get}
-**Arrive with:** the four data questions answered · the three shapes read ·
-the self-check attempted.
+**Arrive with:** chapter 6 read · the four data questions answered ·
+the three shapes read · the self-check attempted.
 :::
 
 ::: {.muted}

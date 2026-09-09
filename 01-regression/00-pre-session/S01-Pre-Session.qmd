@@ -1,6 +1,6 @@
 ---
 title: "Session 1: Before the session"
-subtitle: "Set up the machine, then meet the straight line"
+subtitle: "VS Codium, a local model, and then the straight line"
 author: "Thierry Warin, PhD"
 institute: "HEC Montréal"
 format:
@@ -24,18 +24,23 @@ format:
 ## Outline · Before the first class {.center .scrollable}
 
 1. What to do, and how long it takes
-2. Install Python
-3. Make a virtual environment
-4. Get the course, and check it works
-5. Enough pandas to start
-6. Enough inference to read a coefficient
-7. Self-check
-8. What session 1 will ask of you
+2. The toolchain, and why these four
+3. Install VS Codium
+4. Install Python
+5. Make a virtual environment
+6. Get the course, and check it works
+7. Install Ollama and pull Qwen 2.5 Coder
+8. Point Continue at it
+9. Enough pandas to start
+10. Enough inference to read a coefficient
+11. Readings
+12. Self-check
+12. What session 1 will ask of you
 
 # Before the session {background-color="#E3120B" style="color:#F7F4ED"}
 
 ::: {style="margin-top: 1.0em; color:#F7F4ED"}
-### Set up the machine, then meet the straight line
+### VS Codium, a local model, and then the straight line
 :::
 
 ## This one is longer than the others
@@ -45,18 +50,133 @@ everything below is working, and none of them will ask you to install again.
 
 | | | |
 |---|---|---|
-| **1** | Install Python and make a virtual environment | 40 min |
-| **2** | Clone the course and run the verification suite | 10 min |
-| **3** | Work through the pandas section, at the keyboard | 30 min |
-| **4** | Read the inference section | 20 min |
-| **5** | Attempt the self-check | 15 min |
+| **1** | Install VS Codium | 10 min |
+| **2** | Install Python and make a virtual environment | 30 min |
+| **3** | Clone the course and run the verification suite | 10 min |
+| **4** | Install Ollama, pull Qwen 2.5 Coder, configure Continue | 30 min |
+| **5** | Read the assigned chapters | 60 min |
+| **6** | Work through the pandas section, at the keyboard | 30 min |
+| **7** | Read the inference section, and attempt the self-check | 30 min |
 
 ::: {.warn}
-Budget two hours, once. Doing it in the ten minutes before class does not work,
-and every subsequent session depends on it.
+Budget three hours, once. Doing it in the ten minutes before class does not
+work, and every subsequent session depends on it. Steps 1 to 4 never have to be
+repeated.
 :::
 
-## 1 · Install Python
+## 1 · The toolchain, and why these four
+
+::: {.tight}
+| | | |
+|---|---|---|
+| **1** | **VS Codium** | the editor — VS Code with the telemetry removed |
+| **2** | **Python 3.12+** | in a virtual environment, one per project |
+| **3** | **Ollama + Qwen 2.5 Coder** | a language model running **on your machine** |
+| **4** | **Continue** | that model, inside the editor, beside the file |
+:::
+
+::: {.step}
+All four are open source, none requires an account or a subscription, and after
+setup **none of them needs a network connection**. That is not frugality — each
+choice teaches something the alternative would hide.
+:::
+
+## Why VS Codium rather than VS Code
+
+Visual Studio Code is developed in the open under a permissive licence. The
+binary Microsoft distributes is not the same artefact: it adds telemetry and
+ships under a proprietary licence, and its extension marketplace is a Microsoft
+service with its own terms. **VS Codium is the identical source, compiled
+without the telemetry and the branding.**
+
+::: {.step}
+The practical reason is the habit rather than this course's data. The teaching
+data here is generated on your laptop and could not matter less. The habit is
+for the working file you will one day open under a non-disclosure agreement or a
+research ethics protocol. An editor that reports usage to a third party should
+be a decision you make once, deliberately — not a default you inherited.
+:::
+
+## Why a local model rather than a hosted one
+
+The model you will install is Chinese, developed by Alibaba. It is worth being
+direct about that, because the reflex is to treat provenance as the security
+question, and here it is not.
+
+::: {.tight}
+| | |
+|---|---|
+| **Open weights, on your machine** | It cannot send your data anywhere. There is no connection to send it over — and you can verify that rather than trust it: turn the wifi off and watch it keep working. |
+| **A closed model behind an API** | Receives everything you type, by construction, wherever the company is domiciled. |
+:::
+
+::: {.step}
+On the dimension people actually care about — *does my work leave this room* —
+open weights running locally are the stronger guarantee, and the nationality of
+the developer does not enter into it.
+:::
+
+## And why a small one
+
+Qwen 2.5 Coder is a **vertical** model: specialised for code, and consequently
+far better at code, for its size, than a general assistant many times larger.
+
+::: {.tight}
+- A 3-billion-parameter model on a laptop is not competitive with a frontier
+  system at open-ended reasoning.
+- At completing a pandas idiom, or explaining what a function does, it is
+  entirely adequate.
+:::
+
+::: {.check}
+Choosing a small specialised model over a large general one — and knowing which
+tasks admit that trade — is the applied judgement that separates a sensible AI
+deployment from an expensive one. It is also, almost exactly, the judgement
+session 4 makes about a deliberately biased estimator.
+:::
+
+## 2 · Install VS Codium
+
+Download from **[vscodium.com](https://vscodium.com)** and install it as you
+would any application.
+
+::: {.warn}
+VS Codium uses the **Open VSX** registry rather than Microsoft's Marketplace.
+Some extensions are missing from it. The two you need are both there.
+:::
+
+Install these from the Extensions panel (`Cmd/Ctrl + Shift + X`):
+
+::: {.tight}
+- **Python** — by Microsoft, on Open VSX as `ms-python.python`
+- **Continue** — the assistant panel, which part 7 points at a model
+:::
+
+::: {.step}
+From here on, **always use the VS Codium terminal** — `Ctrl + ` ` ` to open it.
+Not the macOS Terminal, not PowerShell. It starts inside your project folder and
+it sees your virtual environment.
+:::
+
+## A note on PATH that will save you an hour
+
+A terminal reads your PATH **once, when it opens**. VS Codium reads it once,
+when *it* opens, and every terminal tab inherits that copy.
+
+::: {.tight}
+| After installing | To make it visible |
+|---|---|
+| A **VS Codium extension** | *Developer: Reload Window* — `Cmd/Ctrl + Shift + P` |
+| **Python** or **git** | Quit VS Codium entirely and reopen it |
+| **Ollama** | A new terminal tab is usually enough — `+` in the terminal panel |
+:::
+
+::: {.muted}
+"But I just installed it" is the single most common problem in this pre-session,
+and it is almost always this.
+:::
+
+## 3 · Install Python
 
 You want **3.12 or 3.13**. Anything older than 3.10 will fail on syntax used
 throughout the course.
@@ -78,7 +198,7 @@ and the error message will not tell you why.
 
 **Linux** — you already have it. `python3 --version` to confirm.
 
-## 2 · Make a virtual environment
+## 4 · Make a virtual environment
 
 A virtual environment is a folder holding one project's packages. It exists so
 that installing something for this course cannot break something else on your
@@ -97,7 +217,7 @@ You must activate it **every time you open a new terminal**. Ninety per cent of
 "it says the module is not installed" is a terminal where nobody ran `activate`.
 :::
 
-## 3 · Get the course, and check it works
+## 5 · Get the course, and check it works
 
 ```bash
 git clone https://github.com/warint/essentials-data-science-python.git
@@ -138,7 +258,164 @@ Nothing is downloaded. Three things follow, and they shape how the sessions run:
 - There is a **right answer**, and you can check whether you found it.
 :::
 
-## 4 · Enough pandas to start
+## 6 · Install Ollama and pull the model
+
+Install **[ollama.com](https://ollama.com)**, then, in the VS Codium terminal:
+
+```bash
+ollama --version
+ollama pull qwen2.5-coder:3b
+```
+
+Check that it answers:
+
+```bash
+ollama run qwen2.5-coder:3b "In one sentence, what is a residual?"
+```
+
+::: {.check}
+**Now turn your wifi off and run that again.** It should still answer. That is
+the whole point of running it locally, and it is worth seeing once with your own
+eyes rather than taking on trust.
+:::
+
+::: {.muted}
+`ollama: command not found` immediately after installing? Open a **new
+terminal**. On Windows, quit VS Codium and reopen it — see the PATH slide.
+:::
+
+## Which size to pull
+
+**Start with the 3b.** It is the one that works on a laptop without a dedicated
+graphics card, which is most laptops.
+
+| | 3b | 7b |
+|---|---|---|
+| **Disk** | 1.9 GB | 4.7 GB |
+| **RAM while loaded** | ~3.4 GB | ~8 GB |
+| **Needs a GPU** | no | not required, but painful without |
+
+::: {.warn}
+Only try the 7b once `ollama ps` reports **100% GPU** on the 3b. If it already
+says 100% CPU, the 7b is not a better model on your machine — it gives a
+comparable answer to the same question at roughly a quarter of the speed, and a
+tool slow enough to interrupt your thinking is a tool you stop using.
+:::
+
+::: {.muted}
+Rule of thumb for any model: it needs its **file size plus about a fifth** in
+memory.
+:::
+
+## Check the context window
+
+The model is sent your file. If its context window is small it **silently drops
+the beginning** and answers about the part it can still see — which looks like
+stupidity rather than truncation.
+
+```bash
+ollama run qwen2.5-coder:3b "hi"
+ollama ps
+```
+
+```text
+NAME                SIZE      PROCESSOR    CONTEXT    UNTIL
+qwen2.5-coder:3b    3.1 GB    100% GPU     32768      4 minutes from now
+```
+
+::: {.check}
+**8192 or more — do nothing.** **2048 or 4096 — raise it** with
+`/set parameter num_ctx 8192` inside `ollama run`, or via Ollama's settings.
+:::
+
+::: {.warn}
+This differs by platform, so check rather than assume. The macOS app asks for a
+large window and the model caps it at its own maximum. **On Windows the default
+is often 4096**, which any real file will outgrow.
+:::
+
+## 7 · Point Continue at it
+
+Continue is installed but talks to nothing until it has a config file. The
+easiest way to open it is from inside Continue:
+
+::: {.step}
+Open the Continue panel → the **gear icon** at its top right → *Configure*. It
+opens `config.yaml` in the editor, creating it if it does not exist.
+:::
+
+Or from the terminal — the file lives in your home directory:
+
+```bash
+mkdir -p ~/.continue && open -e ~/.continue/config.yaml            # macOS
+mkdir -p ~/.continue && ${EDITOR:-nano} ~/.continue/config.yaml    # Linux
+```
+
+```powershell
+New-Item -ItemType Directory -Force "$HOME\.continue" | Out-Null
+notepad "$HOME\.continue\config.yaml"                              # Windows
+```
+
+## What to put in it
+
+```yaml
+name: essentials
+version: 0.0.1
+models:
+  - name: Local coder
+    provider: ollama
+    model: qwen2.5-coder:3b     # the size you actually pulled
+    roles: [chat, edit, apply]
+context:
+  - provider: file
+  - provider: code
+  - provider: diff
+  - provider: terminal
+```
+
+::: {.check}
+Open a `.py` file, select a few lines, and press `Cmd/Ctrl + L`. If the panel
+answers, you are finished with setup for the whole term.
+:::
+
+::: {.warn}
+Put the model name you **actually pulled** in `config.yaml`. A name that is not
+installed produces a confusing error rather than a missing-model one.
+
+Nothing at all? No model server is listening. Start Ollama — the app on macOS
+and Windows, `sudo systemctl start ollama` on Linux.
+:::
+
+## What the model is for, and what it is not
+
+You will read far more code this term than you write: the session decks, the
+starter scripts, your own work from three weeks ago. A model beside the file
+answers *"what does this do"* without your leaving the file.
+
+::: {.tight}
+| Good use | Poor use |
+|---|---|
+| "Explain what this block does" | "Write my analysis" |
+| "Why does this throw a KeyError?" | "Is this result significant?" |
+| "What is the pandas idiom for this?" | "Interpret this coefficient for me" |
+:::
+
+::: {.get}
+**The standing rule of this course.** Every deliverable must document at least
+one instance where you identified a model output as wrong, unverifiable or
+misleading, and explain how you established that. You are never penalised for
+using the model. You are penalised for using it uncritically.
+:::
+
+::: {.muted}
+The honest limitation, stated once: on a machine without a graphics card, a
+small model is a capable **reader** and an unreliable **editor**. It will explain
+a function correctly and then fail to produce a well-formed multi-file edit,
+because emitting a precise diff is a harder task than describing code. That is a
+fact about small models rather than about you.
+:::
+
+## 8 · Enough pandas to start
 
 Do this at the keyboard, not by reading. Activate the environment, then:
 
@@ -193,7 +470,7 @@ how many coasters are there · what is the mean top speed by `propulsion` ·
 which single coaster has the largest `drop_m`.
 :::
 
-## 5 · Enough inference to read a coefficient
+## 9 · Enough inference to read a coefficient
 
 A regression hands you three numbers per variable. You need to know what each
 one is before you can be told a fourth.
@@ -242,7 +519,30 @@ that gets the answer wrong, sitting next to a model that gets it right. If you
 learn one thing before class, learn to distrust that number on its own.
 :::
 
-## 6 · Self-check
+## 10 · Readings
+
+Both chapters are from *Quantitative Methods in International Business with Python* (Warin), the
+companion volume to this course:
+[warint.github.io/quantitative-methods/book](https://warint.github.io/quantitative-methods/book/)
+
+::: {.tight}
+| | | |
+|---|---|---|
+| **Ch. 2** | [Exploratory Data Analysis, and the First Model](https://warint.github.io/quantitative-methods/book/session-02.html) | read fully |
+| **Ch. 3** | [Regression: Adequacy, Validity, and Robustness](https://warint.github.io/quantitative-methods/book/session-03.html) | read fully |
+:::
+
+::: {.step}
+Chapter 2 gets you to a first fitted line and to reading its output. Chapter 3 is
+this session: residuals, leverage, influence, and why $R^2$ is not a diagnostic.
+:::
+
+::: {.muted}
+Also worth a skim before you start: [Appendix A · Setting up your tools](https://warint.github.io/quantitative-methods/book/setup.html),
+which is the longer version of the four installation steps above.
+:::
+
+## 11 · Self-check
 
 On paper. If you cannot answer these, that is what the session is for.
 
@@ -272,8 +572,10 @@ By the end of the session you should be able to:
 :::
 
 ::: {.get}
-**Arrive with:** the environment activated · `verify_puzzles.py` passing ·
-the three pandas questions answered · the self-check attempted on paper.
+**Arrive with:** VS Codium open with the environment activated ·
+`verify_puzzles.py` passing · Continue answering from a local model ·
+chapters 2 and 3 read · the three pandas questions answered · the self-check
+attempted on paper.
 :::
 
 ::: {.muted}

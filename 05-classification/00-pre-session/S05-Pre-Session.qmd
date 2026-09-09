@@ -27,7 +27,8 @@ format:
 2. The Bayes classifier, and the floor it sets
 3. $k$-nearest neighbours, by hand
 4. Load the data
-5. Self-check
+5. Readings
+6. Self-check
 
 # Before the session {background-color="#E3120B" style="color:#F7F4ED"}
 
@@ -39,10 +40,11 @@ format:
 
 | | | |
 |---|---|---|
-| **1** | Read the Bayes classifier section | 15 min |
-| **2** | Do the $k$-NN exercise **by hand**, on paper | 20 min |
-| **3** | Load `bestiary` and answer three questions | 15 min |
-| **4** | Attempt the self-check | 10 min |
+| **1** | Read chapter 8 of the book | 45 min |
+| **2** | Read the Bayes classifier section | 15 min |
+| **3** | Do the $k$-NN exercise **by hand**, on paper | 20 min |
+| **4** | Load `bestiary` and answer three questions | 15 min |
+| **5** | Attempt the self-check | 10 min |
 
 ## 1 · The best possible classifier
 
@@ -145,6 +147,24 @@ Answer before class:
 Question 3 is the trap in this session, and the answer is smaller than you expect.
 :::
 
+## Readings
+
+From *Quantitative Methods in International Business with Python* (Warin):
+[warint.github.io/quantitative-methods/book](https://warint.github.io/quantitative-methods/book/)
+
+::: {.tight}
+| | | |
+|---|---|---|
+| **Ch. 8** | [K-Nearest Neighbours and the Bias–Variance Trade-off](https://warint.github.io/quantitative-methods/book/session-08.html) | read fully |
+| **Ch. 4** | [Logistic Regression: Binary, Ordinal, and Multinomial](https://warint.github.io/quantitative-methods/book/session-04.html) | revisit the classification metrics |
+:::
+
+::: {.step}
+Chapter 8 is this session: the Bayes classifier, $k$-NN, and the trade-off that
+$k$ controls. Go back to chapter 4 for the confusion matrix and the precision and
+recall definitions, which we now need for **four** classes rather than two.
+:::
+
 ## 4 · Self-check
 
 ::: {.tight}
@@ -171,6 +191,6 @@ dimension is still distance, and it drowns the dimensions that matter.
 :::
 
 ::: {.get}
-**Arrive with:** the $k$-NN exercise done on paper · the three data questions
-answered · the self-check attempted.
+**Arrive with:** chapter 8 read · the $k$-NN exercise done on paper ·
+the three data questions answered · the self-check attempted.
 :::

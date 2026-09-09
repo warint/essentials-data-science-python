@@ -28,7 +28,8 @@ format:
 3. Bias and variance
 4. Cross-validation
 5. Load the data
-6. Self-check
+6. Readings
+7. Self-check
 
 # Before the session {background-color="#E3120B" style="color:#F7F4ED"}
 
@@ -40,10 +41,11 @@ format:
 
 | | | |
 |---|---|---|
-| **1** | Read the bias–variance section | 20 min |
-| **2** | Read the cross-validation section | 15 min |
-| **3** | Load `secret_recipe` and answer three questions | 15 min |
-| **4** | Attempt the self-check | 10 min |
+| **1** | Read chapter 5, and the bias–variance part of chapter 8 | 60 min |
+| **2** | Read the bias–variance section | 20 min |
+| **3** | Read the cross-validation section | 15 min |
+| **4** | Load `secret_recipe` and answer three questions | 15 min |
+| **5** | Attempt the self-check | 10 min |
 
 ## 1 · The shape of the problem
 
@@ -138,6 +140,24 @@ Answer before class:
    off-diagonal correlation. Which two ingredients, and how correlated?
 :::
 
+## Readings
+
+From *Quantitative Methods in International Business with Python* (Warin):
+[warint.github.io/quantitative-methods/book](https://warint.github.io/quantitative-methods/book/)
+
+::: {.tight}
+| | | |
+|---|---|---|
+| **Ch. 5** | [Regularisation: Ridge, Lasso, and the Elastic Net](https://warint.github.io/quantitative-methods/book/session-05.html) | read fully |
+| **Ch. 8** | [K-Nearest Neighbours and the Bias–Variance Trade-off](https://warint.github.io/quantitative-methods/book/session-08.html) | the bias–variance sections only |
+:::
+
+::: {.step}
+Chapter 5 is the session. Read the bias–variance part of chapter 8 first,
+though — the whole argument for a deliberately biased estimator rests on that
+decomposition, and chapter 5 assumes you have it.
+:::
+
 ## 5 · Self-check
 
 ::: {.tight}
@@ -164,6 +184,6 @@ wins by a factor of seven, and that is not a trick question — it is this sessi
 :::
 
 ::: {.get}
-**Arrive with:** the three data questions answered · bias–variance read ·
-the self-check attempted.
+**Arrive with:** chapters 5 and 8 read · the three data questions answered ·
+bias–variance read · the self-check attempted.
 :::

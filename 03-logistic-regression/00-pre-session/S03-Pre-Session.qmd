@@ -27,7 +27,8 @@ format:
 2. Why a line will not do
 3. Odds, log-odds, and the logistic function
 4. Load the data
-5. Self-check
+5. Readings
+6. Self-check
 6. What the session will ask of you
 
 # Before the session {background-color="#E3120B" style="color:#F7F4ED"}
@@ -40,9 +41,10 @@ format:
 
 | | | |
 |---|---|---|
-| **1** | Read the odds section, with a pen | 20 min |
-| **2** | Load `mushrooms` and answer three questions | 15 min |
-| **3** | Attempt the self-check | 10 min |
+| **1** | Read chapter 4 of the book | 45 min |
+| **2** | Read the odds section, with a pen | 20 min |
+| **3** | Load `mushrooms` and answer three questions | 15 min |
+| **4** | Attempt the self-check | 10 min |
 
 ## 1 · Why a line will not do
 
@@ -141,6 +143,28 @@ Hold on to the answer to question 3. It is the number that makes accuracy
 useless in this session.
 :::
 
+## Readings
+
+From *Quantitative Methods in International Business with Python* (Warin):
+[warint.github.io/quantitative-methods/book](https://warint.github.io/quantitative-methods/book/)
+
+::: {.tight}
+| | | |
+|---|---|---|
+| **Ch. 4** | [Logistic Regression: Binary, Ordinal, and Multinomial](https://warint.github.io/quantitative-methods/book/session-04.html) | read fully |
+:::
+
+::: {.step}
+One chapter, and it covers the whole session: the logit link, odds ratios,
+inference by likelihood ratio, and the ordinal and multinomial extensions.
+:::
+
+::: {.warn}
+The chapter does not settle the question this session turns on — **where to put
+the threshold**. Read it for the model, and come to class expecting the decision
+to be a separate problem with its own arithmetic.
+:::
+
 ## 4 · Self-check
 
 ::: {.tight}
@@ -169,6 +193,6 @@ Question 3 has a one-word answer, and the word is "nothing".
 :::
 
 ::: {.get}
-**Arrive with:** the three data questions answered · the self-check attempted ·
-the odds table understood well enough to reproduce.
+**Arrive with:** chapter 4 read · the three data questions answered ·
+the self-check attempted · the odds table understood well enough to reproduce.
 :::

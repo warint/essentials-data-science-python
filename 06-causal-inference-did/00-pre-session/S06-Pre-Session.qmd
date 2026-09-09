@@ -28,7 +28,8 @@ format:
 3. The 2×2 difference-in-differences
 4. Parallel trends
 5. Load the data
-6. Self-check
+6. Readings
+7. Self-check
 
 # Before the session {background-color="#E3120B" style="color:#F7F4ED"}
 
@@ -40,10 +41,11 @@ format:
 
 | | | |
 |---|---|---|
-| **1** | Read the potential-outcomes section, with a pen | 25 min |
-| **2** | Work the 2×2 example by hand | 20 min |
-| **3** | Load `cat_cafe` and answer four questions | 15 min |
-| **4** | Attempt the self-check | 10 min |
+| **1** | Read chapters 10 and 11 of the book | 75 min |
+| **2** | Read the potential-outcomes section, with a pen | 25 min |
+| **3** | Work the 2×2 example by hand | 20 min |
+| **4** | Load `cat_cafe` and answer four questions | 15 min |
+| **5** | Attempt the self-check | 10 min |
 
 ::: {.warn}
 This pre-session carries the whole conceptual load of the last session, so the
@@ -173,6 +175,31 @@ Keep that in mind on Thursday, because one of the methods we look at will happil
 report a number for those quarters anyway.
 :::
 
+## Readings
+
+From *Quantitative Methods in International Business with Python* (Warin):
+[warint.github.io/quantitative-methods/book](https://warint.github.io/quantitative-methods/book/)
+
+::: {.tight}
+| | | |
+|---|---|---|
+| **Ch. 10** | [Causal Inference I: Counterfactuals, Randomisation, Matching](https://warint.github.io/quantitative-methods/book/session-10.html) | read fully |
+| **Ch. 11** | [Causal Inference II: Difference-in-Differences](https://warint.github.io/quantitative-methods/book/session-11.html) | read fully |
+:::
+
+::: {.step}
+Chapter 10 is the conceptual load this pre-session carries — potential outcomes,
+why randomisation solves the problem, and what matching does when you cannot
+randomise. Chapter 11 is the 2×2 design and parallel trends.
+:::
+
+::: {.warn}
+Read chapter 11 as the **classical** treatment. The lecture starts where it
+stops: what happens to that estimator when units are treated at different dates
+and the effects grow over time. The answer is not in the chapter, and it is not
+reassuring.
+:::
+
 ## 5 · Self-check
 
 ::: {.tight}
@@ -202,6 +229,6 @@ yet treated", you are ahead of a great deal of published work.
 :::
 
 ::: {.get}
-**Arrive with:** the 2×2 table worked by hand · the four data questions
-answered · the self-check attempted.
+**Arrive with:** chapters 10 and 11 read · the 2×2 table worked by hand ·
+the four data questions answered · the self-check attempted.
 :::

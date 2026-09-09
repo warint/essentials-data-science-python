@@ -1,5 +1,7 @@
 # Essentials of Data Science in Python
 
+**[Read the decks online →](https://warint.github.io/essentials-data-science-python/)**
+
 Six sessions on the methods that carry most applied quantitative work: linear
 regression and its diagnostics, interactions and fixed effects, logistic
 regression, regularisation, classification, and causal inference with modern
@@ -123,13 +125,37 @@ public, because five of the six sessions are built around a method that fails.
 ## Rendering the decks
 
 ```bash
-scripts/render.sh        # all decks
+scripts/render.sh        # all 18 decks, self-contained, beside their sources
 scripts/render.sh 06     # just session 6
 ```
 
 Requires [Quarto](https://quarto.org/docs/download/). The lecture decks execute
 their own Python at render time, so the numbers on the slides are the numbers
 your machine produces — a slide cannot drift away from the code that made it.
+
+These renders are **self-contained**: each inlines reveal.js, its fonts and its
+figures, so a downloaded deck opens on a train with no wifi. That costs about
+3.3 MB each, which is why they are git-ignored.
+
+## Publishing the site
+
+```bash
+scripts/publish.sh       # builds docs/, then commit and push
+```
+
+The published site is the same eighteen decks built as one Quarto *website*, so
+they share a single copy of reveal.js — **7 MB in total rather than 61**. It
+lands in [`docs/`](docs/), which is committed, with a generated landing page.
+
+Preview before pushing:
+
+```bash
+python3 -m http.server -d docs 8000
+```
+
+GitHub Pages needs pointing at it **once**, by hand:
+*Settings → Pages → Source: "Deploy from a branch", Branch: `main`, folder:
+`/docs`.* After that every push updates the site.
 
 ## Repository layout
 

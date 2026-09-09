@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-html/tabby.min.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/light-border.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-e1a5c8363afafaef2c763b6775fbf3ca.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.7.31">
+
+  <meta name="author" content="Thierry Warin, PhD">
+  <title>Essentials of Data Science in Python – Session 3: Logistic Regression</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="../../site_libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="../../site_libs/revealjs/dist/reveal.css">
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+      vertical-align: middle;
+    }
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      { color: #003b4f; background-color: #f1f3f5; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #003b4f; } /* Normal */
+    code span.al { color: #ad0000; } /* Alert */
+    code span.an { color: #5e5e5e; } /* Annotation */
+    code span.at { color: #657422; } /* Attribute */
+    code span.bn { color: #ad0000; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #003b4f; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #20794d; } /* Char */
+    code span.cn { color: #8f5902; } /* Constant */
+    code span.co { color: #5e5e5e; } /* Comment */
+    code span.cv { color: #5e5e5e; font-style: italic; } /* CommentVar */
+    code span.do { color: #5e5e5e; font-style: italic; } /* Documentation */
+    code span.dt { color: #ad0000; } /* DataType */
+    code span.dv { color: #ad0000; } /* DecVal */
+    code span.er { color: #ad0000; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #ad0000; } /* Float */
+    code span.fu { color: #4758ab; } /* Function */
+    code span.im { color: #00769e; } /* Import */
+    code span.in { color: #5e5e5e; } /* Information */
+    code span.kw { color: #003b4f; font-weight: bold; } /* Keyword */
+    code span.op { color: #5e5e5e; } /* Operator */
+    code span.ot { color: #003b4f; } /* Other */
+    code span.pp { color: #ad0000; } /* Preprocessor */
+    code span.sc { color: #5e5e5e; } /* SpecialChar */
+    code span.ss { color: #20794d; } /* SpecialString */
+    code span.st { color: #20794d; } /* String */
+    code span.va { color: #111111; } /* Variable */
+    code span.vs { color: #20794d; } /* VerbatimString */
+    code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="../../site_libs/revealjs/dist/theme/quarto-21fffaf735640ba0afcef080c07e331f.css">
+  <link href="../../site_libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="../../site_libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="../../site_libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="../../site_libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <style type="text/css">
+    .reveal div.sourceCode {
+      margin: 0;
+      overflow: auto;
+    }
+    .reveal div.hanging-indent {
+      margin-left: 1em;
+      text-indent: -1em;
+    }
+    .reveal .slide:not(.center) {
+      height: 100%;
+    }
+    .reveal .slide.scrollable {
+      overflow-y: auto;
+    }
+    .reveal .footnotes {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide .absolute {
+      position: absolute;
+      display: block;
+    }
+    .reveal .footnotes ol {
+      counter-reset: ol;
+      list-style-type: none; 
+      margin-left: 0;
+    }
+    .reveal .footnotes ol li:before {
+      counter-increment: ol;
+      content: counter(ol) ". "; 
+    }
+    .reveal .footnotes ol li > p:first-child {
+      display: inline-block;
+    }
+    .reveal .slide ul,
+    .reveal .slide ol {
+      margin-bottom: 0.5em;
+    }
+    .reveal .slide ul li,
+    .reveal .slide ol li {
+      margin-top: 0.4em;
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide ul[role="tablist"] li {
+      margin-bottom: 0;
+    }
+    .reveal .slide ul li > *:first-child,
+    .reveal .slide ol li > *:first-child {
+      margin-block-start: 0;
+    }
+    .reveal .slide ul li > *:last-child,
+    .reveal .slide ol li > *:last-child {
+      margin-block-end: 0;
+    }
+    .reveal .slide .columns:nth-child(3) {
+      margin-block-start: 0.8em;
+    }
+    .reveal blockquote {
+      box-shadow: none;
+    }
+    .reveal .tippy-content>* {
+      margin-top: 0.2em;
+      margin-bottom: 0.7em;
+    }
+    .reveal .tippy-content>*:last-child {
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide > img.stretch.quarto-figure-center,
+    .reveal .slide > img.r-stretch.quarto-figure-center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-left,
+    .reveal .slide > img.r-stretch.quarto-figure-left  {
+      display: block;
+      margin-left: 0;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-right,
+    .reveal .slide > img.r-stretch.quarto-figure-right  {
+      display: block;
+      margin-left: auto;
+      margin-right: 0; 
+    }
+  </style>
+</head>
+<body class="quarto-light">
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide" class="quarto-title-block center">
+  <h1 class="title">Session 3: Logistic Regression</h1>
+  <p class="subtitle">The model gives you a probability. The decision is still yours.</p>
+
+<div class="quarto-title-authors">
+<div class="quarto-title-author">
+<div class="quarto-title-author-name">
+Thierry Warin, PhD 
+</div>
+        <p class="quarto-title-affiliation">
+            HEC Montréal
+          </p>
+    </div>
+</div>
+
+</section>
+<section id="outline-the-hour-ahead" class="slide level2 center scrollable">
+<h2>Outline · The hour ahead</h2>
+<ol type="1">
+<li>The model, and the odds ratio</li>
+<li>Fitting it, and reading it</li>
+<li>Inference: Wald, and the likelihood-ratio test</li>
+<li>The confusion matrix, and what accuracy hides</li>
+<li>The threshold is a decision, not a default</li>
+<li>Ordinal outcomes</li>
+<li>What to report</li>
+</ol>
+</section>
+<section id="what-session-3-is-for" class="slide level2 scrollable">
+<h2>What session 3 is for</h2>
+<div class="columns">
+<div class="column" style="width:33%;">
+<h3 id="the-mathematics">The mathematics</h3>
+<ul>
+<li>Model the <strong>logit</strong>, not the probability</li>
+<li><span class="math inline">\(e^{\beta}\)</span> is an <strong>odds ratio</strong>, not a probability ratio</li>
+<li>The likelihood-ratio test: <span class="math inline">\(2(\ell_1 - \ell_0) \sim \chi^2_{\Delta k}\)</span></li>
+<li>Expected loss is minimised at <span class="math inline">\(t^\star = c_{FP}/(c_{FP} + c_{FN})\)</span></li>
+</ul>
+</div><div class="column" style="width:33%;">
+<h3 id="the-python">The Python</h3>
+<ul>
+<li><code>smf.logit</code> and <code>.predict</code> — which returns <strong>probabilities</strong>, not classes</li>
+<li><code>np.exp</code> on a coefficient to get an odds ratio</li>
+<li><code>confusion_matrix</code> and <code>classification_report</code></li>
+<li><code>roc_curve</code>, and choosing a point on it</li>
+</ul>
+</div><div class="column" style="width:33%;">
+<h3 id="the-judgement">The judgement</h3>
+<ul>
+<li>Refuse accuracy as a headline number on imbalanced data</li>
+<li>Write the two costs down before choosing a threshold</li>
+<li>Say which error you chose to make more of, and why</li>
+<li>Report an odds ratio without implying it is a probability</li>
+</ul>
+</div></div>
+</section>
+<section>
+<section id="the-model" class="title-slide slide level1 center" data-background-color="#E3120B" style="color:#F7F4ED">
+<h1>The model</h1>
+
+</section>
+<section id="mushrooms.-which-ones-would-you-eat" style="margin-top: 1.0em; color:#F7F4ED">
+<h3>1,400 mushrooms. Which ones would you eat?</h3>
+</section>
+<section id="the-data" class="slide level2">
+<h2>The data</h2>
+<div id="075a0d62" class="cell" data-execution_count="2">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a></a>d <span class="op">=</span> ess.load(<span class="st">"mushrooms"</span>)</span>
+<span id="cb1-2"><a></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(d)<span class="sc">}</span><span class="ss"> mushrooms, </span><span class="sc">{</span>d<span class="sc">.</span>poisonous<span class="sc">.</span>mean()<span class="sc">:.1%}</span><span class="ss"> poisonous"</span>)</span>
+<span id="cb1-3"><a></a><span class="bu">print</span>(d.toxicity.value_counts().reindex(</span>
+<span id="cb1-4"><a></a>    [<span class="st">"edible"</span>, <span class="st">"upset stomach"</span>, <span class="st">"hospital"</span>, <span class="st">"fatal"</span>]).to_string())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>1400 mushrooms, 28.7% poisonous
+toxicity
+edible           998
+upset stomach    267
+hospital          71
+fatal             64</code></pre>
+</div>
+</div>
+<div class="muted">
+<p><code>poisonous</code> is the binary outcome. <code>toxicity</code> is the same risk graded, and we come back to it at the end.</p>
+</div>
+</section>
+<section id="what-we-fit-and-why" class="slide level2">
+<h2>What we fit, and why</h2>
+<p>A linear model on a 0/1 outcome produces predicted probabilities above 1 and below 0. So model the <strong>log-odds</strong>, which are free to be any real number:</p>
+<p><span class="math display">\[ \log\frac{p}{1-p} = \beta_0 + \beta_1 x_1 + \cdots + \beta_k x_k \]</span></p>
+<p>and invert to recover a probability:</p>
+<p><span class="math display">\[ p = \frac{1}{1 + e^{-\eta}}, \qquad \eta = \beta_0 + \textstyle\sum_j \beta_j x_j \]</span></p>
+<div class="step">
+<p>There is no closed-form solution. The coefficients are found by <strong>maximum likelihood</strong> — numerically, by iteration — which is why the output reports a log-likelihood rather than an <span class="math inline">\(R^2\)</span>.</p>
+</div>
+</section>
+<section id="fitting-it" class="slide level2">
+<h2>Fitting it</h2>
+<div id="b24f3843" class="cell" data-execution_count="3">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a></a>F <span class="op">=</span> (<span class="st">"poisonous ~ cap_diameter_cm + stem_height_cm + odor_index + ring_present"</span></span>
+<span id="cb3-2"><a></a>     <span class="st">" + volva_present + C(spore_print, Treatment('brown'))"</span></span>
+<span id="cb3-3"><a></a>     <span class="st">" + C(gill_spacing, Treatment('close')) + C(habitat, Treatment('grassland'))"</span>)</span>
+<span id="cb3-4"><a></a></span>
+<span id="cb3-5"><a></a>fit <span class="op">=</span> smf.logit(F, data<span class="op">=</span>d).fit(disp<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb3-6"><a></a><span class="bu">print</span>(fit.summary().tables[<span class="dv">1</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>==================================================================================================================
+                                                     coef    std err          z      P&gt;|z|      [0.025      0.975]
+------------------------------------------------------------------------------------------------------------------
+Intercept                                         -9.2362      0.649    -14.231      0.000     -10.508      -7.964
+C(spore_print, Treatment('brown'))[T.black]       -1.7919      0.386     -4.647      0.000      -2.548      -1.036
+C(spore_print, Treatment('brown'))[T.pink]         1.8080      0.267      6.769      0.000       1.284       2.331
+C(spore_print, Treatment('brown'))[T.white]        3.3952      0.264     12.847      0.000       2.877       3.913
+C(gill_spacing, Treatment('close'))[T.crowded]     1.1809      0.210      5.611      0.000       0.768       1.593
+C(gill_spacing, Treatment('close'))[T.distant]    -0.5994      0.251     -2.391      0.017      -1.091      -0.108
+C(habitat, Treatment('grassland'))[T.mulch]        0.6762      0.258      2.624      0.009       0.171       1.181
+C(habitat, Treatment('grassland'))[T.woodland]     0.9715      0.218      4.465      0.000       0.545       1.398
+cap_diameter_cm                                   -0.0611      0.025     -2.431      0.015      -0.110      -0.012
+stem_height_cm                                     0.1451      0.025      5.765      0.000       0.096       0.194
+odor_index                                         0.6310      0.044     14.384      0.000       0.545       0.717
+ring_present                                       2.0060      0.207      9.704      0.000       1.601       2.411
+volva_present                                      4.2925      0.296     14.503      0.000       3.712       4.873
+==================================================================================================================</code></pre>
+</div>
+</div>
+</section>
+<section id="read-it-as-odds-ratios" class="slide level2">
+<h2>Read it as odds ratios</h2>
+<div id="6a9b6b5a" class="cell" data-execution_count="4">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a></a>odds <span class="op">=</span> pd.DataFrame({</span>
+<span id="cb5-2"><a></a>    <span class="st">"coefficient"</span>: fit.params,</span>
+<span id="cb5-3"><a></a>    <span class="st">"odds ratio"</span>: np.exp(fit.params),</span>
+<span id="cb5-4"><a></a>}).drop(<span class="st">"Intercept"</span>).sort_values(<span class="st">"odds ratio"</span>, ascending<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb5-5"><a></a><span class="bu">print</span>(odds.<span class="bu">round</span>(<span class="dv">3</span>).to_string())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                                                coefficient  odds ratio
+volva_present                                         4.292      73.149
+C(spore_print, Treatment('brown'))[T.white]           3.395      29.822
+ring_present                                          2.006       7.433
+C(spore_print, Treatment('brown'))[T.pink]            1.808       6.098
+C(gill_spacing, Treatment('close'))[T.crowded]        1.181       3.257
+C(habitat, Treatment('grassland'))[T.woodland]        0.971       2.642
+C(habitat, Treatment('grassland'))[T.mulch]           0.676       1.966
+odor_index                                            0.631       1.879
+stem_height_cm                                        0.145       1.156
+cap_diameter_cm                                      -0.061       0.941
+C(gill_spacing, Treatment('close'))[T.distant]       -0.599       0.549
+C(spore_print, Treatment('brown'))[T.black]          -1.792       0.167</code></pre>
+</div>
+</div>
+</section>
+<section id="one-feature-is-doing-most-of-the-work" class="slide level2">
+<h2>One feature is doing most of the work</h2>
+<div id="13d32822" class="cell" data-execution_count="5">
+<div class="cell-output cell-output-stdout">
+<pre><code>volva_present   coefficient +4.292   odds ratio x73
+
+share poisonous, with a volva:     61.1%
+share poisonous, without one:      21.6%</code></pre>
+</div>
+</div>
+<div class="step">
+<p>A volva is the membranous sac at the base of the stem that marks the genus responsible for most fatal mushroom poisonings. The model found it without being told, and it multiplies the odds by about seventy.</p>
+</div>
+<div class="warn">
+<p>It multiplies the <strong>odds</strong>, not the probability. A mushroom already at <span class="math inline">\(p = 0.95\)</span> cannot become 70 times more likely to be poisonous. Odds ratios are constant across the range; probability changes are not.</p>
+</div>
+</section>
+<section id="the-same-coefficient-in-probability-terms" class="slide level2">
+<h2>The same coefficient, in probability terms</h2>
+<div id="90e1fecb" class="cell" data-execution_count="6">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a></a><span class="cf">for</span> base_p <span class="kw">in</span> (<span class="fl">0.01</span>, <span class="fl">0.10</span>, <span class="fl">0.50</span>, <span class="fl">0.90</span>):</span>
+<span id="cb8-2"><a></a>    base_odds <span class="op">=</span> base_p <span class="op">/</span> (<span class="dv">1</span> <span class="op">-</span> base_p)</span>
+<span id="cb8-3"><a></a>    new_odds <span class="op">=</span> base_odds <span class="op">*</span> np.exp(b)</span>
+<span id="cb8-4"><a></a>    new_p <span class="op">=</span> new_odds <span class="op">/</span> (<span class="dv">1</span> <span class="op">+</span> new_odds)</span>
+<span id="cb8-5"><a></a>    <span class="bu">print</span>(<span class="ss">f"p = </span><span class="sc">{</span>base_p<span class="sc">:.2f}</span><span class="ss">  -&gt;  </span><span class="sc">{</span>new_p<span class="sc">:.4f}</span><span class="ss">   "</span></span>
+<span id="cb8-6"><a></a>          <span class="ss">f"(a rise of </span><span class="sc">{</span>new_p <span class="op">-</span> base_p<span class="sc">:+.4f}</span><span class="ss">)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>p = 0.01  -&gt;  0.4249   (a rise of +0.4149)
+p = 0.10  -&gt;  0.8904   (a rise of +0.7904)
+p = 0.50  -&gt;  0.9865   (a rise of +0.4865)
+p = 0.90  -&gt;  0.9985   (a rise of +0.0985)</code></pre>
+</div>
+</div>
+<div class="muted">
+<p>Same odds ratio, four different probability changes. This is why “the effect” of a logistic coefficient is not a single number, and why reporting marginal effects at chosen values is often clearer than reporting the coefficient.</p>
+</div>
+</section></section>
+<section>
+<section id="inference" class="title-slide slide level1 center" data-background-color="#E3120B" style="color:#F7F4ED">
+<h1>Inference</h1>
+
+</section>
+<section id="two-tests-and-when-to-use-each" style="margin-top: 1.0em; color:#F7F4ED">
+<h3>Two tests, and when to use each</h3>
+</section>
+<section id="one-coefficient-the-wald-test" class="slide level2">
+<h2>One coefficient: the Wald test</h2>
+<p>The <span class="math inline">\(z\)</span>-statistic in the output is <span class="math inline">\(\hat\beta / \mathrm{se}(\hat\beta)\)</span>, compared against a normal rather than a <span class="math inline">\(t\)</span> distribution — maximum likelihood gives asymptotic standard errors.</p>
+<div id="ca145bd4" class="cell" data-execution_count="7">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a></a><span class="bu">print</span>(fit.summary2().tables[<span class="dv">1</span>].loc[</span>
+<span id="cb10-2"><a></a>    [<span class="st">"volva_present"</span>, <span class="st">"ring_present"</span>, <span class="st">"odor_index"</span>, <span class="st">"cap_diameter_cm"</span>],</span>
+<span id="cb10-3"><a></a>    [<span class="st">"Coef."</span>, <span class="st">"Std.Err."</span>, <span class="st">"z"</span>, <span class="st">"P&gt;|z|"</span>]].<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                  Coef.  Std.Err.        z   P&gt;|z|
+volva_present    4.2925    0.2960  14.5035  0.0000
+ring_present     2.0060    0.2067   9.7037  0.0000
+odor_index       0.6310    0.0439  14.3838  0.0000
+cap_diameter_cm -0.0611    0.0251  -2.4311  0.0151</code></pre>
+</div>
+</div>
+</section>
+<section id="several-at-once-the-likelihood-ratio-test" class="slide level2">
+<h2>Several at once: the likelihood-ratio test</h2>
+<p>To test whether a <strong>group</strong> of variables belongs — all three habitat levels, say — compare log-likelihoods:</p>
+<p><span class="math display">\[ 2\left(\ell_{\text{full}} - \ell_{\text{restricted}}\right) \sim \chi^2_{\Delta k} \]</span></p>
+<div id="873ff7e5" class="cell" data-execution_count="8">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a></a><span class="im">from</span> scipy <span class="im">import</span> stats</span>
+<span id="cb12-2"><a></a></span>
+<span id="cb12-3"><a></a>reduced <span class="op">=</span> smf.logit(</span>
+<span id="cb12-4"><a></a>    F.replace(<span class="st">" + C(habitat, Treatment('grassland'))"</span>, <span class="st">""</span>), data<span class="op">=</span>d).fit(disp<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb12-5"><a></a></span>
+<span id="cb12-6"><a></a>lr <span class="op">=</span> <span class="dv">2</span> <span class="op">*</span> (fit.llf <span class="op">-</span> reduced.llf)</span>
+<span id="cb12-7"><a></a>df <span class="op">=</span> <span class="bu">int</span>(fit.df_model <span class="op">-</span> reduced.df_model)</span>
+<span id="cb12-8"><a></a><span class="bu">print</span>(<span class="ss">f"LR statistic </span><span class="sc">{</span>lr<span class="sc">:.2f}</span><span class="ss"> on </span><span class="sc">{</span>df<span class="sc">}</span><span class="ss"> df,  p = </span><span class="sc">{</span>stats<span class="sc">.</span>chi2<span class="sc">.</span>sf(lr, df)<span class="sc">:.2e}</span><span class="ss">"</span>)</span>
+<span id="cb12-9"><a></a><span class="bu">print</span>(<span class="ss">f"pseudo R2 </span><span class="sc">{</span>reduced<span class="sc">.</span>prsquared<span class="sc">:.4f}</span><span class="ss"> -&gt; </span><span class="sc">{</span>fit<span class="sc">.</span>prsquared<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>LR statistic 21.27 on 2 df,  p = 2.40e-05
+pseudo R2 0.5204 -&gt; 0.5331</code></pre>
+</div>
+</div>
+<div class="warn">
+<p>McFadden’s pseudo-<span class="math inline">\(R^2\)</span> is not a share of variance and is not comparable to a linear model’s <span class="math inline">\(R^2\)</span>. Values of 0.2 to 0.4 are considered excellent. Do not report it as though it were <span class="math inline">\(R^2\)</span>.</p>
+</div>
+</section></section>
+<section>
+<section id="the-confusion-matrix" class="title-slide slide level1 center" data-background-color="#E3120B" style="color:#F7F4ED">
+<h1>The confusion matrix</h1>
+
+</section>
+<section id="what-accuracy-hides" style="margin-top: 1.0em; color:#F7F4ED">
+<h3>What accuracy hides</h3>
+</section>
+<section id="predict-gives-probabilities-not-classes" class="slide level2">
+<h2><code>.predict</code> gives probabilities, not classes</h2>
+<div id="f86fb8ef" class="cell" data-execution_count="9">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a></a>p_hat <span class="op">=</span> fit.predict(d)</span>
+<span id="cb14-2"><a></a><span class="bu">print</span>(p_hat.describe().<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>count    1400.0000
+mean        0.2871
+std         0.3435
+min         0.0001
+25%         0.0129
+50%         0.0980
+75%         0.5336
+max         0.9999</code></pre>
+</div>
+</div>
+<div class="step">
+<p>Turning a probability into a decision requires a <strong>threshold</strong>, and the model has no opinion about what it should be. Choosing 0.5 is a choice, not a default — and on this data it is the wrong one.</p>
+</div>
+</section>
+<section id="the-baseline-you-have-to-beat" class="slide level2">
+<h2>The baseline you have to beat</h2>
+<div id="1af6eb64" class="cell" data-execution_count="10">
+<div class="cell-output cell-output-stdout">
+<pre><code>'call everything edible':  accuracy 71.3%
+                           poisonous mushrooms eaten: 402 of 402</code></pre>
+</div>
+</div>
+<div class="warn">
+<p>Seventy-one per cent accurate, from a rule that requires no data, no model and no thought — and that will eventually kill you. <strong>Any accuracy figure you report has to be read against this number.</strong></p>
+</div>
+</section>
+<section id="the-four-cells-at-t-0.5" class="slide level2">
+<h2>The four cells at <span class="math inline">\(t = 0.5\)</span></h2>
+<div id="48d94968" class="cell" data-execution_count="11">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a></a>tn, fp, fn, tp <span class="op">=</span> confusion_matrix(d.poisonous, (p_hat <span class="op">&gt;</span> <span class="fl">0.5</span>).astype(<span class="bu">int</span>)).ravel()</span>
+<span id="cb17-2"><a></a><span class="bu">print</span>(pd.DataFrame([[tn, fp], [fn, tp]],</span>
+<span id="cb17-3"><a></a>                   index<span class="op">=</span>[<span class="st">"truly edible"</span>, <span class="st">"truly poisonous"</span>],</span>
+<span id="cb17-4"><a></a>                   columns<span class="op">=</span>[<span class="st">"called edible"</span>, <span class="st">"called poisonous"</span>]).to_string())</span>
+<span id="cb17-5"><a></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">accuracy </span><span class="sc">{</span>(tp<span class="op">+</span>tn)<span class="op">/</span><span class="bu">len</span>(d)<span class="sc">:.3f}</span><span class="ss">   AUC </span><span class="sc">{</span>roc_auc_score(d.poisonous, p_hat)<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb17-6"><a></a><span class="bu">print</span>(<span class="ss">f"poisonous mushrooms called edible: </span><span class="sc">{</span>fn<span class="sc">}</span><span class="ss"> of </span><span class="sc">{</span>fn<span class="op">+</span>tp<span class="sc">}</span><span class="ss"> (</span><span class="sc">{</span>fn<span class="op">/</span>(fn<span class="op">+</span>tp)<span class="sc">:.1%}</span><span class="ss">)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                 called edible  called poisonous
+truly edible               931                67
+truly poisonous            105               297
+
+accuracy 0.877   AUC 0.9382
+poisonous mushrooms called edible: 105 of 402 (26.1%)</code></pre>
+</div>
+</div>
+<div class="warn">
+<p>Accuracy 0.877 — a clear improvement on the baseline. And it puts 105 poisonous mushrooms on your plate. <strong>One meal in four.</strong></p>
+</div>
+</section></section>
+<section>
+<section id="the-threshold-is-a-decision" class="title-slide slide level1 center" data-background-color="#E3120B" style="color:#F7F4ED">
+<h1>The threshold is a decision</h1>
+
+</section>
+<section id="write-the-costs-down-first" style="margin-top: 1.0em; color:#F7F4ED">
+<h3>Write the costs down first</h3>
+</section>
+<section id="the-two-errors-are-not-the-same-size" class="slide level2">
+<h2>The two errors are not the same size</h2>
+<table class="caption-top">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<tbody>
+<tr class="odd">
+<td><strong>False negative</strong></td>
+<td>you call it edible, it is poisonous. A hospital visit.</td>
+</tr>
+<tr class="even">
+<td><strong>False positive</strong></td>
+<td>you call it poisonous, it was edible. A discarded mushroom.</td>
+</tr>
+</tbody>
+</table>
+<div class="step">
+<p>Say a hospital visit is 50 times worse than losing a mushroom. Then expected loss is <span class="math inline">\(c_{FN} \times FN + c_{FP} \times FP\)</span>, and it is minimised at</p>
+<p><span class="math display">\[ t^\star = \frac{c_{FP}}{c_{FP} + c_{FN}} = \frac{1}{51} = 0.0196 \]</span></p>
+</div>
+<div class="muted">
+<p>Accuracy is the special case where the two costs are equal. It is a strange assumption, and it is almost never stated out loud.</p>
+</div>
+</section>
+<section id="does-the-theory-hold-on-our-data" class="slide level2">
+<h2>Does the theory hold on our data?</h2>
+<div id="059adaec" class="cell" data-execution_count="12">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a></a>grid <span class="op">=</span> pd.DataFrame([outcomes(t) <span class="cf">for</span> t <span class="kw">in</span></span>
+<span id="cb19-2"><a></a>                     np.concatenate([[<span class="fl">0.002</span>, <span class="fl">0.005</span>, <span class="fl">0.01</span>, <span class="fl">0.0196</span>, <span class="fl">0.05</span>],</span>
+<span id="cb19-3"><a></a>                                     np.linspace(<span class="fl">0.1</span>, <span class="fl">0.9</span>, <span class="dv">9</span>)])])</span>
+<span id="cb19-4"><a></a><span class="bu">print</span>(grid.assign(acc<span class="op">=</span>grid.acc.<span class="bu">round</span>(<span class="dv">3</span>), discarded<span class="op">=</span>grid.discarded.<span class="bu">round</span>(<span class="dv">3</span>))</span>
+<span id="cb19-5"><a></a>        .to_string(index<span class="op">=</span><span class="va">False</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>     t   acc  missed  discarded  loss
+0.0020 0.386       0      0.901   860
+0.0050 0.449       0      0.839   772
+0.0100 0.513       0      0.774   682
+0.0196 0.585       1      0.701   630
+0.0500 0.683       7      0.594   787
+0.1000 0.764      17      0.499  1164
+0.2000 0.829      37      0.405  2052
+0.3000 0.861      58      0.343  3036
+0.4000 0.869      81      0.302  4152
+0.5000 0.877     105      0.260  5317
+0.6000 0.871     131      0.229  6599
+0.7000 0.867     157      0.196  7879
+0.8000 0.856     189      0.161  9463
+0.9000 0.807     263      0.104 13157</code></pre>
+</div>
+</div>
+</section>
+<section id="the-loss-curve" class="slide level2">
+<h2>The loss curve</h2>
+<div id="41c66b45" class="cell" data-execution_count="13">
+
+<div class="cell-output cell-output-stdout">
+<pre><code>theory       t = 0.0196   loss 630
+empirical    t = 0.0305   loss 614
+within 5% of the minimum:  t in [0.0210, 0.0305]</code></pre>
+</div>
+</div>
+<img data-src="S03-Lecture_files/figure-revealjs/cell-14-output-1.png" class="quarto-figure quarto-figure-center r-stretch"><div class="step">
+<p>The two do not coincide exactly, and they should not: with 1,400 discrete cases the loss is a <strong>step function</strong>, so its minimum is a flat region rather than a point. Theory names 0.0196; the empirical floor runs from about 0.021 to 0.031, and the loss at the theoretical value is within 3% of the best achievable.</p>
+</div>
+<div class="muted">
+<p>The formula is a guide to the right neighbourhood, not a value to quote to four decimal places. What matters is that it puts you two orders of magnitude away from 0.5.</p>
+</div>
+</section>
+<section id="read-the-two-rows-that-matter" class="slide level2">
+<h2>Read the two rows that matter</h2>
+<div id="75e6ce5b" class="cell" data-execution_count="14">
+<div class="cell-output cell-output-stdout">
+<pre><code>t = 0.5000   accuracy 0.877   missed 105   discarded 26%   loss 5317
+t = 0.0196   accuracy 0.585   missed   1   discarded 70%   loss 630</code></pre>
+</div>
+</div>
+<div class="check">
+<p>The cost-optimal rule has <strong>worse accuracy</strong> — 0.585 against 0.877 — and cuts expected loss by a factor of eight. It discards 70% of the basket and misses one poisonous mushroom in four hundred.</p>
+</div>
+<div class="get">
+<p>That is the session in two lines. The model that scores worse on the conventional metric is the one you would actually carry into the woods.</p>
+</div>
+</section>
+<section id="the-roc-curve-is-the-whole-menu" class="slide level2">
+<h2>The ROC curve is the whole menu</h2>
+
+<img data-src="S03-Lecture_files/figure-revealjs/cell-16-output-1.png" class="quarto-figure quarto-figure-center r-stretch"><div class="muted">
+<p>AUC summarises the curve over <strong>every</strong> threshold, which is why it is a good measure of the model and a bad basis for a decision. You do not deploy a curve; you deploy a point on it.</p>
+</div>
+</section></section>
+<section>
+<section id="ordinal-outcomes" class="title-slide slide level1 center" data-background-color="#E3120B" style="color:#F7F4ED">
+<h1>Ordinal outcomes</h1>
+
+</section>
+<section id="when-the-categories-are-ordered" style="margin-top: 1.0em; color:#F7F4ED">
+<h3>When the categories are ordered</h3>
+</section>
+<section id="edible-upset-stomach-hospital-fatal" class="slide level2">
+<h2>Edible, upset stomach, hospital, fatal</h2>
+<p>Those four are <strong>ordered</strong>, and collapsing them to a binary throws that away. An ordinal (proportional-odds) model uses one set of coefficients and a set of cut-points:</p>
+<p><span class="math display">\[ \log\frac{\Pr(Y \le j)}{\Pr(Y &gt; j)} = \alpha_j - \textstyle\sum_k \beta_k x_k \]</span></p>
+<div id="9ee5254c" class="cell" data-execution_count="16">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a></a><span class="im">from</span> statsmodels.miscmodels.ordinal_model <span class="im">import</span> OrderedModel</span>
+<span id="cb23-2"><a></a></span>
+<span id="cb23-3"><a></a>sub <span class="op">=</span> d.dropna(subset<span class="op">=</span>[<span class="st">"toxicity"</span>]).copy()</span>
+<span id="cb23-4"><a></a>X <span class="op">=</span> pd.get_dummies(</span>
+<span id="cb23-5"><a></a>    sub[[<span class="st">"odor_index"</span>, <span class="st">"volva_present"</span>, <span class="st">"ring_present"</span>, <span class="st">"spore_print"</span>]],</span>
+<span id="cb23-6"><a></a>    columns<span class="op">=</span>[<span class="st">"spore_print"</span>], drop_first<span class="op">=</span><span class="va">True</span>, dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb23-7"><a></a></span>
+<span id="cb23-8"><a></a>ord_fit <span class="op">=</span> OrderedModel(sub.toxicity.cat.codes, X, distr<span class="op">=</span><span class="st">"logit"</span>).fit(</span>
+<span id="cb23-9"><a></a>    method<span class="op">=</span><span class="st">"bfgs"</span>, disp<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb23-10"><a></a><span class="bu">print</span>(ord_fit.params.<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>odor_index           0.5314
+volva_present        3.7000
+ring_present         1.7350
+spore_print_brown    1.3535
+spore_print_pink     3.1286
+spore_print_white    4.4486
+0/1                  8.1041
+1/2                  0.9308
+2/3                  0.2730</code></pre>
+</div>
+</div>
+</section>
+<section id="what-that-model-assumes" class="slide level2">
+<h2>What that model assumes</h2>
+<div class="step">
+<p><strong>One coefficient per variable, shared across all the thresholds.</strong> The effect of a volva on the odds of “at least upset stomach” is assumed identical to its effect on the odds of “fatal”. That is the proportional-odds assumption, and it is what buys you the parsimony.</p>
+</div>
+<div class="warn">
+<p>If it is false — if a feature predicts mild illness but not death — the model will average the two and report something true of neither. Check it by fitting separate binary logits at each cut-point and comparing the coefficients. If they diverge, use a multinomial model and give up the ordering.</p>
+</div>
+</section>
+<section id="what-to-report" class="slide level2">
+<h2>What to report</h2>
+<div class="tight">
+<ul>
+<li>Coefficients <strong>as odds ratios</strong>, with intervals</li>
+<li>The <strong>confusion matrix</strong>, not accuracy alone — and always against the majority-class baseline</li>
+<li>The <strong>threshold you chose and the costs that justify it</strong></li>
+<li>Which error you deliberately made more of</li>
+<li>AUC for the model; a chosen point on the ROC curve for the decision</li>
+</ul>
+</div>
+<div class="get">
+<p>A classifier reported without its threshold, or a threshold reported without its costs, is an unfinished piece of work.</p>
+</div>
+</section>
+<section id="key-takeaways" class="slide level2">
+<h2>Key takeaways</h2>
+<div class="tight">
+<ol type="1">
+<li>Model the log-odds; recover probabilities by inverting.</li>
+<li><span class="math inline">\(e^{\beta}\)</span> is an <strong>odds ratio</strong>. It is constant; the probability change it implies is not.</li>
+<li><strong>Accuracy is a trap on imbalanced data.</strong> Always quote the majority-class baseline beside it.</li>
+<li>The threshold is a decision that belongs to the costs, not to the model. <span class="math inline">\(t^\star = c_{FP}/(c_{FP} + c_{FN})\)</span>.</li>
+<li>The best decision rule can have the worse accuracy. If that sounds wrong, the metric is wrong.</li>
+<li>Ordinal models buy parsimony with the proportional-odds assumption. Check it.</li>
+</ol>
+</div>
+</section>
+<section id="references" class="slide level2">
+<h2>References</h2>
+<ul>
+<li>James, Witten, Hastie &amp; Tibshirani (2021). <em>An Introduction to Statistical Learning</em>, 2nd ed., ch.&nbsp;4.</li>
+<li>Hosmer, D., Lemeshow, S. &amp; Sturdivant, R. (2013). <em>Applied Logistic Regression</em>, 3rd ed.&nbsp;Wiley.</li>
+<li>Agresti, A. (2019). <em>An Introduction to Categorical Data Analysis</em>, 3rd ed.&nbsp;Wiley.</li>
+<li>Provost, F. &amp; Fawcett, T. (2013). <em>Data Science for Business</em>. O’Reilly. Ch. 7–8 on cost-sensitive evaluation.</li>
+</ul>
+
+
+</section></section>
+    </div>
+  <div class="quarto-auto-generated-content" style="display: none;">
+<div class="footer footer-default">
+<p>Essentials of Data Science in Python · Session 03 · Thierry Warin, PhD</p>
+</div>
+</div></div>
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script>
+  <script src="../../site_libs/revealjs/dist/reveal.js"></script>
+  <!-- reveal.js plugins -->
+  <script src="../../site_libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="../../site_libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="../../site_libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="../../site_libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="../../site_libs/revealjs/plugin/quarto-support/support.js"></script>
+  
+
+  <script src="../../site_libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="../../site_libs/revealjs/plugin/search/search.js"></script>
+  <script src="../../site_libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script src="../../site_libs/revealjs/plugin/math/math.js"></script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+'controlsAuto': false,
+'previewLinksAuto': false,
+'pdfSeparateFragments': false,
+'autoAnimateEasing': "ease",
+'autoAnimateDuration': 1,
+'autoAnimateUnmatched': true,
+'jumpToSlide': true,
+'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleScrollView(event)\"><kbd>r</kbd> Scroll View Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"5\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'smaller': true,
+ 
+        // Display controls in the bottom right corner
+        controls: true,
+
+        // Help the user learn the controls by providing hints, for example by
+        // bouncing the down arrow when they first encounter a vertical slide
+        controlsTutorial: false,
+
+        // Determines where controls appear, "edges" or "bottom-right"
+        controlsLayout: 'edges',
+
+        // Visibility rule for backwards navigation arrows; "faded", "hidden"
+        // or "visible"
+        controlsBackArrows: 'faded',
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // Display the page number of the current slide
+        slideNumber: 'c/t',
+
+        // 'all', 'print', or 'speaker'
+        showSlideNumber: 'all',
+
+        // Add the current slide number to the URL hash so that reloading the
+        // page/copying the URL will return you to the same slide
+        hash: true,
+
+        // Start with 1 for the hash rather than 0
+        hashOneBasedIndex: false,
+
+        // Flags if we should monitor the hash and change slides accordingly
+        respondToHashChanges: true,
+
+        // Push each slide change to the browser history
+        history: false,
+
+        // Enable keyboard shortcuts for navigation
+        keyboard: true,
+
+        // Enable the slide overview mode
+        overview: true,
+
+        // Disables the default reveal.js slide layout (scaling and centering)
+        // so that you can use custom CSS layout
+        disableLayout: false,
+
+        // Vertical centering of slides
+        center: false,
+
+        // Enables touch navigation on devices with touch input
+        touch: true,
+
+        // Loop the presentation
+        loop: false,
+
+        // Change the presentation direction to be RTL
+        rtl: false,
+
+        // see https://revealjs.com/vertical-slides/#navigation-mode
+        navigationMode: 'linear',
+
+        // Randomizes the order of slides each time the presentation loads
+        shuffle: false,
+
+        // Turns fragments on and off globally
+        fragments: true,
+
+        // Flags whether to include the current fragment in the URL,
+        // so that reloading brings you to the same fragment position
+        fragmentInURL: false,
+
+        // Flags if the presentation is running in an embedded mode,
+        // i.e. contained within a limited portion of the screen
+        embedded: false,
+
+        // Flags if we should show a help overlay when the questionmark
+        // key is pressed
+        help: true,
+
+        // Flags if it should be possible to pause the presentation (blackout)
+        pause: true,
+
+        // Flags if speaker notes should be visible to all viewers
+        showNotes: false,
+
+        // Global override for autoplaying embedded media (null/true/false)
+        autoPlayMedia: null,
+
+        // Global override for preloading lazy-loaded iframes (null/true/false)
+        preloadIframes: null,
+
+        // Number of milliseconds between automatically proceeding to the
+        // next slide, disabled when set to 0, this value can be overwritten
+        // by using a data-autoslide attribute on your slides
+        autoSlide: 0,
+
+        // Stop auto-sliding after user input
+        autoSlideStoppable: true,
+
+        // Use this method for navigation when auto-sliding
+        autoSlideMethod: null,
+
+        // Specify the average time in seconds that you think you will spend
+        // presenting each slide. This is used to show a pacing timer in the
+        // speaker view
+        defaultTiming: null,
+
+        // Enable slide navigation via mouse wheel
+        mouseWheel: false,
+
+        // The display mode that will be used to show slides
+        display: 'block',
+
+        // Hide cursor if inactive
+        hideInactiveCursor: true,
+
+        // Time before the cursor is hidden (in ms)
+        hideCursorTime: 5000,
+
+        // Opens links in an iframe preview overlay
+        previewLinks: false,
+
+        // Transition style (none/fade/slide/convex/concave/zoom)
+        transition: 'none',
+
+        // Transition speed (default/fast/slow)
+        transitionSpeed: 'default',
+
+        // Transition style for full page slide backgrounds
+        // (none/fade/slide/convex/concave/zoom)
+        backgroundTransition: 'none',
+
+        // Number of slides away from the current that are visible
+        viewDistance: 3,
+
+        // Number of slides away from the current that are visible on mobile
+        // devices. It is advisable to set this to a lower number than
+        // viewDistance in order to save resources.
+        mobileViewDistance: 2,
+
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1280,
+
+        height: 760,
+
+        // Factor of the display size that should remain empty around the content
+        margin: 6.0e-2,
+
+        math: {
+          mathjax: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+        // reveal.js plugins
+        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, QuartoSupport,
+
+          RevealMath,
+          RevealNotes,
+          RevealSearch,
+          RevealZoom
+        ]
+      });
+    </script>
+    <script id="quarto-html-after-body" type="application/javascript">
+      window.document.addEventListener("DOMContentLoaded", function (event) {
+        const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
+        tabsets.forEach(function(tabset) {
+          const tabby = new Tabby('#' + tabset.id);
+        });
+        const isCodeAnnotation = (el) => {
+          for (const clz of el.classList) {
+            if (clz.startsWith('code-annotation-')) {                     
+              return true;
+            }
+          }
+          return false;
+        }
+        const onCopySuccess = function(e) {
+          // button target
+          const button = e.trigger;
+          // don't keep focus
+          button.blur();
+          // flash "checked"
+          button.classList.add('code-copy-button-checked');
+          var currentTitle = button.getAttribute("title");
+          button.setAttribute("title", "Copied!");
+          let tooltip;
+          if (window.bootstrap) {
+            button.setAttribute("data-bs-toggle", "tooltip");
+            button.setAttribute("data-bs-placement", "left");
+            button.setAttribute("data-bs-title", "Copied!");
+            tooltip = new bootstrap.Tooltip(button, 
+              { trigger: "manual", 
+                customClass: "code-copy-button-tooltip",
+                offset: [0, -8]});
+            tooltip.show();    
+          }
+          setTimeout(function() {
+            if (tooltip) {
+              tooltip.hide();
+              button.removeAttribute("data-bs-title");
+              button.removeAttribute("data-bs-toggle");
+              button.removeAttribute("data-bs-placement");
+            }
+            button.setAttribute("title", currentTitle);
+            button.classList.remove('code-copy-button-checked');
+          }, 1000);
+          // clear code selection
+          e.clearSelection();
+        }
+        const getTextToCopy = function(trigger) {
+            const codeEl = trigger.previousElementSibling.cloneNode(true);
+            for (const childEl of codeEl.children) {
+              if (isCodeAnnotation(childEl)) {
+                childEl.remove();
+              }
+            }
+            return codeEl.innerText;
+        }
+        const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+          text: getTextToCopy
+        });
+        clipboard.on('success', onCopySuccess);
+        if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+          const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+            text: getTextToCopy,
+            container: window.document.getElementById('quarto-embedded-source-code-modal')
+          });
+          clipboardModal.on('success', onCopySuccess);
+        }
+          var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+          var mailtoRegex = new RegExp(/^mailto:/);
+            var filterRegex = new RegExp('/' + window.location.host + '/');
+          var isInternal = (href) => {
+              return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+          }
+          // Inspect non-navigation links and adorn them if external
+         var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+          for (var i=0; i<links.length; i++) {
+            const link = links[i];
+            if (!isInternal(link.href)) {
+              // undo the damage that might have been done by quarto-nav.js in the case of
+              // links that we want to consider external
+              if (link.dataset.originalHref !== undefined) {
+                link.href = link.dataset.originalHref;
+              }
+            }
+          }
+        function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+          const config = {
+            allowHTML: true,
+            maxWidth: 500,
+            delay: 100,
+            arrow: false,
+            appendTo: function(el) {
+                return el.closest('section.slide') || el.parentElement;
+            },
+            interactive: true,
+            interactiveBorder: 10,
+            theme: 'light-border',
+            placement: 'bottom-start',
+          };
+          if (contentFn) {
+            config.content = contentFn;
+          }
+          if (onTriggerFn) {
+            config.onTrigger = onTriggerFn;
+          }
+          if (onUntriggerFn) {
+            config.onUntrigger = onUntriggerFn;
+          }
+            config['offset'] = [0,0];
+            config['maxWidth'] = 700;
+          window.tippy(el, config); 
+        }
+        const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+        for (var i=0; i<noterefs.length; i++) {
+          const ref = noterefs[i];
+          tippyHover(ref, function() {
+            // use id or data attribute instead here
+            let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+            try { href = new URL(href).hash; } catch {}
+            const id = href.replace(/^#\/?/, "");
+            const note = window.document.getElementById(id);
+            if (note) {
+              return note.innerHTML;
+            } else {
+              return "";
+            }
+          });
+        }
+        const findCites = (el) => {
+          const parentEl = el.parentElement;
+          if (parentEl) {
+            const cites = parentEl.dataset.cites;
+            if (cites) {
+              return {
+                el,
+                cites: cites.split(' ')
+              };
+            } else {
+              return findCites(el.parentElement)
+            }
+          } else {
+            return undefined;
+          }
+        };
+        var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+        for (var i=0; i<bibliorefs.length; i++) {
+          const ref = bibliorefs[i];
+          const citeInfo = findCites(ref);
+          if (citeInfo) {
+            tippyHover(citeInfo.el, function() {
+              var popup = window.document.createElement('div');
+              citeInfo.cites.forEach(function(cite) {
+                var citeDiv = window.document.createElement('div');
+                citeDiv.classList.add('hanging-indent');
+                citeDiv.classList.add('csl-entry');
+                var biblioDiv = window.document.getElementById('ref-' + cite);
+                if (biblioDiv) {
+                  citeDiv.innerHTML = biblioDiv.innerHTML;
+                }
+                popup.appendChild(citeDiv);
+              });
+              return popup.innerHTML;
+            });
+          }
+        }
+      });
+      </script>
+    
+
+</body></html>

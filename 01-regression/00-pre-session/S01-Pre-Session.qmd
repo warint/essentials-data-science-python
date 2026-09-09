@@ -590,5 +590,5 @@ attempted on paper.
 :::
 
 ::: {.muted}
-Session 1: [`README.md`](../README.md) · the notes: [`chapter.md`](../chapter.md)
+Session 1: [`README.md`](https://github.com/warint/essentials-data-science-python/blob/main/01-regression/README.md) · the notes: [`chapter.md`](https://github.com/warint/essentials-data-science-python/blob/main/01-regression/chapter.md)
 :::

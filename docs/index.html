@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Essentials of Data Science in Python</title>
+<style>
+  :root {
+    --paper: #F7F4ED; --ink: #222; --muted: #6B6B67;
+    --red: #E3120B; --line: #D8D3C8; --blue: #356B8C;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font: 16px/1.55 'Helvetica Neue', Inter, system-ui, -apple-system, sans-serif;
+  }
+  .wrap { max-width: 62rem; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  header { border-bottom: 3px solid var(--red); padding-bottom: 1.4rem; margin-bottom: 2rem; }
+  h1 { font-size: clamp(1.7rem, 4vw, 2.5rem); margin: 0 0 .4rem; letter-spacing: -.02em; }
+  .sub { color: var(--muted); font-size: 1.05rem; margin: 0; }
+  .byline { margin-top: .9rem; font-size: .92rem; color: var(--muted); }
+  .lede { font-size: 1.05rem; max-width: 46rem; }
+  .lede strong { color: var(--red); }
+  .card {
+    display: flex; gap: 1.2rem; padding: 1.5rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .num {
+    flex: 0 0 2.6rem; font-size: 2rem; font-weight: 700;
+    color: var(--line); line-height: 1; text-align: right;
+  }
+  .body { flex: 1 1 auto; min-width: 0; }
+  .card h2 { font-size: 1.22rem; margin: 0 0 .25rem; }
+  .puzzle { margin: 0; font-weight: 600; color: var(--red); font-size: .98rem; }
+  .brief { margin: .35rem 0 .5rem; color: var(--ink); }
+  .trap { margin: .1rem 0 .9rem; color: var(--muted); font-size: .93rem; }
+  .tl {
+    display: inline-block; font-size: .7rem; letter-spacing: .07em;
+    text-transform: uppercase; font-weight: 700; color: var(--red);
+    border: 1px solid var(--red); border-radius: 2px;
+    padding: 0 .3rem; margin-right: .35rem; vertical-align: 1px;
+  }
+  .links { margin: 0 0 .5rem; display: flex; flex-wrap: wrap; gap: .5rem; }
+  a.deck {
+    display: inline-block; text-decoration: none; color: var(--ink);
+    border: 1px solid var(--ink); border-radius: 2px;
+    padding: .3rem .8rem; font-size: .87rem; font-weight: 600;
+    transition: background .12s, color .12s;
+  }
+  a.deck:hover { background: var(--ink); color: var(--paper); }
+  .deck.missing {
+    display: inline-block; border: 1px dashed var(--line); border-radius: 2px;
+    padding: .3rem .8rem; font-size: .87rem; color: var(--line);
+  }
+  .reading { margin: 0; font-size: .85rem; color: var(--muted); }
+  .reading a { color: var(--blue); }
+  footer { margin-top: 2.5rem; font-size: .88rem; color: var(--muted); }
+  footer a { color: var(--blue); }
+  code {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: .88em; background: rgba(0,0,0,.045);
+    padding: .1em .35em; border-radius: 2px;
+  }
+  @media (max-width: 34rem) {
+    .card { flex-direction: column; gap: .3rem; }
+    .num { text-align: left; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Essentials of Data Science in Python</h1>
+      <p class="sub">Six sessions, from a straight line to modern
+         difference-in-differences.</p>
+      <p class="byline">Thierry Warin, PhD · HEC Montréal</p>
+    </header>
+
+    <p class="lede">
+      Every dataset in this course is generated locally from a fixed seed, and
+      every one contains a <strong>planted answer</strong> you can check yourself
+      against — plus a <strong>trap</strong>: a method most people reach for
+      first, that reports a healthy fit statistic and gets the wrong answer.
+      Finding the trap is the exercise.
+    </p>
+
+    <main>
+      <article class="card">
+        <div class="num">1</div>
+        <div class="body">
+          <h2>Regression</h2>
+          <p class="puzzle">The Roller Coaster Problem</p>
+          <p class="brief">A law of physics hides in two columns. Find its exponent.</p>
+          <p class="trap"><span class="tl">The trap</span> A straight line fits at <em>R²</em> = 0.96 and reports a meaningless slope.</p>
+          <p class="links"><a class="deck" href="01-regression/00-pre-session/S01-Pre-Session.html">Pre-session</a><a class="deck" href="01-regression/01-lecture/S01-Lecture.html">Lecture</a><a class="deck" href="01-regression/02-practice/S01-Practice.html">Practice</a></p>
+          <p class="reading">Reading: <a href="https://warint.github.io/quantitative-methods/book/session-02.html">ch.&nbsp;2</a> · <a href="https://warint.github.io/quantitative-methods/book/session-03.html">ch.&nbsp;3</a></p>
+        </div>
+      </article>
+      <article class="card">
+        <div class="num">2</div>
+        <div class="body">
+          <h2>Advanced Regression</h2>
+          <p class="puzzle">The Sourdough Optimum</p>
+          <p class="brief">240 loaves, eight bakers. Hand in the recipe that maximises rise.</p>
+          <p class="trap"><span class="tl">The trap</span> Omit the baker effects and the answer is four points out, at <em>R²</em> = 0.90.</p>
+          <p class="links"><a class="deck" href="02-advanced-regression/00-pre-session/S02-Pre-Session.html">Pre-session</a><a class="deck" href="02-advanced-regression/01-lecture/S02-Lecture.html">Lecture</a><a class="deck" href="02-advanced-regression/02-practice/S02-Practice.html">Practice</a></p>
+          <p class="reading">Reading: <a href="https://warint.github.io/quantitative-methods/book/session-06.html">ch.&nbsp;6</a></p>
+        </div>
+      </article>
+      <article class="card">
+        <div class="num">3</div>
+        <div class="body">
+          <h2>Logistic Regression</h2>
+          <p class="puzzle">The Mushroom Forager</p>
+          <p class="brief">Decide which ones you would eat.</p>
+          <p class="trap"><span class="tl">The trap</span> The accuracy-maximising threshold poisons you one meal in four.</p>
+          <p class="links"><a class="deck" href="03-logistic-regression/00-pre-session/S03-Pre-Session.html">Pre-session</a><a class="deck" href="03-logistic-regression/01-lecture/S03-Lecture.html">Lecture</a><a class="deck" href="03-logistic-regression/02-practice/S03-Practice.html">Practice</a></p>
+          <p class="reading">Reading: <a href="https://warint.github.io/quantitative-methods/book/session-04.html">ch.&nbsp;4</a></p>
+        </div>
+      </article>
+      <article class="card">
+        <div class="num">4</div>
+        <div class="body">
+          <h2>Ridge, Lasso, Elastic Net</h2>
+          <p class="puzzle">The Secret Recipe</p>
+          <p class="brief">Sixty bakes, two hundred ingredients, seven that matter.</p>
+          <p class="trap"><span class="tl">The trap</span> The lasso silently zeroes one of two identical ingredients.</p>
+          <p class="links"><a class="deck" href="04-elastic-net/00-pre-session/S04-Pre-Session.html">Pre-session</a><a class="deck" href="04-elastic-net/01-lecture/S04-Lecture.html">Lecture</a><a class="deck" href="04-elastic-net/02-practice/S04-Practice.html">Practice</a></p>
+          <p class="reading">Reading: <a href="https://warint.github.io/quantitative-methods/book/session-05.html">ch.&nbsp;5</a> · <a href="https://warint.github.io/quantitative-methods/book/session-08.html">ch.&nbsp;8</a></p>
+        </div>
+      </article>
+      <article class="card">
+        <div class="num">5</div>
+        <div class="body">
+          <h2>Classification</h2>
+          <p class="puzzle">The Bestiary</p>
+          <p class="brief">Four species, and a decision boundary you can check against the truth.</p>
+          <p class="trap"><span class="tl">The trap</span> Blindness to a 2% species costs 1.7 points of accuracy.</p>
+          <p class="links"><a class="deck" href="05-classification/00-pre-session/S05-Pre-Session.html">Pre-session</a><a class="deck" href="05-classification/01-lecture/S05-Lecture.html">Lecture</a><a class="deck" href="05-classification/02-practice/S05-Practice.html">Practice</a></p>
+          <p class="reading">Reading: <a href="https://warint.github.io/quantitative-methods/book/session-08.html">ch.&nbsp;8</a></p>
+        </div>
+      </article>
+      <article class="card">
+        <div class="num">6</div>
+        <div class="body">
+          <h2>Causal Inference</h2>
+          <p class="puzzle">The Cat Café Effect</p>
+          <p class="brief">186 cafés adopt a resident cat on staggered dates. Did it work?</p>
+          <p class="trap"><span class="tl">The trap</span> Two-way fixed effects returns <strong>−2.09, <em>p</em> = 0.00001</strong> when every true effect is positive.</p>
+          <p class="links"><a class="deck" href="06-causal-inference-did/00-pre-session/S06-Pre-Session.html">Pre-session</a><a class="deck" href="06-causal-inference-did/01-lecture/S06-Lecture.html">Lecture</a><a class="deck" href="06-causal-inference-did/02-practice/S06-Practice.html">Practice</a></p>
+          <p class="reading">Reading: <a href="https://warint.github.io/quantitative-methods/book/session-10.html">ch.&nbsp;10</a> · <a href="https://warint.github.io/quantitative-methods/book/session-11.html">ch.&nbsp;11</a></p>
+        </div>
+      </article>
+    </main>
+
+    <footer>
+      <p>
+        Source, data generators and lecture notes:
+        <a href="https://github.com/warint/essentials-data-science-python">github.com/warint/essentials-data-science-python</a><br>
+        Companion volume:
+        <a href="https://warint.github.io/quantitative-methods/book/">Quantitative Methods in International Business with Python</a>
+      </p>
+      <p>
+        Decks are reveal.js — <code>→</code> and <code>←</code> to navigate,
+        <code>Esc</code> for the overview, <code>?</code> for all shortcuts.
+      </p>
+      <p>
+        Teaching materials CC BY-NC 4.0 · code MIT · © 2026 Thierry Warin
+      </p>
+    </footer>
+  </div>
+</body>
+</html>

@@ -4,13 +4,20 @@ __pycache__/
 .venv/
 .ruff_cache/
 
-# Quarto build cache and rendered decks. The .qmd source is committed; the
-# renders are not — GitHub will not display an HTML file when you click it, and
-# each self-contained deck is several megabytes.
+# Quarto build cache, and the self-contained decks rendered next to their
+# sources. The .qmd source is committed; those renders are not — each one
+# inlines reveal.js and comes out around 3.3 MB, and GitHub will not display an
+# HTML file when you click it anyway.
 #   Regenerate with: scripts/render.sh
 .quarto/
 *_files/
 *.html
+
+# ...except the GitHub Pages site, which must be committed for Pages to serve
+# it. It is built by scripts/publish.sh with resource embedding turned off, so
+# all eighteen decks share one copy of reveal.js: 7 MB in total rather than 61.
+!docs/**
+!docs/.nojekyll
 
 # Generated data. Every dataset in this course is built from a fixed seed by
 # essentials.py, so the cache is reproducible rather than precious. Deleting it

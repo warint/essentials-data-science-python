@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-html/tabby.min.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/light-border.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-e1a5c8363afafaef2c763b6775fbf3ca.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.7.31">
+
+  <meta name="author" content="Thierry Warin, PhD">
+  <title>Essentials of Data Science in Python – Session 1: Before the session</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="../../site_libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="../../site_libs/revealjs/dist/reveal.css">
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+      vertical-align: middle;
+    }
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      { color: #003b4f; background-color: #f1f3f5; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #003b4f; } /* Normal */
+    code span.al { color: #ad0000; } /* Alert */
+    code span.an { color: #5e5e5e; } /* Annotation */
+    code span.at { color: #657422; } /* Attribute */
+    code span.bn { color: #ad0000; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #003b4f; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #20794d; } /* Char */
+    code span.cn { color: #8f5902; } /* Constant */
+    code span.co { color: #5e5e5e; } /* Comment */
+    code span.cv { color: #5e5e5e; font-style: italic; } /* CommentVar */
+    code span.do { color: #5e5e5e; font-style: italic; } /* Documentation */
+    code span.dt { color: #ad0000; } /* DataType */
+    code span.dv { color: #ad0000; } /* DecVal */
+    code span.er { color: #ad0000; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #ad0000; } /* Float */
+    code span.fu { color: #4758ab; } /* Function */
+    code span.im { color: #00769e; } /* Import */
+    code span.in { color: #5e5e5e; } /* Information */
+    code span.kw { color: #003b4f; font-weight: bold; } /* Keyword */
+    code span.op { color: #5e5e5e; } /* Operator */
+    code span.ot { color: #003b4f; } /* Other */
+    code span.pp { color: #ad0000; } /* Preprocessor */
+    code span.sc { color: #5e5e5e; } /* SpecialChar */
+    code span.ss { color: #20794d; } /* SpecialString */
+    code span.st { color: #20794d; } /* String */
+    code span.va { color: #111111; } /* Variable */
+    code span.vs { color: #20794d; } /* VerbatimString */
+    code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="../../site_libs/revealjs/dist/theme/quarto-21fffaf735640ba0afcef080c07e331f.css">
+  <link href="../../site_libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="../../site_libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="../../site_libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="../../site_libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <style type="text/css">
+    .reveal div.sourceCode {
+      margin: 0;
+      overflow: auto;
+    }
+    .reveal div.hanging-indent {
+      margin-left: 1em;
+      text-indent: -1em;
+    }
+    .reveal .slide:not(.center) {
+      height: 100%;
+    }
+    .reveal .slide.scrollable {
+      overflow-y: auto;
+    }
+    .reveal .footnotes {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide .absolute {
+      position: absolute;
+      display: block;
+    }
+    .reveal .footnotes ol {
+      counter-reset: ol;
+      list-style-type: none; 
+      margin-left: 0;
+    }
+    .reveal .footnotes ol li:before {
+      counter-increment: ol;
+      content: counter(ol) ". "; 
+    }
+    .reveal .footnotes ol li > p:first-child {
+      display: inline-block;
+    }
+    .reveal .slide ul,
+    .reveal .slide ol {
+      margin-bottom: 0.5em;
+    }
+    .reveal .slide ul li,
+    .reveal .slide ol li {
+      margin-top: 0.4em;
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide ul[role="tablist"] li {
+      margin-bottom: 0;
+    }
+    .reveal .slide ul li > *:first-child,
+    .reveal .slide ol li > *:first-child {
+      margin-block-start: 0;
+    }
+    .reveal .slide ul li > *:last-child,
+    .reveal .slide ol li > *:last-child {
+      margin-block-end: 0;
+    }
+    .reveal .slide .columns:nth-child(3) {
+      margin-block-start: 0.8em;
+    }
+    .reveal blockquote {
+      box-shadow: none;
+    }
+    .reveal .tippy-content>* {
+      margin-top: 0.2em;
+      margin-bottom: 0.7em;
+    }
+    .reveal .tippy-content>*:last-child {
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide > img.stretch.quarto-figure-center,
+    .reveal .slide > img.r-stretch.quarto-figure-center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-left,
+    .reveal .slide > img.r-stretch.quarto-figure-left  {
+      display: block;
+      margin-left: 0;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-right,
+    .reveal .slide > img.r-stretch.quarto-figure-right  {
+      display: block;
+      margin-left: auto;
+      margin-right: 0; 
+    }
+  </style>
+</head>
+<body class="quarto-light">
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide" class="quarto-title-block center">
+  <h1 class="title">Session 1: Before the session</h1>
+  <p class="subtitle">VS Codium, a local model, and then the straight line</p>
+
+<div class="quarto-title-authors">
+<div class="quarto-title-author">
+<div class="quarto-title-author-name">
+Thierry Warin, PhD 
+</div>
+        <p class="quarto-title-affiliation">
+            HEC Montréal
+          </p>
+    </div>
+</div>
+
+</section>
+<section id="outline-before-the-first-class" class="slide level2 center scrollable">
+<h2>Outline · Before the first class</h2>
+<ol type="1">
+<li>This one is longer than the others</li>
+<li>The toolchain, and why these four</li>
+<li>Install VS Codium</li>
+<li>Install Python</li>
+<li>Make a virtual environment</li>
+<li>Get the course, and check it works</li>
+<li>Install Ollama and pull the model</li>
+<li>Point Continue at it</li>
+<li>Enough pandas to start</li>
+<li>Enough inference to read a coefficient</li>
+<li>Readings</li>
+<li>Self-check</li>
+<li>What session 1 will ask of you</li>
+</ol>
+</section>
+<section>
+<section id="before-the-session" class="title-slide slide level1 center" data-background-color="#E3120B" style="color:#F7F4ED">
+<h1>Before the session</h1>
+
+</section>
+<section id="vs-codium-a-local-model-and-then-the-straight-line" style="margin-top: 1.0em; color:#F7F4ED">
+<h3>VS Codium, a local model, and then the straight line</h3>
+</section>
+<section id="this-one-is-longer-than-the-others" class="slide level2">
+<h2>1 · This one is longer than the others</h2>
+<p>This is the only pre-session that installs anything. Sessions 2 to 6 assume everything below is working, and none of them will ask you to install again.</p>
+<p><strong>The work, and roughly how long each part takes:</strong></p>
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<tbody>
+<tr class="odd">
+<td><strong>1</strong></td>
+<td>Install VS Codium</td>
+<td>10 min</td>
+</tr>
+<tr class="even">
+<td><strong>2</strong></td>
+<td>Install Python and make a virtual environment</td>
+<td>30 min</td>
+</tr>
+<tr class="odd">
+<td><strong>3</strong></td>
+<td>Clone the course and run the verification suite</td>
+<td>10 min</td>
+</tr>
+<tr class="even">
+<td><strong>4</strong></td>
+<td>Install Ollama, pull Qwen 2.5 Coder, configure Continue</td>
+<td>30 min</td>
+</tr>
+<tr class="odd">
+<td><strong>5</strong></td>
+<td>Read the assigned chapters</td>
+<td>60 min</td>
+</tr>
+<tr class="even">
+<td><strong>6</strong></td>
+<td>Work through the pandas section, at the keyboard</td>
+<td>30 min</td>
+</tr>
+<tr class="odd">
+<td><strong>7</strong></td>
+<td>Read the inference section, and attempt the self-check</td>
+<td>30 min</td>
+</tr>
+</tbody>
+</table>
+<div class="warn">
+<p>Budget three hours, once. Doing it in the ten minutes before class does not work, and every subsequent session depends on it. Steps 1 to 4 never have to be repeated.</p>
+</div>
+</section>
+<section id="the-toolchain-and-why-these-four" class="slide level2">
+<h2>2 · The toolchain, and why these four</h2>
+<div class="tight">
+<table class="caption-top">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<tbody>
+<tr class="odd">
+<td><strong>1</strong></td>
+<td><strong>VS Codium</strong></td>
+<td>the editor — VS Code with the telemetry removed</td>
+</tr>
+<tr class="even">
+<td><strong>2</strong></td>
+<td><strong>Python 3.12+</strong></td>
+<td>in a virtual environment, one per project</td>
+</tr>
+<tr class="odd">
+<td><strong>3</strong></td>
+<td><strong>Ollama + Qwen 2.5 Coder</strong></td>
+<td>a language model running <strong>on your machine</strong></td>
+</tr>
+<tr class="even">
+<td><strong>4</strong></td>
+<td><strong>Continue</strong></td>
+<td>that model, inside the editor, beside the file</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="step">
+<p>All four are open source, none requires an account or a subscription, and after setup <strong>none of them needs a network connection</strong>. That is not frugality — each choice teaches something the alternative would hide.</p>
+</div>
+</section>
+<section id="why-vs-codium-rather-than-vs-code" class="slide level2">
+<h2>Why VS Codium rather than VS Code</h2>
+<p>Visual Studio Code is developed in the open under a permissive licence. The binary Microsoft distributes is not the same artefact: it adds telemetry and ships under a proprietary licence, and its extension marketplace is a Microsoft service with its own terms. <strong>VS Codium is the identical source, compiled without the telemetry and the branding.</strong></p>
+<div class="step">
+<p>The practical reason is the habit rather than this course’s data. The teaching data here is generated on your laptop and could not matter less. The habit is for the working file you will one day open under a non-disclosure agreement or a research ethics protocol. An editor that reports usage to a third party should be a decision you make once, deliberately — not a default you inherited.</p>
+</div>
+</section>
+<section id="why-a-local-model-rather-than-a-hosted-one" class="slide level2">
+<h2>Why a local model rather than a hosted one</h2>
+<p>The model you will install is Chinese, developed by Alibaba. It is worth being direct about that, because the reflex is to treat provenance as the security question, and here it is not.</p>
+<div class="tight">
+<table class="caption-top">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<tbody>
+<tr class="odd">
+<td><strong>Open weights, on your machine</strong></td>
+<td>It cannot send your data anywhere. There is no connection to send it over — and you can verify that rather than trust it: turn the wifi off and watch it keep working.</td>
+</tr>
+<tr class="even">
+<td><strong>A closed model behind an API</strong></td>
+<td>Receives everything you type, by construction, wherever the company is domiciled.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="step">
+<p>On the dimension people actually care about — <em>does my work leave this room</em> — open weights running locally are the stronger guarantee, and the nationality of the developer does not enter into it.</p>
+</div>
+</section>
+<section id="and-why-a-small-one" class="slide level2">
+<h2>And why a small one</h2>
+<p>Qwen 2.5 Coder is a <strong>vertical</strong> model: specialised for code, and consequently far better at code, for its size, than a general assistant many times larger.</p>
+<div class="tight">
+<ul>
+<li>A 3-billion-parameter model on a laptop is not competitive with a frontier system at open-ended reasoning.</li>
+<li>At completing a pandas idiom, or explaining what a function does, it is entirely adequate.</li>
+</ul>
+</div>
+<div class="check">
+<p>Choosing a small specialised model over a large general one — and knowing which tasks admit that trade — is the applied judgement that separates a sensible AI deployment from an expensive one. It is also, almost exactly, the judgement session 4 makes about a deliberately biased estimator.</p>
+</div>
+</section>
+<section id="install-vs-codium" class="slide level2">
+<h2>3 · Install VS Codium</h2>
+<p>Download from <strong><a href="https://vscodium.com">vscodium.com</a></strong> and install it as you would any application.</p>
+<div class="warn">
+<p>VS Codium uses the <strong>Open VSX</strong> registry rather than Microsoft’s Marketplace. Some extensions are missing from it. The two you need are both there.</p>
+</div>
+<p>Install these from the Extensions panel (<code>Cmd/Ctrl + Shift + X</code>):</p>
+<div class="tight">
+<ul>
+<li><strong>Python</strong> — by Microsoft, on Open VSX as <code>ms-python.python</code></li>
+<li><strong>Continue</strong> — the assistant panel, which part 7 points at a model</li>
+</ul>
+</div>
+<div class="step">
+<p>From here on, <strong>always use the VS Codium terminal</strong> — <code>Ctrl +</code> <code></code> to open it. Not the macOS Terminal, not PowerShell. It starts inside your project folder and it sees your virtual environment.</p>
+</div>
+</section>
+<section id="a-note-on-path-that-will-save-you-an-hour" class="slide level2">
+<h2>A note on PATH that will save you an hour</h2>
+<p>A terminal reads your PATH <strong>once, when it opens</strong>. VS Codium reads it once, when <em>it</em> opens, and every terminal tab inherits that copy.</p>
+<div class="tight">
+<table class="caption-top">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>After installing</th>
+<th>To make it visible</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>A <strong>VS Codium extension</strong></td>
+<td><em>Developer: Reload Window</em> — <code>Cmd/Ctrl + Shift + P</code></td>
+</tr>
+<tr class="even">
+<td><strong>Python</strong> or <strong>git</strong></td>
+<td>Quit VS Codium entirely and reopen it</td>
+</tr>
+<tr class="odd">
+<td><strong>Ollama</strong></td>
+<td>A new terminal tab is usually enough — <code>+</code> in the terminal panel</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="muted">
+<p>“But I just installed it” is the single most common problem in this pre-session, and it is almost always this.</p>
+</div>
+</section>
+<section id="install-python" class="slide level2">
+<h2>4 · Install Python</h2>
+<p>You want <strong>3.12 or 3.13</strong>. Anything older than 3.10 will fail on syntax used throughout the course.</p>
+<p><strong>macOS</strong> — check what you have, then install if needed:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a></a><span class="ex">python3</span> <span class="at">--version</span></span>
+<span id="cb1-2"><a></a><span class="ex">brew</span> install python@3.12          <span class="co"># if Homebrew is installed</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p><strong>Windows</strong> — download the installer from <a href="https://www.python.org/downloads/">python.org</a>.</p>
+<div class="warn">
+<p>On Windows, tick <strong>“Add python.exe to PATH”</strong> on the first screen of the installer. If you miss it, <code>python</code> will not be a command your terminal knows, and the error message will not tell you why.</p>
+</div>
+<p><strong>Linux</strong> — you already have it. <code>python3 --version</code> to confirm.</p>
+</section>
+<section id="make-a-virtual-environment" class="slide level2">
+<h2>5 · Make a virtual environment</h2>
+<p>A virtual environment is a folder holding one project’s packages. It exists so that installing something for this course cannot break something else on your machine.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a></a><span class="ex">python3</span> <span class="at">-m</span> venv .venv</span>
+<span id="cb2-2"><a></a><span class="bu">source</span> .venv/bin/activate          <span class="co"># macOS and Linux</span></span>
+<span id="cb2-3"><a></a><span class="ex">.venv\Scripts\activate</span>             <span class="co"># Windows</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Your prompt now starts with <code>(.venv)</code>. That is the whole signal that it worked.</p>
+<div class="warn">
+<p>You must activate it <strong>every time you open a new terminal</strong>. Ninety per cent of “it says the module is not installed” is a terminal where nobody ran <code>activate</code>.</p>
+</div>
+</section>
+<section id="get-the-course-and-check-it-works" class="slide level2">
+<h2>6 · Get the course, and check it works</h2>
+<div class="sourceCode" id="cb3"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a></a><span class="fu">git</span> clone https://github.com/warint/essentials-data-science-python.git</span>
+<span id="cb3-2"><a></a><span class="bu">cd</span> essentials-data-science-python</span>
+<span id="cb3-3"><a></a><span class="bu">source</span> .venv/bin/activate</span>
+<span id="cb3-4"><a></a><span class="ex">pip</span> install <span class="at">-r</span> requirements.txt</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Then run the suite that checks the course data is intact:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a></a><span class="ex">python</span> scripts/verify_puzzles.py</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="check">
+<p>You should see 39 lines beginning <code>[  ok  ]</code> and, at the end, <strong>All planted answers are present and all traps still spring.</strong></p>
+</div>
+<div class="muted">
+<p>It takes about twenty seconds. If a line says <code>FAIL</code>, bring the output to class — that is a bug in the course, not in your setup.</p>
+</div>
+</section>
+<section id="what-that-suite-just-did" class="slide level2">
+<h2>What that suite just did</h2>
+<p>It generated all six course datasets and checked that each one still contains the answer it is supposed to contain.</p>
+<p>Every dataset in this course is <strong>built on your machine from a fixed seed</strong>. Nothing is downloaded. Three things follow, and they shape how the sessions run:</p>
+<div class="tight">
+<ul>
+<li>The practice works with the wifi off.</li>
+<li>Your numbers and your neighbour’s numbers are <strong>identical</strong>, so if you disagree, one of you has made an analytical mistake — which is the useful kind of argument.</li>
+<li>There is a <strong>right answer</strong>, and you can check whether you found it.</li>
+</ul>
+</div>
+</section>
+<section id="install-ollama-and-pull-the-model" class="slide level2">
+<h2>7 · Install Ollama and pull the model</h2>
+<p>Install <strong><a href="https://ollama.com">ollama.com</a></strong>, then, in the VS Codium terminal:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a></a><span class="ex">ollama</span> <span class="at">--version</span></span>
+<span id="cb5-2"><a></a><span class="ex">ollama</span> pull qwen2.5-coder:3b</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Check that it answers:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a></a><span class="ex">ollama</span> run qwen2.5-coder:3b <span class="st">"In one sentence, what is a residual?"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="check">
+<p><strong>Now turn your wifi off and run that again.</strong> It should still answer. That is the whole point of running it locally, and it is worth seeing once with your own eyes rather than taking on trust.</p>
+</div>
+<div class="muted">
+<p><code>ollama: command not found</code> immediately after installing? Open a <strong>new terminal</strong>. On Windows, quit VS Codium and reopen it — see the PATH slide.</p>
+</div>
+</section>
+<section id="which-size-to-pull" class="slide level2">
+<h2>Which size to pull</h2>
+<p><strong>Start with the 3b.</strong> It is the one that works on a laptop without a dedicated graphics card, which is most laptops.</p>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th></th>
+<th>3b</th>
+<th>7b</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Disk</strong></td>
+<td>1.9 GB</td>
+<td>4.7 GB</td>
+</tr>
+<tr class="even">
+<td><strong>RAM while loaded</strong></td>
+<td>~3.4 GB</td>
+<td>~8 GB</td>
+</tr>
+<tr class="odd">
+<td><strong>Needs a GPU</strong></td>
+<td>no</td>
+<td>not required, but painful without</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb7"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a></a><span class="ex">ollama</span> pull qwen2.5-coder:7b     <span class="co"># only if the 3b already runs on the GPU</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="warn">
+<p>Only try the 7b once <code>ollama ps</code> reports <strong>100% GPU</strong> on the 3b. If it already says 100% CPU, the 7b is not a better model on your machine — it gives a comparable answer to the same question at roughly a quarter of the speed, and a tool slow enough to interrupt your thinking is a tool you stop using.</p>
+</div>
+<div class="muted">
+<p>Whichever you pull, put <strong>that exact name</strong> in <code>config.yaml</code>. A name that is not installed produces a confusing error rather than a missing-model one.</p>
+</div>
+<div class="muted">
+<p>Rule of thumb for any model: it needs its <strong>file size plus about a fifth</strong> in memory.</p>
+</div>
+</section>
+<section id="check-the-context-window" class="slide level2">
+<h2>Check the context window</h2>
+<p>The model is sent your file. If its context window is small it <strong>silently drops the beginning</strong> and answers about the part it can still see — which looks like stupidity rather than truncation.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a></a><span class="ex">ollama</span> run qwen2.5-coder:3b <span class="st">"hi"</span></span>
+<span id="cb8-2"><a></a><span class="ex">ollama</span> ps</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode numberSource text number-lines code-with-copy"><code class="sourceCode"><span id="cb9-1"><a></a>NAME                SIZE      PROCESSOR    CONTEXT    UNTIL</span>
+<span id="cb9-2"><a></a>qwen2.5-coder:3b    3.1 GB    100% GPU     32768      4 minutes from now</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="check">
+<p><strong>8192 or more — do nothing.</strong> <strong>2048 or 4096 — raise it</strong> with <code>/set parameter num_ctx 8192</code> inside <code>ollama run</code>, or via Ollama’s settings.</p>
+</div>
+<div class="warn">
+<p>This differs by platform, so check rather than assume. The macOS app asks for a large window and the model caps it at its own maximum. <strong>On Windows the default is often 4096</strong>, which any real file will outgrow.</p>
+</div>
+</section>
+<section id="point-continue-at-it" class="slide level2">
+<h2>8 · Point Continue at it</h2>
+<p>Continue is installed but talks to nothing until it has a config file. The easiest way to open it is from inside Continue:</p>
+<div class="step">
+<p>Open the Continue panel → the <strong>gear icon</strong> at its top right → <em>Configure</em>. It opens <code>config.yaml</code> in the editor, creating it if it does not exist.</p>
+</div>
+<p>Or from the terminal — the file lives in your home directory:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a></a><span class="fu">mkdir</span> <span class="at">-p</span> ~/.continue <span class="kw">&amp;&amp;</span> <span class="ex">open</span> <span class="at">-e</span> ~/.continue/config.yaml            <span class="co"># macOS</span></span>
+<span id="cb10-2"><a></a><span class="fu">mkdir</span> <span class="at">-p</span> ~/.continue <span class="kw">&amp;&amp;</span> <span class="va">${EDITOR</span><span class="op">:-</span>nano<span class="va">}</span> ~/.continue/config.yaml    <span class="co"># Linux</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode numberSource powershell number-lines code-with-copy"><code class="sourceCode powershell"><span id="cb11-1"><a></a><span class="fu">New-Item</span> <span class="op">-</span>ItemType Directory <span class="op">-</span>Force <span class="st">"</span><span class="va">$HOME</span><span class="st">\.continue"</span> <span class="op">|</span> <span class="fu">Out-Null</span></span>
+<span id="cb11-2"><a></a>notepad <span class="st">"</span><span class="va">$HOME</span><span class="st">\.continue\config.yaml"</span>                              <span class="co"># Windows</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="what-to-put-in-it" class="slide level2">
+<h2>What to put in it</h2>
+<div class="sourceCode" id="cb12"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb12-1"><a></a><span class="fu">name</span><span class="kw">:</span><span class="at"> essentials</span></span>
+<span id="cb12-2"><a></a><span class="fu">version</span><span class="kw">:</span><span class="at"> </span><span class="fl">0.0.1</span></span>
+<span id="cb12-3"><a></a><span class="fu">models</span><span class="kw">:</span></span>
+<span id="cb12-4"><a></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Local coder</span></span>
+<span id="cb12-5"><a></a><span class="at">    </span><span class="fu">provider</span><span class="kw">:</span><span class="at"> ollama</span></span>
+<span id="cb12-6"><a></a><span class="at">    </span><span class="fu">model</span><span class="kw">:</span><span class="at"> qwen2.5-coder:3b</span><span class="co">     # the size you actually pulled</span></span>
+<span id="cb12-7"><a></a><span class="at">    </span><span class="fu">roles</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">chat</span><span class="kw">,</span><span class="at"> edit</span><span class="kw">,</span><span class="at"> apply</span><span class="kw">]</span></span>
+<span id="cb12-8"><a></a><span class="fu">context</span><span class="kw">:</span></span>
+<span id="cb12-9"><a></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">provider</span><span class="kw">:</span><span class="at"> file</span></span>
+<span id="cb12-10"><a></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">provider</span><span class="kw">:</span><span class="at"> code</span></span>
+<span id="cb12-11"><a></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">provider</span><span class="kw">:</span><span class="at"> diff</span></span>
+<span id="cb12-12"><a></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">provider</span><span class="kw">:</span><span class="at"> terminal</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="check">
+<p>Open a <code>.py</code> file, select a few lines, and press <code>Cmd/Ctrl + L</code>. If the panel answers, you are finished with setup for the whole term.</p>
+</div>
+<div class="warn">
+<p>Put the model name you <strong>actually pulled</strong> in <code>config.yaml</code>. A name that is not installed produces a confusing error rather than a missing-model one.</p>
+<p>Nothing at all? No model server is listening. Start Ollama — the app on macOS and Windows, <code>sudo systemctl start ollama</code> on Linux.</p>
+</div>
+</section>
+<section id="what-the-model-is-for-and-what-it-is-not" class="slide level2">
+<h2>What the model is for, and what it is not</h2>
+<p>You will read far more code this term than you write: the session decks, the starter scripts, your own work from three weeks ago. A model beside the file answers <em>“what does this do”</em> without your leaving the file.</p>
+<div class="tight">
+<table class="caption-top">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Good use</th>
+<th>Poor use</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>“Explain what this block does”</td>
+<td>“Write my analysis”</td>
+</tr>
+<tr class="even">
+<td>“Why does this throw a KeyError?”</td>
+<td>“Is this result significant?”</td>
+</tr>
+<tr class="odd">
+<td>“What is the pandas idiom for this?”</td>
+<td>“Interpret this coefficient for me”</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="get">
+<p><strong>The standing rule of this course.</strong> Every deliverable must document at least one instance where you identified a model output as wrong, unverifiable or misleading, and explain how you established that. You are never penalised for using the model. You are penalised for using it uncritically.</p>
+</div>
+<div class="muted">
+<p>The honest limitation, stated once: on a machine without a graphics card, a small model is a capable <strong>reader</strong> and an unreliable <strong>editor</strong>. It will explain a function correctly and then fail to produce a well-formed multi-file edit, because emitting a precise diff is a harder task than describing code. That is a fact about small models rather than about you.</p>
+</div>
+</section>
+<section id="enough-pandas-to-start" class="slide level2">
+<h2>9 · Enough pandas to start</h2>
+<p>Do this at the keyboard, not by reading. Activate the environment, then:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a></a><span class="im">import</span> essentials <span class="im">as</span> ess</span>
+<span id="cb13-2"><a></a></span>
+<span id="cb13-3"><a></a>ess.catalog()                     <span class="co"># the six datasets, and what each one asks</span></span>
+<span id="cb13-4"><a></a>d <span class="op">=</span> ess.load(<span class="st">"coasters"</span>)          <span class="co"># session 1's data</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Now look at it. These five are the ones you will use constantly:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a></a>d.shape                           <span class="co"># (rows, columns)</span></span>
+<span id="cb14-2"><a></a>d.head()                          <span class="co"># the first five rows</span></span>
+<span id="cb14-3"><a></a>d.dtypes                          <span class="co"># what type each column is</span></span>
+<span id="cb14-4"><a></a>d.describe()                      <span class="co"># count, mean, sd, quartiles, per column</span></span>
+<span id="cb14-5"><a></a>d.columns.tolist()                <span class="co"># the names, as a list</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="selecting-and-filtering" class="slide level2">
+<h2>Selecting and filtering</h2>
+<div class="sourceCode" id="cb15"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a></a>d[<span class="st">"drop_m"</span>]                       <span class="co"># one column, as a Series</span></span>
+<span id="cb15-2"><a></a>d[[<span class="st">"drop_m"</span>, <span class="st">"speed_kmh"</span>]]        <span class="co"># two columns, as a DataFrame</span></span>
+<span id="cb15-3"><a></a></span>
+<span id="cb15-4"><a></a>d[d.drop_m <span class="op">&gt;</span> <span class="dv">100</span>]                 <span class="co"># rows where the drop exceeds 100 m</span></span>
+<span id="cb15-5"><a></a>d[d.propulsion <span class="op">==</span> <span class="st">"gravity"</span>]      <span class="co"># rows matching a string</span></span>
+<span id="cb15-6"><a></a>d.query(<span class="st">"drop_m &gt; 100"</span>)           <span class="co"># the same filter, more readable</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="warn">
+<p><code>d["drop_m"]</code> gives a Series; <code>d[["drop_m"]]</code> gives a one-column DataFrame. They print almost identically and behave differently. The double bracket means <em>“a list of columns”</em>, and the list happens to have one item in it.</p>
+</div>
+</section>
+<section id="grouping-sorting-and-new-columns" class="slide level2">
+<h2>Grouping, sorting, and new columns</h2>
+<div class="sourceCode" id="cb16"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a></a>d.groupby(<span class="st">"propulsion"</span>)[<span class="st">"speed_kmh"</span>].mean()      <span class="co"># a mean per group</span></span>
+<span id="cb16-2"><a></a>d.groupby(<span class="st">"propulsion"</span>).size()                   <span class="co"># how many in each group</span></span>
+<span id="cb16-3"><a></a></span>
+<span id="cb16-4"><a></a>d.sort_values(<span class="st">"speed_kmh"</span>, ascending<span class="op">=</span><span class="va">False</span>).head(<span class="dv">5</span>)</span>
+<span id="cb16-5"><a></a></span>
+<span id="cb16-6"><a></a>d[<span class="st">"speed_ms"</span>] <span class="op">=</span> d.speed_kmh <span class="op">/</span> <span class="fl">3.6</span>                <span class="co"># a new column</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="check">
+<p>Before class, answer these three from the data, in Python: how many coasters are there · what is the mean top speed by <code>propulsion</code> · which single coaster has the largest <code>drop_m</code>.</p>
+</div>
+</section>
+<section id="enough-inference-to-read-a-coefficient" class="slide level2">
+<h2>10 · Enough inference to read a coefficient</h2>
+<p>A regression hands you three numbers per variable. You need to know what each one is before you can be told a fourth.</p>
+<table class="caption-top">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<tbody>
+<tr class="odd">
+<td><strong>Coefficient</strong></td>
+<td>how much <span class="math inline">\(y\)</span> moves per one-unit move in <span class="math inline">\(x\)</span> — <strong>in the units of <span class="math inline">\(y\)</span></strong></td>
+</tr>
+<tr class="even">
+<td><strong>Standard error</strong></td>
+<td>how much that estimate would wobble if you collected the data again</td>
+</tr>
+<tr class="odd">
+<td><strong><span class="math inline">\(t\)</span>-statistic</strong></td>
+<td>the coefficient divided by its standard error: how many wobbles from zero</td>
+</tr>
+</tbody>
+</table>
+<div class="step">
+<p>A coefficient is a quantity with units. A <span class="math inline">\(t\)</span>-statistic is a ratio, and has none. Reporting the second without the first is the most common way to say nothing at all.</p>
+</div>
+</section>
+<section id="the-p-value-stated-carefully" class="slide level2">
+<h2>The <span class="math inline">\(p\)</span>-value, stated carefully</h2>
+<blockquote>
+<p>If the true effect were <strong>exactly zero</strong>, and I repeated this whole study many times, what fraction of those studies would produce a coefficient at least this far from zero?</p>
+</blockquote>
+<p>That is the <span class="math inline">\(p\)</span>-value. It is a statement about <em>data under an assumption</em>, not about the probability that the assumption is true.</p>
+<div class="warn">
+<p>It does not tell you the effect is large. It does not tell you the effect is real. With 2,000 rows, an effect too small to care about will clear <span class="math inline">\(p &lt; 0.05\)</span> comfortably — and you would still be right not to care.</p>
+</div>
+</section>
+<section id="what-r2-is-and-what-it-is-not" class="slide level2">
+<h2>What <span class="math inline">\(R^2\)</span> is, and what it is not</h2>
+<p><span class="math inline">\(R^2\)</span> is the share of the variance in <span class="math inline">\(y\)</span> that your fitted values reproduce. It runs from 0 to 1, and it rises whenever you add a variable — including a variable made of pure noise.</p>
+<div class="step">
+<p><span class="math inline">\(R^2\)</span> measures how <em>close</em> the line is to the points. It says nothing about whether the line is the <strong>right shape</strong>.</p>
+</div>
+<div class="warn">
+<p>Session 1’s puzzle is built precisely on that gap: a model with <span class="math inline">\(R^2 = 0.96\)</span> that gets the answer wrong, sitting next to a model that gets it right. If you learn one thing before class, learn to distrust that number on its own.</p>
+</div>
+</section>
+<section id="readings" class="slide level2">
+<h2>11 · Readings</h2>
+<p>Both chapters are from <em>Quantitative Methods in International Business with Python</em> (Warin), the companion volume to this course: <a href="https://warint.github.io/quantitative-methods/book/">warint.github.io/quantitative-methods/book</a></p>
+<div class="tight">
+<table class="caption-top">
+<tbody>
+<tr class="odd">
+<td><strong>Ch. 2</strong></td>
+<td><a href="https://warint.github.io/quantitative-methods/book/session-02.html">Exploratory Data Analysis, and the First Model</a></td>
+<td>read fully</td>
+</tr>
+<tr class="even">
+<td><strong>Ch. 3</strong></td>
+<td><a href="https://warint.github.io/quantitative-methods/book/session-03.html">Regression: Adequacy, Validity, and Robustness</a></td>
+<td>read fully</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="step">
+<p>Chapter 2 gets you to a first fitted line and to reading its output. Chapter 3 is this session: residuals, leverage, influence, and why <span class="math inline">\(R^2\)</span> is not a diagnostic.</p>
+</div>
+<div class="muted">
+<p>Also worth a skim before you start: <a href="https://warint.github.io/quantitative-methods/book/setup.html">Appendix A · Setting up your tools</a>, which is the longer version of the four installation steps above.</p>
+</div>
+</section>
+<section id="self-check" class="slide level2">
+<h2>12 · Self-check</h2>
+<p>On paper. If you cannot answer these, that is what the session is for.</p>
+<div class="tight">
+<ol type="1">
+<li>A regression of salary on years of experience gives a coefficient of 2,400. What are its units, and what does the number mean in a sentence?</li>
+<li>Two studies estimate the same effect. One reports <span class="math inline">\(p = 0.04\)</span>, the other <span class="math inline">\(p = 0.002\)</span>. What can you conclude about which effect is larger?</li>
+<li>You add a column of random numbers to a regression. What happens to <span class="math inline">\(R^2\)</span>, and why?</li>
+</ol>
+</div>
+<div class="muted">
+<p>Answer 2 is the interesting one, and the answer is “nothing at all”.</p>
+</div>
+</section>
+<section id="what-session-1-will-ask-of-you" class="slide level2">
+<h2>13 · What session 1 will ask of you</h2>
+<p>By the end of the session you should be able to:</p>
+<div class="tight">
+<ul>
+<li>Fit a linear model from a formula and read every column of its output</li>
+<li>Say what a residuals-versus-fitted plot reveals, and what you looked for</li>
+<li>Compute leverage, and say which observations can move the line</li>
+<li>Separate an outlier from an <strong>influential</strong> point using Cook’s distance</li>
+<li>Recognise when a straight line is fitting a curved relationship, and fix it</li>
+</ul>
+</div>
+<div class="get">
+<p><strong>Arrive with:</strong> VS Codium open with the environment activated · <code>verify_puzzles.py</code> passing · Continue answering from a local model · chapters 2 and 3 read · the three pandas questions answered · the self-check attempted on paper.</p>
+</div>
+<div class="muted">
+<p>Session 1: <a href="https://github.com/warint/essentials-data-science-python/blob/main/01-regression/README.md"><code>README.md</code></a> · the notes: <a href="https://github.com/warint/essentials-data-science-python/blob/main/01-regression/chapter.md"><code>chapter.md</code></a></p>
+</div>
+
+
+</section></section>
+    </div>
+  <div class="quarto-auto-generated-content" style="display: none;">
+<div class="footer footer-default">
+<p>Essentials of Data Science in Python · Session 01 pre-session · Thierry Warin, PhD</p>
+</div>
+</div></div>
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script>
+  <script src="../../site_libs/revealjs/dist/reveal.js"></script>
+  <!-- reveal.js plugins -->
+  <script src="../../site_libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="../../site_libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="../../site_libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="../../site_libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="../../site_libs/revealjs/plugin/quarto-support/support.js"></script>
+  
+
+  <script src="../../site_libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="../../site_libs/revealjs/plugin/search/search.js"></script>
+  <script src="../../site_libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script src="../../site_libs/revealjs/plugin/math/math.js"></script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+'controlsAuto': false,
+'previewLinksAuto': false,
+'pdfSeparateFragments': false,
+'autoAnimateEasing': "ease",
+'autoAnimateDuration': 1,
+'autoAnimateUnmatched': true,
+'jumpToSlide': true,
+'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleScrollView(event)\"><kbd>r</kbd> Scroll View Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"5\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'smaller': true,
+ 
+        // Display controls in the bottom right corner
+        controls: true,
+
+        // Help the user learn the controls by providing hints, for example by
+        // bouncing the down arrow when they first encounter a vertical slide
+        controlsTutorial: false,
+
+        // Determines where controls appear, "edges" or "bottom-right"
+        controlsLayout: 'edges',
+
+        // Visibility rule for backwards navigation arrows; "faded", "hidden"
+        // or "visible"
+        controlsBackArrows: 'faded',
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // Display the page number of the current slide
+        slideNumber: 'c/t',
+
+        // 'all', 'print', or 'speaker'
+        showSlideNumber: 'all',
+
+        // Add the current slide number to the URL hash so that reloading the
+        // page/copying the URL will return you to the same slide
+        hash: true,
+
+        // Start with 1 for the hash rather than 0
+        hashOneBasedIndex: false,
+
+        // Flags if we should monitor the hash and change slides accordingly
+        respondToHashChanges: true,
+
+        // Push each slide change to the browser history
+        history: false,
+
+        // Enable keyboard shortcuts for navigation
+        keyboard: true,
+
+        // Enable the slide overview mode
+        overview: true,
+
+        // Disables the default reveal.js slide layout (scaling and centering)
+        // so that you can use custom CSS layout
+        disableLayout: false,
+
+        // Vertical centering of slides
+        center: false,
+
+        // Enables touch navigation on devices with touch input
+        touch: true,
+
+        // Loop the presentation
+        loop: false,
+
+        // Change the presentation direction to be RTL
+        rtl: false,
+
+        // see https://revealjs.com/vertical-slides/#navigation-mode
+        navigationMode: 'linear',
+
+        // Randomizes the order of slides each time the presentation loads
+        shuffle: false,
+
+        // Turns fragments on and off globally
+        fragments: true,
+
+        // Flags whether to include the current fragment in the URL,
+        // so that reloading brings you to the same fragment position
+        fragmentInURL: false,
+
+        // Flags if the presentation is running in an embedded mode,
+        // i.e. contained within a limited portion of the screen
+        embedded: false,
+
+        // Flags if we should show a help overlay when the questionmark
+        // key is pressed
+        help: true,
+
+        // Flags if it should be possible to pause the presentation (blackout)
+        pause: true,
+
+        // Flags if speaker notes should be visible to all viewers
+        showNotes: false,
+
+        // Global override for autoplaying embedded media (null/true/false)
+        autoPlayMedia: null,
+
+        // Global override for preloading lazy-loaded iframes (null/true/false)
+        preloadIframes: null,
+
+        // Number of milliseconds between automatically proceeding to the
+        // next slide, disabled when set to 0, this value can be overwritten
+        // by using a data-autoslide attribute on your slides
+        autoSlide: 0,
+
+        // Stop auto-sliding after user input
+        autoSlideStoppable: true,
+
+        // Use this method for navigation when auto-sliding
+        autoSlideMethod: null,
+
+        // Specify the average time in seconds that you think you will spend
+        // presenting each slide. This is used to show a pacing timer in the
+        // speaker view
+        defaultTiming: null,
+
+        // Enable slide navigation via mouse wheel
+        mouseWheel: false,
+
+        // The display mode that will be used to show slides
+        display: 'block',
+
+        // Hide cursor if inactive
+        hideInactiveCursor: true,
+
+        // Time before the cursor is hidden (in ms)
+        hideCursorTime: 5000,
+
+        // Opens links in an iframe preview overlay
+        previewLinks: false,
+
+        // Transition style (none/fade/slide/convex/concave/zoom)
+        transition: 'none',
+
+        // Transition speed (default/fast/slow)
+        transitionSpeed: 'default',
+
+        // Transition style for full page slide backgrounds
+        // (none/fade/slide/convex/concave/zoom)
+        backgroundTransition: 'none',
+
+        // Number of slides away from the current that are visible
+        viewDistance: 3,
+
+        // Number of slides away from the current that are visible on mobile
+        // devices. It is advisable to set this to a lower number than
+        // viewDistance in order to save resources.
+        mobileViewDistance: 2,
+
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1280,
+
+        height: 760,
+
+        // Factor of the display size that should remain empty around the content
+        margin: 6.0e-2,
+
+        math: {
+          mathjax: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+        // reveal.js plugins
+        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, QuartoSupport,
+
+          RevealMath,
+          RevealNotes,
+          RevealSearch,
+          RevealZoom
+        ]
+      });
+    </script>
+    <script id="quarto-html-after-body" type="application/javascript">
+      window.document.addEventListener("DOMContentLoaded", function (event) {
+        const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
+        tabsets.forEach(function(tabset) {
+          const tabby = new Tabby('#' + tabset.id);
+        });
+        const isCodeAnnotation = (el) => {
+          for (const clz of el.classList) {
+            if (clz.startsWith('code-annotation-')) {                     
+              return true;
+            }
+          }
+          return false;
+        }
+        const onCopySuccess = function(e) {
+          // button target
+          const button = e.trigger;
+          // don't keep focus
+          button.blur();
+          // flash "checked"
+          button.classList.add('code-copy-button-checked');
+          var currentTitle = button.getAttribute("title");
+          button.setAttribute("title", "Copied!");
+          let tooltip;
+          if (window.bootstrap) {
+            button.setAttribute("data-bs-toggle", "tooltip");
+            button.setAttribute("data-bs-placement", "left");
+            button.setAttribute("data-bs-title", "Copied!");
+            tooltip = new bootstrap.Tooltip(button, 
+              { trigger: "manual", 
+                customClass: "code-copy-button-tooltip",
+                offset: [0, -8]});
+            tooltip.show();    
+          }
+          setTimeout(function() {
+            if (tooltip) {
+              tooltip.hide();
+              button.removeAttribute("data-bs-title");
+              button.removeAttribute("data-bs-toggle");
+              button.removeAttribute("data-bs-placement");
+            }
+            button.setAttribute("title", currentTitle);
+            button.classList.remove('code-copy-button-checked');
+          }, 1000);
+          // clear code selection
+          e.clearSelection();
+        }
+        const getTextToCopy = function(trigger) {
+            const codeEl = trigger.previousElementSibling.cloneNode(true);
+            for (const childEl of codeEl.children) {
+              if (isCodeAnnotation(childEl)) {
+                childEl.remove();
+              }
+            }
+            return codeEl.innerText;
+        }
+        const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+          text: getTextToCopy
+        });
+        clipboard.on('success', onCopySuccess);
+        if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+          const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+            text: getTextToCopy,
+            container: window.document.getElementById('quarto-embedded-source-code-modal')
+          });
+          clipboardModal.on('success', onCopySuccess);
+        }
+          var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+          var mailtoRegex = new RegExp(/^mailto:/);
+            var filterRegex = new RegExp('/' + window.location.host + '/');
+          var isInternal = (href) => {
+              return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+          }
+          // Inspect non-navigation links and adorn them if external
+         var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+          for (var i=0; i<links.length; i++) {
+            const link = links[i];
+            if (!isInternal(link.href)) {
+              // undo the damage that might have been done by quarto-nav.js in the case of
+              // links that we want to consider external
+              if (link.dataset.originalHref !== undefined) {
+                link.href = link.dataset.originalHref;
+              }
+            }
+          }
+        function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+          const config = {
+            allowHTML: true,
+            maxWidth: 500,
+            delay: 100,
+            arrow: false,
+            appendTo: function(el) {
+                return el.closest('section.slide') || el.parentElement;
+            },
+            interactive: true,
+            interactiveBorder: 10,
+            theme: 'light-border',
+            placement: 'bottom-start',
+          };
+          if (contentFn) {
+            config.content = contentFn;
+          }
+          if (onTriggerFn) {
+            config.onTrigger = onTriggerFn;
+          }
+          if (onUntriggerFn) {
+            config.onUntrigger = onUntriggerFn;
+          }
+            config['offset'] = [0,0];
+            config['maxWidth'] = 700;
+          window.tippy(el, config); 
+        }
+        const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+        for (var i=0; i<noterefs.length; i++) {
+          const ref = noterefs[i];
+          tippyHover(ref, function() {
+            // use id or data attribute instead here
+            let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+            try { href = new URL(href).hash; } catch {}
+            const id = href.replace(/^#\/?/, "");
+            const note = window.document.getElementById(id);
+            if (note) {
+              return note.innerHTML;
+            } else {
+              return "";
+            }
+          });
+        }
+        const findCites = (el) => {
+          const parentEl = el.parentElement;
+          if (parentEl) {
+            const cites = parentEl.dataset.cites;
+            if (cites) {
+              return {
+                el,
+                cites: cites.split(' ')
+              };
+            } else {
+              return findCites(el.parentElement)
+            }
+          } else {
+            return undefined;
+          }
+        };
+        var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+        for (var i=0; i<bibliorefs.length; i++) {
+          const ref = bibliorefs[i];
+          const citeInfo = findCites(ref);
+          if (citeInfo) {
+            tippyHover(citeInfo.el, function() {
+              var popup = window.document.createElement('div');
+              citeInfo.cites.forEach(function(cite) {
+                var citeDiv = window.document.createElement('div');
+                citeDiv.classList.add('hanging-indent');
+                citeDiv.classList.add('csl-entry');
+                var biblioDiv = window.document.getElementById('ref-' + cite);
+                if (biblioDiv) {
+                  citeDiv.innerHTML = biblioDiv.innerHTML;
+                }
+                popup.appendChild(citeDiv);
+              });
+              return popup.innerHTML;
+            });
+          }
+        }
+      });
+      </script>
+    
+
+</body></html>

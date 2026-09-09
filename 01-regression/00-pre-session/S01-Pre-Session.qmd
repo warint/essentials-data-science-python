@@ -23,13 +23,13 @@ format:
 
 ## Outline · Before the first class {.center .scrollable}
 
-1. What to do, and how long it takes
+1. This one is longer than the others
 2. The toolchain, and why these four
 3. Install VS Codium
 4. Install Python
 5. Make a virtual environment
 6. Get the course, and check it works
-7. Install Ollama and pull Qwen 2.5 Coder
+7. Install Ollama and pull the model
 8. Point Continue at it
 9. Enough pandas to start
 10. Enough inference to read a coefficient
@@ -43,10 +43,12 @@ format:
 ### VS Codium, a local model, and then the straight line
 :::
 
-## This one is longer than the others
+## 1 · This one is longer than the others
 
 This is the only pre-session that installs anything. Sessions 2 to 6 assume
 everything below is working, and none of them will ask you to install again.
+
+**The work, and roughly how long each part takes:**
 
 | | | |
 |---|---|---|
@@ -64,7 +66,7 @@ work, and every subsequent session depends on it. Steps 1 to 4 never have to be
 repeated.
 :::
 
-## 1 · The toolchain, and why these four
+## 2 · The toolchain, and why these four
 
 ::: {.tight}
 | | | |
@@ -135,7 +137,7 @@ deployment from an expensive one. It is also, almost exactly, the judgement
 session 4 makes about a deliberately biased estimator.
 :::
 
-## 2 · Install VS Codium
+## 3 · Install VS Codium
 
 Download from **[vscodium.com](https://vscodium.com)** and install it as you
 would any application.
@@ -176,7 +178,7 @@ when *it* opens, and every terminal tab inherits that copy.
 and it is almost always this.
 :::
 
-## 3 · Install Python
+## 4 · Install Python
 
 You want **3.12 or 3.13**. Anything older than 3.10 will fail on syntax used
 throughout the course.
@@ -198,7 +200,7 @@ and the error message will not tell you why.
 
 **Linux** — you already have it. `python3 --version` to confirm.
 
-## 4 · Make a virtual environment
+## 5 · Make a virtual environment
 
 A virtual environment is a folder holding one project's packages. It exists so
 that installing something for this course cannot break something else on your
@@ -217,7 +219,7 @@ You must activate it **every time you open a new terminal**. Ninety per cent of
 "it says the module is not installed" is a terminal where nobody ran `activate`.
 :::
 
-## 5 · Get the course, and check it works
+## 6 · Get the course, and check it works
 
 ```bash
 git clone https://github.com/warint/essentials-data-science-python.git
@@ -258,7 +260,7 @@ Nothing is downloaded. Three things follow, and they shape how the sessions run:
 - There is a **right answer**, and you can check whether you found it.
 :::
 
-## 6 · Install Ollama and pull the model
+## 7 · Install Ollama and pull the model
 
 Install **[ollama.com](https://ollama.com)**, then, in the VS Codium terminal:
 
@@ -295,11 +297,20 @@ graphics card, which is most laptops.
 | **RAM while loaded** | ~3.4 GB | ~8 GB |
 | **Needs a GPU** | no | not required, but painful without |
 
+```bash
+ollama pull qwen2.5-coder:7b     # only if the 3b already runs on the GPU
+```
+
 ::: {.warn}
 Only try the 7b once `ollama ps` reports **100% GPU** on the 3b. If it already
 says 100% CPU, the 7b is not a better model on your machine — it gives a
 comparable answer to the same question at roughly a quarter of the speed, and a
 tool slow enough to interrupt your thinking is a tool you stop using.
+:::
+
+::: {.muted}
+Whichever you pull, put **that exact name** in `config.yaml`. A name that is not
+installed produces a confusing error rather than a missing-model one.
 :::
 
 ::: {.muted}
@@ -334,7 +345,7 @@ large window and the model caps it at its own maximum. **On Windows the default
 is often 4096**, which any real file will outgrow.
 :::
 
-## 7 · Point Continue at it
+## 8 · Point Continue at it
 
 Continue is installed but talks to nothing until it has a config file. The
 easiest way to open it is from inside Continue:
@@ -415,7 +426,7 @@ because emitting a precise diff is a harder task than describing code. That is a
 fact about small models rather than about you.
 :::
 
-## 8 · Enough pandas to start
+## 9 · Enough pandas to start
 
 Do this at the keyboard, not by reading. Activate the environment, then:
 
@@ -470,7 +481,7 @@ how many coasters are there · what is the mean top speed by `propulsion` ·
 which single coaster has the largest `drop_m`.
 :::
 
-## 9 · Enough inference to read a coefficient
+## 10 · Enough inference to read a coefficient
 
 A regression hands you three numbers per variable. You need to know what each
 one is before you can be told a fourth.
@@ -519,7 +530,7 @@ that gets the answer wrong, sitting next to a model that gets it right. If you
 learn one thing before class, learn to distrust that number on its own.
 :::
 
-## 10 · Readings
+## 11 · Readings
 
 Both chapters are from *Quantitative Methods in International Business with Python* (Warin), the
 companion volume to this course:
@@ -542,7 +553,7 @@ Also worth a skim before you start: [Appendix A · Setting up your tools](https:
 which is the longer version of the four installation steps above.
 :::
 
-## 11 · Self-check
+## 12 · Self-check
 
 On paper. If you cannot answer these, that is what the session is for.
 
@@ -559,7 +570,7 @@ On paper. If you cannot answer these, that is what the session is for.
 Answer 2 is the interesting one, and the answer is "nothing at all".
 :::
 
-## What session 1 will ask of you
+## 13 · What session 1 will ask of you
 
 By the end of the session you should be able to:
 

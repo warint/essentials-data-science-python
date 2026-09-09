@@ -25,7 +25,7 @@ format:
 
 1. What to do, and how long it takes
 2. Why a line will not do
-3. Odds, log-odds, and the logistic function
+3. Odds, and why they help
 4. Load the data
 5. Readings
 6. Self-check
@@ -37,7 +37,7 @@ format:
 ### When the answer is yes or no
 :::
 
-## What to do, and how long it takes
+## 1 · What to do, and how long it takes
 
 | | | |
 |---|---|---|
@@ -46,7 +46,7 @@ format:
 | **3** | Load `mushrooms` and answer three questions | 15 min |
 | **4** | Attempt the self-check | 10 min |
 
-## 1 · Why a line will not do
+## 2 · Why a line will not do
 
 Suppose $y$ is 0 or 1 and you fit $y = \beta_0 + \beta_1 x$ anyway.
 
@@ -64,7 +64,7 @@ The fix is not a different error assumption. It is to model something that is
 allowed to be any real number, and then map it into $[0, 1]$.
 :::
 
-## 2 · Odds, and why they help
+## 3 · Odds, and why they help
 
 If an event has probability $p$, its **odds** are
 
@@ -117,7 +117,7 @@ entirely on where you started — near $p = 0.5$ it moves a lot, near $p = 0.99$
 almost nothing.
 :::
 
-## 3 · Load the data
+## 4 · Load the data
 
 ```python
 import essentials as ess
@@ -143,7 +143,7 @@ Hold on to the answer to question 3. It is the number that makes accuracy
 useless in this session.
 :::
 
-## Readings
+## 5 · Readings
 
 From *Quantitative Methods in International Business with Python* (Warin):
 [warint.github.io/quantitative-methods/book](https://warint.github.io/quantitative-methods/book/)
@@ -165,7 +165,7 @@ the threshold**. Read it for the model, and come to class expecting the decision
 to be a separate problem with its own arithmetic.
 :::
 
-## 4 · Self-check
+## 6 · Self-check
 
 ::: {.tight}
 1. A logistic coefficient is 1.10. What is the odds ratio, and what does it mean
@@ -181,7 +181,7 @@ to be a separate problem with its own arithmetic.
 Question 3 has a one-word answer, and the word is "nothing".
 :::
 
-## What the session will ask of you
+## 7 · What the session will ask of you
 
 ::: {.tight}
 - Fit a logistic regression and read a coefficient as an odds ratio

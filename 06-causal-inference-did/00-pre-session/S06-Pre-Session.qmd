@@ -24,7 +24,7 @@ format:
 ## Outline · Before class {.center .scrollable}
 
 1. What to do, and how long it takes
-2. Potential outcomes, and the missing half
+2. Potential outcomes
 3. The 2×2 difference-in-differences
 4. Parallel trends
 5. Load the data
@@ -37,7 +37,7 @@ format:
 ### The counterfactual you never get to see
 :::
 
-## What to do, and how long it takes
+## 1 · What to do, and how long it takes
 
 | | | |
 |---|---|---|
@@ -52,7 +52,7 @@ This pre-session carries the whole conceptual load of the last session, so the
 lecture can spend its ninety minutes on what goes wrong. Do not skip it.
 :::
 
-## 1 · Potential outcomes
+## 2 · Potential outcomes
 
 For each unit $i$, imagine two numbers:
 
@@ -84,7 +84,7 @@ A causal claim is always a claim about a counterfactual, and a counterfactual is
 never in your data. The design is the argument for the substitute you used.
 :::
 
-## 2 · The 2×2 difference-in-differences
+## 3 · The 2×2 difference-in-differences
 
 Two groups, two periods. One group gets treated in between.
 
@@ -119,7 +119,7 @@ that $\beta_0 = 35$, $\beta_1 = 15$, $\beta_2 = 20$, $\beta_3 = 15$. Do it on
 paper — it is fifteen minutes that makes the rest of the session readable.
 :::
 
-## 3 · Parallel trends
+## 4 · Parallel trends
 
 The assumption doing all the work:
 
@@ -142,7 +142,7 @@ that as evidence about the period after. That is the event study, and it is
 evidence rather than proof.
 :::
 
-## 4 · Load the data
+## 5 · Load the data
 
 ```python
 import essentials as ess
@@ -175,7 +175,7 @@ Keep that in mind on Thursday, because one of the methods we look at will happil
 report a number for those quarters anyway.
 :::
 
-## Readings
+## 6 · Readings
 
 From *Quantitative Methods in International Business with Python* (Warin):
 [warint.github.io/quantitative-methods/book](https://warint.github.io/quantitative-methods/book/)
@@ -200,7 +200,7 @@ and the effects grow over time. The answer is not in the chapter, and it is not
 reassuring.
 :::
 
-## 5 · Self-check
+## 7 · Self-check
 
 ::: {.tight}
 1. Why does difference-in-differences not require the two groups to be similar?

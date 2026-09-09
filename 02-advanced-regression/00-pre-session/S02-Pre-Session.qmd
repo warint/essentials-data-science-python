@@ -36,7 +36,7 @@ format:
 ### A straight line was never going to be enough
 :::
 
-## What to do, and how long it takes
+## 1 · What to do, and how long it takes
 
 | | | |
 |---|---|---|
@@ -51,7 +51,7 @@ single transformation cannot reach: a genuine optimum, an effect that depends on
 another variable, and a group difference you have not measured.
 :::
 
-## 1 · Load the data, and look at it
+## 2 · Load the data, and look at it
 
 ```python
 import essentials as ess
@@ -89,7 +89,7 @@ points of hydration in the final answer. Come to class knowing the bakers are
 not interchangeable.
 :::
 
-## 2 · Three shapes a line cannot make
+## 3 · Three shapes a line cannot make
 
 ### A hill
 
@@ -124,7 +124,7 @@ The fix: fixed effects. `C(baker)` adds one dummy per baker and one intercept
 each, and the other coefficients are then estimated **within** bakers.
 :::
 
-## Readings
+## 4 · Readings
 
 From *Quantitative Methods in International Business with Python* (Warin):
 [warint.github.io/quantitative-methods/book](https://warint.github.io/quantitative-methods/book/)
@@ -142,7 +142,7 @@ structure, and comparing models on AIC. The revisit of chapter 3 is for the
 model-comparison rules, which we will use and which are easy to break.
 :::
 
-## 3 · Self-check
+## 5 · Self-check
 
 On paper.
 
@@ -162,7 +162,7 @@ the coefficient on `x` is the effect of `x` **when `z` is zero** — which may n
 be a value `z` can take.
 :::
 
-## What the session will ask of you
+## 6 · What the session will ask of you
 
 ::: {.tight}
 - Fit and interpret a quadratic, and locate its optimum from the coefficients

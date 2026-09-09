@@ -37,7 +37,7 @@ format:
 ### More columns than rows
 :::
 
-## What to do, and how long it takes
+## 1 · What to do, and how long it takes
 
 | | | |
 |---|---|---|
@@ -47,7 +47,7 @@ format:
 | **4** | Load `secret_recipe` and answer three questions | 15 min |
 | **5** | Attempt the self-check | 10 min |
 
-## 1 · The shape of the problem
+## 2 · The shape of the problem
 
 Every model so far had many more rows than columns. This session starts with the
 opposite: **60 rows, 200 columns.**
@@ -64,7 +64,7 @@ noise, and it will predict new data badly. The way out is to *stop* asking for
 the best fit, and deliberately accept a worse one.
 :::
 
-## 2 · Bias and variance
+## 3 · Bias and variance
 
 Take the expected squared prediction error at a point and decompose it:
 
@@ -90,7 +90,7 @@ in variance. A deliberately wrong estimator that predicts better is not a
 paradox; it is the whole design.
 :::
 
-## 3 · Cross-validation
+## 4 · Cross-validation
 
 You cannot choose how much to shrink using the data you fitted on: more
 flexibility always fits better. So hold data back.
@@ -119,7 +119,7 @@ that identifies the right variables. Cross-validation will hand you a model with
 too many variables in it, and it will be right to.
 :::
 
-## 4 · Load the data
+## 5 · Load the data
 
 ```python
 import essentials as ess
@@ -140,7 +140,7 @@ Answer before class:
    off-diagonal correlation. Which two ingredients, and how correlated?
 :::
 
-## Readings
+## 6 · Readings
 
 From *Quantitative Methods in International Business with Python* (Warin):
 [warint.github.io/quantitative-methods/book](https://warint.github.io/quantitative-methods/book/)
@@ -158,7 +158,7 @@ though — the whole argument for a deliberately biased estimator rests on that
 decomposition, and chapter 5 assumes you have it.
 :::
 
-## 5 · Self-check
+## 7 · Self-check
 
 ::: {.tight}
 1. A model has zero training error. What do you know about its test error?

@@ -232,3 +232,8 @@ yet treated", you are ahead of a great deal of published work.
 **Arrive with:** chapters 10 and 11 read · the 2×2 table worked by hand ·
 the four data questions answered · the self-check attempted.
 :::
+
+::: {.muted}
+Session 6: [`README.md`](https://github.com/warint/essentials-data-science-python/blob/main/06-causal-inference-did/README.md) · the notes: [`chapter.md`](https://github.com/warint/essentials-data-science-python/blob/main/06-causal-inference-did/chapter.md) ·
+**[Python cheatsheet](https://warint.github.io/essentials-data-science-python/python-cheatsheet-06.pdf)** (PDF) — everything you need to type, including every name from earlier sessions
+:::

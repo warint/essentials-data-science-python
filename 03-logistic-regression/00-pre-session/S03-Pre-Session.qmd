@@ -196,3 +196,8 @@ Question 3 has a one-word answer, and the word is "nothing".
 **Arrive with:** chapter 4 read · the three data questions answered ·
 the self-check attempted · the odds table understood well enough to reproduce.
 :::
+
+::: {.muted}
+Session 3: [`README.md`](https://github.com/warint/essentials-data-science-python/blob/main/03-logistic-regression/README.md) · the notes: [`chapter.md`](https://github.com/warint/essentials-data-science-python/blob/main/03-logistic-regression/chapter.md) ·
+**[Python cheatsheet](https://warint.github.io/essentials-data-science-python/python-cheatsheet-03.pdf)** (PDF) — everything you need to type, including every name from earlier sessions
+:::

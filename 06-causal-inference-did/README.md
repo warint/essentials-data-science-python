@@ -60,6 +60,7 @@ Assigned in the pre-session. Chapter 11 is the **classical** treatment;
 | [`01-lecture/`](01-lecture/) | The deck. Executes its own Python. |
 | [`chapter.md`](chapter.md) | The lecture notes, as prose. |
 | [`02-practice/`](02-practice/) | The workshop, a starter script, and `SOLUTION.md`. |
+| [`PYTHON-CHEATSHEET.pdf`](PYTHON-CHEATSHEET.pdf) | Sessions 1 to 6, on a page: the environment, and every name so far. |
 
 ## Data
 

@@ -47,6 +47,7 @@ this session's data.
 | [`01-lecture/`](01-lecture/) | The deck. Executes its own Python, so the slide numbers are your numbers. |
 | [`chapter.md`](chapter.md) | The lecture notes, as prose. Reads on its own. |
 | [`02-practice/`](02-practice/) | The 90-minute workshop, a starter script, and `SOLUTION.md`. |
+| [`PYTHON-CHEATSHEET.pdf`](PYTHON-CHEATSHEET.pdf) | Everything in this session, on a page. Print it. |
 
 ## Data
 

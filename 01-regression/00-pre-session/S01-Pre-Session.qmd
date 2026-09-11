@@ -590,5 +590,6 @@ attempted on paper.
 :::
 
 ::: {.muted}
-Session 1: [`README.md`](https://github.com/warint/essentials-data-science-python/blob/main/01-regression/README.md) · the notes: [`chapter.md`](https://github.com/warint/essentials-data-science-python/blob/main/01-regression/chapter.md)
+Session 1: [`README.md`](https://github.com/warint/essentials-data-science-python/blob/main/01-regression/README.md) · the notes: [`chapter.md`](https://github.com/warint/essentials-data-science-python/blob/main/01-regression/chapter.md) ·
+**[Python cheatsheet](https://warint.github.io/essentials-data-science-python/python-cheatsheet-01.pdf)** (PDF) — everything you need to type, on a page
 :::

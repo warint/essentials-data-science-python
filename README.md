@@ -47,11 +47,14 @@ Three consequences follow from generating rather than downloading:
 | 5 | [Classification](05-classification/) | *k*-NN, decision boundaries, confusion matrices | **The Bestiary** — four species, and a boundary you can check against the truth | Accuracy hides a 2% class entirely; three noise columns cost real performance |
 | 6 | [Causal inference](06-causal-inference-did/) | DiD, Goodman-Bacon, Callaway–Sant'Anna, honest DiD | **The Cat Café Effect** — 186 cafés, staggered adoption. Did the cat work? | Two-way fixed effects returns **−2.09, *p* = 0.00001**, when every true effect is positive |
 
-Each session ships three things:
+Each session ships four things:
 
 - `00-pre-session/` — what to do before class, and roughly how long it takes.
 - `01-lecture/` — the deck, plus `chapter.md`: prose notes that read on their own.
 - `02-practice/` — a ninety-minute workshop, a starter script, and the answer key.
+- `PYTHON-CHEATSHEET.pdf` — the environment, the four things you always do, and
+  every name taught up to *and including* that session, one runnable line each.
+  Cumulative, so session 4's sheet also carries sessions 1 to 3. Print it.
 
 ## The companion volume
 
@@ -137,6 +140,23 @@ These renders are **self-contained**: each inlines reveal.js, its fonts and its
 figures, so a downloaded deck opens on a train with no wifi. That costs about
 3.3 MB each, which is why they are git-ignored.
 
+## Building the cheatsheets
+
+```bash
+python3 scripts/build_cheatsheets.py        # all six
+python3 scripts/build_cheatsheets.py 03     # just session 3
+python3 scripts/build_cheatsheets.py --no-render   # write the .qmd, skip LaTeX
+```
+
+Requires Quarto and a LaTeX installation. Each session gets
+`PYTHON-CHEATSHEET.qmd` and `PYTHON-CHEATSHEET.pdf` beside its README; both are
+generated, so edit `scripts/build_cheatsheets.py` rather than either one.
+
+Every name on a sheet comes from `TOOLKIT` in that script, which maps a name to
+the session that introduced it, what it is for, and one line showing it in use —
+written as it appears in that session, against the course data. A line you copy
+off the sheet is a line that has run.
+
 ## Publishing the site
 
 ```bash
@@ -163,10 +183,12 @@ GitHub Pages needs pointing at it **once**, by hand:
 essentials.py              every dataset, and the planted answer inside it
 scripts/verify_puzzles.py  39 assertions that the answers are still there
 scripts/render.sh          build the decks
+scripts/build_cheatsheets.py  the per-session Python reference sheets
 theme/                     slide theme and the shared matplotlib palette
 NN-session-name/
   README.md                what this session is for
   chapter.md               the lecture notes, as prose
+  PYTHON-CHEATSHEET.pdf    everything taught up to this session, on a page
   00-pre-session/          before class
   01-lecture/              the deck
   02-practice/             the workshop, a starter script, and SOLUTION.md

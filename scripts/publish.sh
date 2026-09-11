@@ -75,6 +75,22 @@ cp -R "$STAGE/_site/." "$ROOT/docs/"
 # libraries. Without this file the site loads with no CSS and no reveal.js.
 touch "$ROOT/docs/.nojekyll"
 
+# The per-session Python cheatsheets, which the landing page links to by name.
+# Built separately by scripts/build_cheatsheets.py — rendering them needs LaTeX,
+# which is a heavier dependency than the decks have, so this only copies what is
+# already there rather than building it.
+sheets=0
+for src in [0-9][0-9]-*/PYTHON-CHEATSHEET.pdf; do
+    [ -e "$src" ] || continue
+    cp "$src" "$ROOT/docs/python-cheatsheet-${src:0:2}.pdf"
+    sheets=$((sheets + 1))
+done
+if [ "$sheets" -eq 0 ]; then
+    echo "No cheatsheets found — run: python3 scripts/build_cheatsheets.py" >&2
+else
+    echo "Copied $sheets python cheatsheets into docs/"
+fi
+
 python3 "$ROOT/scripts/build_index.py"
 
 echo

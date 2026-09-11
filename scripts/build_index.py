@@ -80,6 +80,14 @@ def main() -> None:
             links.append(
                 f'<a class="deck" href="{href}">{label}</a>' if href
                 else f'<span class="deck missing">{label}</span>')
+        # The session's Python cheatsheet, built by scripts/build_cheatsheets.py
+        # and copied here by scripts/publish.sh. Cumulative: session 4's sheet
+        # carries every name from sessions 1 to 4.
+        sheet = DOCS / f"python-cheatsheet-{slug[:2]}.pdf"
+        links.append(
+            f'<a class="deck sheet" href="{sheet.name}">Cheatsheet&nbsp;(PDF)</a>'
+            if sheet.exists()
+            else '<span class="deck missing">Cheatsheet</span>')
         ch = " · ".join(
             f'<a href="{BOOK}/{f}.html">ch.&nbsp;{n}</a>' for n, f in chapters)
         cards.append(f"""      <article class="card">
@@ -144,6 +152,8 @@ def main() -> None:
     transition: background .12s, color .12s;
   }}
   a.deck:hover {{ background: var(--ink); color: var(--paper); }}
+  a.deck.sheet {{ border-color: var(--red); color: var(--red); }}
+  a.deck.sheet:hover {{ background: var(--red); color: var(--paper); }}
   .deck.missing {{
     display: inline-block; border: 1px dashed var(--line); border-radius: 2px;
     padding: .3rem .8rem; font-size: .87rem; color: var(--line);
@@ -205,7 +215,9 @@ def main() -> None:
 """
     (DOCS / "index.html").write_text(page)
     n = sum(1 for s, *_ in SESSIONS for k, _ in KINDS if deck_href(s, k))
-    print(f"docs/index.html written — {len(SESSIONS)} sessions, {n} decks linked")
+    sheets = len(list(DOCS.glob("python-cheatsheet-*.pdf")))
+    print(f"docs/index.html written — {len(SESSIONS)} sessions, {n} decks "
+          f"and {sheets} cheatsheets linked")
 
 
 if __name__ == "__main__":

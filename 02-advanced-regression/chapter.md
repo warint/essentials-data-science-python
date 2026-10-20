@@ -16,7 +16,23 @@ hydration. Now fit the same line separately within each baker:
 | baker | A | B | C | D | E | F | G | H |
 |---|---|---|---|---|---|---|---|---|
 | mean hydration | 62.5 | 64.3 | 71.4 | 75.5 | 74.7 | 81.3 | 86.5 | 88.9 |
-| within-baker slope | **+2.62** | +1.98 | +1.23 | +1.51 | +1.20 | +0.41 | **−0.52** | **−0.48** |
+| within-baker slope | **+2.62** | +1.98 | +1.23 | +1.51 | +1.20 | +0.40 | **−0.52** | **−0.48** |
+
+```python
+import statsmodels.formula.api as smf
+import essentials as ess
+
+d = ess.load("sourdough")
+
+pooled = smf.ols("rise_mm ~ hydration_pct", data=d).fit()
+print(round(pooled.params["hydration_pct"], 3))          # 0.601
+
+slopes = {b: smf.ols("rise_mm ~ hydration_pct", data=g).fit().params["hydration_pct"]
+          for b, g in d.groupby("baker")}
+print({b: round(float(s), 2) for b, s in slopes.items()})   # A 2.62 ... H -0.48
+print(d.groupby("baker").hydration_pct.mean().round(1).to_dict())
+print(round(sum(slopes.values()) / len(slopes), 2))      # 0.99
+```
 
 Eight bakers, eight different slopes, **two of them negative**. The pooled slope
 is not the average of the eight (that average is +0.99). It is a different
@@ -55,10 +71,15 @@ groups and variation *within* them, and a regression uses whichever is left afte
 the controls have absorbed the rest.
 
 ```python
+import essentials as ess
+
+d = ess.load("sourdough")
+
 for col in ["hydration_pct", "oven_c", "rise_mm"]:
     total = d[col].var()
     within = d.groupby("baker")[col].transform(lambda s: s - s.mean()).var()
     between = total - within
+    print(f"{col:14s} {total:7.2f}  between {between / total:6.1%}  within {within / total:6.1%}")
 ```
 
 | variable | total variance | between bakers | within bakers |
@@ -94,18 +115,28 @@ There are three equivalent ways to compute it, and their equivalence is the
 Frisch–Waugh–Lovell theorem in three costumes:
 
 ```python
+import pandas as pd
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
+import essentials as ess
+
+d = ess.load("sourdough")
+
 # (a) a dummy for every baker
-smf.ols("rise_mm ~ hydration_pct + C(baker)", data=d).fit()
+a = smf.ols("rise_mm ~ hydration_pct + C(baker)", data=d).fit()
 
 # (b) subtract each baker's mean from both variables
+dm = pd.DataFrame()
 for c in ["rise_mm", "hydration_pct"]:
     dm[c] = d.groupby("baker")[c].transform(lambda s: s - s.mean())
-smf.ols("rise_mm ~ hydration_pct - 1", data=dm).fit()
+b = smf.ols("rise_mm ~ hydration_pct - 1", data=dm).fit()
 
 # (c) partial the dummies out of both sides, regress residual on residual
 ry = smf.ols("rise_mm ~ C(baker)", data=d).fit().resid
 rx = smf.ols("hydration_pct ~ C(baker)", data=d).fit().resid
-sm.OLS(ry, rx).fit()
+c = sm.OLS(ry, rx).fit()
+
+print(a.params["hydration_pct"], b.params["hydration_pct"], c.params.iloc[0])   # 0.999816 x 3
 ```
 
 | method | slope |
@@ -176,8 +207,14 @@ tests exactly the correlation at issue — turning a specification test into a
 coefficient you can look at (Mundlak, 1978):
 
 ```python
+import statsmodels.formula.api as smf
+import essentials as ess
+
+d = ess.load("sourdough")
+
 d["hyd_mean"] = d.groupby("baker")["hydration_pct"].transform("mean")
-smf.ols("rise_mm ~ hydration_pct + hyd_mean", data=d).fit()
+mundlak = smf.ols("rise_mm ~ hydration_pct + hyd_mean", data=d).fit()
+print(mundlak.summary().tables[1])   # hyd_mean -0.5553, se 0.1721, t -3.23, p 0.0014
 ```
 
 | term | estimate | se | $t$ | $p$ |
@@ -217,6 +254,21 @@ changes, from a sum over observations to a sum over groups.
 | HC3 | 0.1514 | +6.60 |
 | **clustered by baker** | **0.3559** | **+2.81** |
 
+```python
+import statsmodels.formula.api as smf
+import essentials as ess
+
+d = ess.load("sourdough")
+
+fe = "rise_mm ~ hydration_pct + C(baker)"
+for label, kw in [("classical", {}),
+                  ("HC3", {"cov_type": "HC3"}),
+                  ("clustered", {"cov_type": "cluster", "cov_kwds": {"groups": d.baker}})]:
+    m = smf.ols(fe, data=d).fit(**kw)
+    print(f"{label:10s} se {m.bse['hydration_pct']:.4f}  t {m.tvalues['hydration_pct']:+.2f}")
+# classical 0.1383 +7.23 · HC3 0.1514 +6.60 · clustered 0.3559 +2.81
+```
+
 Clustering more than doubles the standard error and cuts the $t$-statistic from
 7.2 to 2.8. The coefficient does not move at all — as promised in chapter 1,
 dependence does not bias it.
@@ -247,8 +299,13 @@ Differentiating and setting to zero puts the turning point at
 $x^\star = -\beta_1/2\beta_2$, a maximum when $\beta_2 < 0$.
 
 ```python
+import statsmodels.formula.api as smf
+import essentials as ess
+
+d = ess.load("sourdough")
+
 quad = smf.ols("rise_mm ~ hydration_pct + I(hydration_pct**2)", data=d).fit()
--quad.params["hydration_pct"] / (2 * quad.params["I(hydration_pct ** 2)"])   # 81.1 %
+print(-quad.params["hydration_pct"] / (2 * quad.params["I(hydration_pct ** 2)"]))   # 81.1 %
 ```
 
 `I(...)` tells the formula parser to treat its contents as arithmetic; without
@@ -264,8 +321,27 @@ $$ \frac{\partial y}{\partial x} = \beta_1 + 2\beta_2 x .$$
 | at hydration | one more point of water is worth |
 |---|---|
 | 65% | +2.2 mm |
-| 80% | −0.4 mm |
-| 92% | −1.7 mm |
+| 80% | +0.6 mm |
+| 92% | −0.8 mm |
+
+Those are read off the full surface of §2.11 — both squares, the interaction and
+baker effects — at the average oven temperature of 225 °C, where the interaction
+term adds $\beta_{xz}\,z$ to the slope:
+
+```python
+import statsmodels.formula.api as smf
+import essentials as ess
+
+d = ess.load("sourdough")
+
+full = smf.ols("rise_mm ~ hydration_pct + I(hydration_pct**2) + oven_c"
+               " + I(oven_c**2) + hydration_pct:oven_c + C(baker)", data=d).fit()
+p, oven = full.params, d.oven_c.mean()
+for x in [65, 80, 92]:
+    slope = (p["hydration_pct"] + 2 * p["I(hydration_pct ** 2)"] * x
+             + p["hydration_pct:oven_c"] * oven)
+    print(x, round(slope, 2))   # 65 +2.24 · 80 +0.56 · 92 -0.77
+```
 
 $\beta_1$ alone is the slope **at $x = 0$** — a dough made entirely of flour. It
 is a real number in the output and it answers no question anyone asked.
@@ -298,8 +374,25 @@ best temperature at a given hydration:
 
 | hydration | best oven |
 |---|---|
-| 65% | 228.8 °C |
-| 90% | 238.1 °C |
+| 65% | 229.0 °C |
+| 90% | 238.2 °C |
+
+```python
+import statsmodels.formula.api as smf
+import essentials as ess
+
+d = ess.load("sourdough")
+
+full = smf.ols("rise_mm ~ hydration_pct + I(hydration_pct**2) + oven_c"
+               " + I(oven_c**2) + hydration_pct:oven_c + C(baker)", data=d).fit()
+p = full.params
+print(p["hydration_pct:oven_c"], full.tvalues["hydration_pct:oven_c"])   # +0.0151, t = 17.0
+
+# d rise / d oven = b_t + 2 b_tt t + b_ht h = 0
+for h in [65, 90]:
+    best = -(p["oven_c"] + p["hydration_pct:oven_c"] * h) / (2 * p["I(oven_c ** 2)"])
+    print(h, round(best, 1))   # 65 -> 229.0 · 90 -> 238.2
+```
 
 Nine degrees apart. Wetter dough wants a hotter oven, and an additive model
 returns the same number for both.
@@ -323,8 +416,15 @@ indicator lets the slope itself vary, and **the coefficient *is* the difference 
 slopes, so its standard error is the test**:
 
 ```python
+import statsmodels.formula.api as smf
+import essentials as ess
+
+d = ess.load("sourdough")
+
 d["wet_baker"] = d.baker.isin(list("EFGH")).astype(int)
-smf.ols("rise_mm ~ hydration_pct * wet_baker + C(baker)", data=d).fit()
+m = smf.ols("rise_mm ~ hydration_pct * wet_baker + C(baker)", data=d).fit()
+term = "hydration_pct:wet_baker"
+print(m.params[term], m.bse[term], m.tvalues[term], m.pvalues[term])   # -1.571 0.258 -6.09 <0.001
 ```
 
 | term | estimate | se | $t$ | $p$ |
@@ -383,6 +483,39 @@ chapter 1 are what tell you which you have.
 
 *(The planted optimum is 86.62% hydration at 236.86 °C.)*
 
+```python
+import pandas as pd
+import statsmodels.formula.api as smf
+from scipy.optimize import minimize
+import essentials as ess
+
+d = ess.load("sourdough")
+h_true, t_true = ess.sourdough_optimum()          # 86.62, 236.86
+
+FULL = ("rise_mm ~ hydration_pct + I(hydration_pct**2) + oven_c"
+        " + I(oven_c**2) + hydration_pct:oven_c + C(baker)")
+
+def peak(fit):
+    """Maximise the fitted surface over the design, for baker D."""
+    def neg(z):
+        row = pd.DataFrame([{"hydration_pct": z[0], "oven_c": z[1], "baker": "D"}])
+        return -fit.predict(row).iloc[0]
+    return minimize(neg, [75, 225], bounds=[(55, 95), (190, 260)]).x
+
+for label, formula in [
+    ("linear + baker FE", "rise_mm ~ hydration_pct + oven_c + C(baker)"),
+    ("quadratics, no interaction", FULL.replace(" + hydration_pct:oven_c", "")),
+    ("interaction, no baker FE", FULL.replace(" + C(baker)", "")),
+    ("everything", FULL),
+]:
+    m = smf.ols(formula, data=d).fit()
+    h, t = peak(m)
+    print(f"{label:28s} R2 {m.rsquared:.3f}  AIC {m.aic:7.1f}  "
+          f"hydration* {h:5.2f}  error {h - h_true:+.2f} pp")
+# 0.490 1819.4 95.00 +8.38 · 0.919 1380.6 84.86 -1.75
+# 0.904 1411.1 82.41 -4.20 · 0.965 1185.5 86.69 +0.07
+```
+
 The third row is the lesson of the chapter. **$R^2 = 0.904$, every coefficient
 significant, and the recommendation is 4.2 percentage points wrong.** This is
 omitted variable bias where the omitted variable was not unobservable — it was in
@@ -398,12 +531,32 @@ model, not about the world.**
 A peak estimated from data is flat near the top:
 
 ```python
+import numpy as np
+import pandas as pd
+import statsmodels.formula.api as smf
+import matplotlib.pyplot as plt
+import essentials as ess
+
+d = ess.load("sourdough")
+full = smf.ols("rise_mm ~ hydration_pct + I(hydration_pct**2) + oven_c"
+               " + I(oven_c**2) + hydration_pct:oven_c + C(baker)", data=d).fit()
+
 grid = pd.DataFrame({"hydration_pct": np.linspace(70, 95, 60),
                      "oven_c": 236.9, "baker": "D"})
-full.get_prediction(grid).summary_frame()
+pred = full.get_prediction(grid).summary_frame()
+
+# hydrations whose predicted rise lies inside the 95% interval at the peak
+top = pred["mean"].idxmax()
+flat = grid.hydration_pct[pred["mean"] >= pred.loc[top, "mean_ci_lower"]]
+print(round(flat.min(), 1), round(flat.max(), 1))   # 82.3 91.2
+
+plt.plot(grid.hydration_pct, pred["mean"])
+plt.fill_between(grid.hydration_pct, pred.mean_ci_lower, pred.mean_ci_upper, alpha=0.2)
+plt.xlabel("hydration (%)"); plt.ylabel("predicted rise (mm)")
+plt.show()
 ```
 
-Anything from roughly 84% to 89% is indistinguishable from the maximum. Quoting
+Anything from roughly 82% to 91% is indistinguishable from the maximum. Quoting
 86.69% implies a precision the data does not support. **The range is the finding.**
 
 ## 2.12 Comparing models
@@ -411,7 +564,18 @@ Anything from roughly 84% to 89% is indistinguishable from the maximum. Quoting
 For **nested** models — one is the other plus terms — use an F-test:
 
 ```python
-f_stat, p_val, _ = restricted.compare_f_test(full)
+import statsmodels.formula.api as smf
+import essentials as ess
+
+d = ess.load("sourdough")
+
+FULL = ("rise_mm ~ hydration_pct + I(hydration_pct**2) + oven_c"
+        " + I(oven_c**2) + hydration_pct:oven_c + C(baker)")
+full = smf.ols(FULL, data=d).fit()
+restricted = smf.ols(FULL.replace(" + hydration_pct:oven_c", ""), data=d).fit()
+
+f_stat, p_val, df_diff = full.compare_f_test(restricted)   # call it on the larger model
+print(f_stat, p_val, df_diff)                              # 289.1, 2.3e-42, 1
 ```
 
 For **non-nested** models, AIC or BIC is what you have. Chapter 1 §1.12 has the

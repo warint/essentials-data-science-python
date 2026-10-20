@@ -26,6 +26,21 @@ in five** — with a range of $[-0.407, 1.358]$. The failure is worst when the b
 rate is near 0 or 1, or when a predictor takes values outside the range it was
 fitted on, which is to say exactly when you extrapolate.
 
+```python
+import statsmodels.formula.api as smf
+import essentials as ess
+
+d = ess.load("mushrooms")
+F = ("poisonous ~ cap_diameter_cm + stem_height_cm + odor_index + ring_present"
+     " + volva_present + C(spore_print, Treatment('brown'))"
+     " + C(gill_spacing, Treatment('close')) + C(habitat, Treatment('grassland'))")
+
+lpm = smf.ols(F, data=d).fit(cov_type="HC3")   # robust SEs: see the second failure
+f = lpm.fittedvalues
+print((f < 0).sum(), (f > 1).sum())            # 254 21
+print(f.min().round(3), f.max().round(3))      # -0.407 1.358
+```
+
 **Second, the error variance cannot be constant.** If $y_i$ is Bernoulli with
 probability $p_i$ then $\operatorname{Var}(y_i) = p_i(1-p_i)$ **by
 construction**: the variance is a function of the mean, largest at $p = 0.5$ and
@@ -117,9 +132,19 @@ weighted regressions.
 You can check that the optimiser did its job:
 
 ```python
+import numpy as np
+import statsmodels.formula.api as smf
+import essentials as ess
+
+d = ess.load("mushrooms")
+F = ("poisonous ~ cap_diameter_cm + stem_height_cm + odor_index + ring_present"
+     " + volva_present + C(spore_print, Treatment('brown'))"
+     " + C(gill_spacing, Treatment('close')) + C(habitat, Treatment('grassland'))")
+
 m = smf.logit(F, data=d).fit()
 X, y = m.model.exog, m.model.endog
-np.abs(X.T @ (y - m.predict(d))).max()     # 1.7e-12
+print(np.abs(X.T @ (y - m.predict(d))).max())   # ~1e-12: zero, to rounding
+print(round(m.prsquared, 4))                    # 0.5331, McFadden (below)
 ```
 
 This is less alarming than it sounds: the log-likelihood for logistic regression
@@ -186,6 +211,38 @@ $p(x=1) - p(x=0)$ instead:
 | 0.0533 | 0.8047 | **+0.7514** |
 | 0.7550 | 0.9956 | +0.2405 |
 
+The three baselines are the 10th, 50th and 90th percentiles of the predicted risk
+with the volva switched off:
+
+```python
+import numpy as np
+import statsmodels.formula.api as smf
+import essentials as ess
+
+d = ess.load("mushrooms")
+F = ("poisonous ~ cap_diameter_cm + stem_height_cm + odor_index + ring_present"
+     " + volva_present + C(spore_print, Treatment('brown'))"
+     " + C(gill_spacing, Treatment('close')) + C(habitat, Treatment('grassland'))")
+m = smf.logit(F, data=d).fit(disp=0)
+p = m.predict(d)
+b, b_odor = m.params["volva_present"], m.params["odor_index"]
+
+print(round(b, 4), round(np.exp(b), 1))                  # 4.2925 73.1
+p1 = m.predict(d.assign(volva_present=1))                # everyone with a volva
+p0 = m.predict(d.assign(volva_present=0))                # ... and without
+print(round((p1 - p0).mean(), 4))                        # 0.4493, average change
+
+print([float(round(b_odor * q * (1 - q), 4)) for q in (0.02, 0.20, 0.50)])
+                                                         # [0.0124, 0.101, 0.1577]
+print(round((b_odor * p * (1 - p)).mean(), 4))           # 0.0548, odour AME
+
+for q in (0.1, 0.5, 0.9):
+    lo = p0.quantile(q)
+    hi = 1 / (1 + np.exp(-(np.log(lo / (1 - lo)) + b)))  # same person, add a volva
+    print(round(lo, 4), round(hi, 4), round(hi - lo, 4))
+# 0.0014 0.0925 0.0911  /  0.0533 0.8047 0.7514  /  0.755 0.9956 0.2405
+```
+
 > One coefficient, one odds ratio, and three completely different consequences.
 > The probability change is largest in the middle and small at both ends, because
 > that is the shape of the curve. **An odds ratio conceals that; a discrete change
@@ -211,6 +268,28 @@ The coefficient more than doubles and the odds ratio grows thirteen-fold. The
 **average marginal effect moves by 18%**. Most of what looks like a dramatically
 strengthening effect is the rescaling Mood describes.
 
+```python
+import numpy as np
+import statsmodels.formula.api as smf
+import essentials as ess
+
+d = ess.load("mushrooms")
+F = ("poisonous ~ cap_diameter_cm + stem_height_cm + odor_index + ring_present"
+     " + volva_present + C(spore_print, Treatment('brown'))"
+     " + C(gill_spacing, Treatment('close')) + C(habitat, Treatment('grassland'))")
+
+for f in ["poisonous ~ volva_present", "poisonous ~ volva_present + odor_index", F]:
+    m = smf.logit(f, data=d).fit(disp=0)
+    b = m.params["volva_present"]
+    ame = m.get_margeff().summary_frame().loc["volva_present", "dy/dx"]
+    print(f"{b:+.3f}  x{np.exp(b):.1f}  {ame:+.4f}")
+# +1.741  x5.7  +0.3162  /  +2.257  x9.6  +0.3382  /  +4.292  x73.1  +0.3725
+```
+
+The marginal effects in this table are the derivative form averaged over the
+sample, so they are comparable with each other; they are not the discrete change
+of +0.4493 above.
+
 > Compare **average marginal effects or predicted probabilities** across
 > specifications. Never raw coefficients or odds ratios.
 
@@ -225,9 +304,21 @@ $$ \mathrm{LR} = 2\big(\ell_{\text{full}} - \ell_{\text{restricted}}\big) \overs
 
 ```python
 from scipy import stats
+import statsmodels.formula.api as smf
+import essentials as ess
+
+d = ess.load("mushrooms")
+F = ("poisonous ~ cap_diameter_cm + stem_height_cm + odor_index + ring_present"
+     " + volva_present + C(spore_print, Treatment('brown'))"
+     " + C(gill_spacing, Treatment('close')) + C(habitat, Treatment('grassland'))")
+
+full = smf.logit(F, data=d).fit(disp=0)
+reduced = smf.logit(F.replace(" + C(habitat, Treatment('grassland'))", ""),
+                    data=d).fit(disp=0)            # restriction: habitat is irrelevant
+
 lr = 2 * (full.llf - reduced.llf)
 df = int(full.df_model - reduced.df_model)
-stats.chi2.sf(lr, df)
+print(round(lr, 2), df, stats.chi2.sf(lr, df))     # 21.27 2 2.4e-05
 ```
 
 For a **single** coefficient the output's Wald $z$-statistic serves —
@@ -269,6 +360,34 @@ And the calibration itself, by decile of predicted probability:
 Predicted and observed track each other across the whole range. This model is
 both discriminating and well calibrated — which is what you would hope, since the
 generator *is* a logistic model and we have fitted it correctly.
+
+```python
+import numpy as np
+import pandas as pd
+from scipy import stats
+import statsmodels.formula.api as smf
+from sklearn.metrics import brier_score_loss, roc_auc_score
+import essentials as ess
+
+d = ess.load("mushrooms")
+F = ("poisonous ~ cap_diameter_cm + stem_height_cm + odor_index + ring_present"
+     " + volva_present + C(spore_print, Treatment('brown'))"
+     " + C(gill_spacing, Treatment('close')) + C(habitat, Treatment('grassland'))")
+p = smf.logit(F, data=d).fit(disp=0).predict(d)
+y = d.poisonous
+
+pos, neg = p[y == 1], p[y == 0]
+U = stats.mannwhitneyu(pos, neg).statistic
+print(round(roc_auc_score(y, p), 4), round(U / (len(pos) * len(neg)), 4))  # 0.9382 0.9382
+
+model = brier_score_loss(y, p)
+base = brier_score_loss(y, np.full(len(y), y.mean()))
+print(round(model, 4), round(base, 4), f"{1 - model / base:.1%}")  # 0.088 0.2047 57.0%
+
+decile = pd.qcut(p, 10, labels=False)
+print(pd.DataFrame({"predicted": p.groupby(decile).mean(),
+                    "observed": y.groupby(decile).mean()}).round(3).T)
+```
 
 > A model can discriminate well and be badly calibrated, or the reverse, and
 > which matters depends entirely on the use. **A ranking for a limited budget of
@@ -339,6 +458,44 @@ should: with 1,400 discrete cases the loss is a step function, so its minimum is
 a flat region. Everything between 0.021 and 0.031 is within 5% of the floor. The
 formula names the right neighbourhood, not a value to quote to four decimals.
 
+```python
+import numpy as np
+import statsmodels.formula.api as smf
+from sklearn.metrics import confusion_matrix
+import essentials as ess
+
+d = ess.load("mushrooms")
+F = ("poisonous ~ cap_diameter_cm + stem_height_cm + odor_index + ring_present"
+     " + volva_present + C(spore_print, Treatment('brown'))"
+     " + C(gill_spacing, Treatment('close')) + C(habitat, Treatment('grassland'))")
+p = smf.logit(F, data=d).fit(disp=0).predict(d)
+y = d.poisonous
+C_FN, C_FP = 50, 1
+
+print(round(1 - y.mean(), 3))                       # 0.713, "call everything edible"
+print(confusion_matrix(y, (p >= 0.5).astype(int)))  # [[931 67] [105 297]]
+
+def outcome(t):
+    call = (p >= t).astype(int)                     # 1 = called poisonous
+    fn = ((call == 0) & (y == 1)).sum()
+    fp = ((call == 1) & (y == 0)).sum()
+    return (call == y).mean(), fn, call.mean(), C_FN * fn + C_FP * fp
+
+for t in [0.50, 0.10, C_FP / (C_FP + C_FN), 0.005]:
+    acc, fn, discarded, loss = outcome(t)
+    print(f"t={t:.4f}  acc {acc:.3f}  missed {fn:3d}  discarded {discarded:.0%}  loss {loss}")
+# 0.877 105 26% 5317 / 0.764 17 50% 1164 / 0.585 1 70% 630 / 0.449 0 84% 772
+
+ts = np.linspace(0.002, 0.95, 300)
+loss = np.array([outcome(t)[3] for t in ts])
+near = ts[loss <= 1.05 * loss.min()]
+print(round(ts[loss.argmin()], 3), near.min().round(3), near.max().round(3))  # 0.031 0.021 0.031
+```
+
+On this 300-point grid. Sweep every distinct fitted probability instead and the
+floor is 609 at $t \approx 0.022$: the step function has several near-equal
+steps, which is the point.
+
 ### The ROC curve is the menu, not the choice
 
 Plotting sensitivity against $1-$specificity across every threshold traces the
@@ -359,9 +516,18 @@ model fits one slope and several thresholds:
 $$ \Pr(y_i \le j) = \sigma\big(\tau_j - x_i^{\top}\beta\big), \qquad \tau_1 < \tau_2 < \dots < \tau_{J-1} .$$
 
 ```python
+import pandas as pd
 from statsmodels.miscmodels.ordinal_model import OrderedModel
-X = pd.get_dummies(sub[[...]], drop_first=True, dtype=float)
-OrderedModel(sub.toxicity.cat.codes, X, distr="logit").fit(method="bfgs")
+import essentials as ess
+
+d = ess.load("mushrooms")
+sub = d.dropna(subset=["toxicity"]).copy()   # edible < upset stomach < hospital < fatal
+X = pd.get_dummies(
+    sub[["odor_index", "volva_present", "ring_present", "spore_print"]],
+    columns=["spore_print"], drop_first=True, dtype=float)
+
+ordinal = OrderedModel(sub.toxicity.cat.codes, X, distr="logit").fit(method="bfgs", disp=0)
+print(ordinal.params.round(4))   # volva_present 3.70; then three cut-points
 ```
 
 Each threshold $\tau_j$ marks a cut on the latent scale, and the **same** $\beta$
@@ -377,6 +543,24 @@ unordered multinomial is preferable to a restriction the data reject.
 In this generator the assumption holds by construction — the grades are cuts
 through one latent risk — so the separate logits should agree, and finding that
 they do is the correct answer. **The lesson is the check, not the result.**
+
+```python
+import pandas as pd
+import statsmodels.api as sm
+import essentials as ess
+
+d = ess.load("mushrooms")
+sub = d.dropna(subset=["toxicity"]).copy()
+X = sm.add_constant(pd.get_dummies(
+    sub[["odor_index", "volva_present", "ring_present", "spore_print"]],
+    columns=["spore_print"], drop_first=True, dtype=float))
+grade = sub.toxicity.cat.codes
+
+for j, name in enumerate(sub.toxicity.cat.categories[1:], start=1):
+    cut = sm.Logit((grade >= j).astype(int), X).fit(disp=0)
+    print(f"at least {name:14s}", cut.params[["odor_index", "volva_present"]].round(2).values)
+# volva 3.66, 4.13, 3.58 at the three cuts, against 3.70 from the ordinal model
+```
 
 ### When the categories have no order
 
@@ -439,6 +623,35 @@ A penalty does give you a number, and it is worth seeing what kind of number:
 | almost none (`C=1e6`) | +6.04 |
 | moderate (`C=1.0`) | +2.44 |
 | strong (`C=0.1`) | +0.84 |
+
+```python
+import warnings
+import statsmodels.formula.api as smf
+from sklearn.linear_model import LogisticRegression
+import essentials as ess
+
+d = ess.load("mushrooms")
+d["flag"] = ((d.volva_present == 1) & (d.spore_print == "white")
+             & (d.odor_index > 6)).astype(int)
+print(d.groupby("flag").poisonous.agg(["size", "mean"]))   # 26 cases, all poisonous
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    try:
+        m = smf.logit("poisonous ~ flag + odor_index", data=d).fit(disp=0)
+        print(m.mle_retvals["converged"], m.params["flag"], m.bse["flag"], m.pvalues["flag"])
+    except Exception as e:      # older statsmodels: LinAlgError: Singular matrix
+        print(type(e).__name__, e)
+# recent statsmodels does not crash: converged False, an estimate near 20,
+# a standard error near 10,000 and p ~ 1.0 -- "not estimable", read as "not significant"
+
+for C in (1e6, 1.0, 0.1):
+    pen = LogisticRegression(C=C, max_iter=10_000).fit(d[["flag", "odor_index"]], d.poisonous)
+    print(C, round(pen.coef_[0][0], 2))   # +6.04, +2.43, +0.84
+```
+
+At `C=1e6` even the number is an accident of when the optimiser stopped: tighten
+its tolerance and the coefficient keeps climbing.
 
 > The estimate is whatever the penalty says it is, because **the data contains no
 > information about how large the effect is** — only that it is large enough to

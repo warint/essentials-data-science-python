@@ -418,7 +418,7 @@ plt.show()
 ```
 
 ::: {.muted}
-The peak is flat. Anything from roughly 84% to 89% is indistinguishable, and
+The peak is flat. Anything from roughly 82% to 91% is indistinguishable, and
 that — not a single number — is the honest recommendation.
 :::
 
@@ -433,7 +433,7 @@ of 1,204 means nothing on its own.
 #| echo: true
 
 nested_test = smf.ols(FULL.replace(" + hydration_pct:oven_c", ""), data=d).fit()
-f_stat, p_val, _ = nested_test.compare_f_test(full)
+f_stat, p_val, _ = full.compare_f_test(nested_test)
 print(f"F-test for adding the interaction: F = {f_stat:.2f}, p = {p_val:.2e}")
 print(f"AIC {nested_test.aic:.1f} -> {full.aic:.1f}")
 ```

@@ -142,7 +142,7 @@ points wrong — with nothing in its own output to warn you.
 
 ::: {.step}
 A peak estimated from data is flat near the top. "86.7%" implies a precision you
-do not have; "somewhere between 84 and 89%" is what you actually know.
+do not have; "somewhere between 82 and 91%" is what you actually know.
 :::
 
 ## Also worth trying, if you have time

@@ -259,7 +259,7 @@ Thierry Warin, PhD
 </section>
 <section id="the-data" class="slide level2">
 <h2>The data</h2>
-<div id="dd58dc0c" class="cell" data-execution_count="2">
+<div id="7c954bd4" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a></a>d <span class="op">=</span> ess.load(<span class="st">"bestiary"</span>)</span>
 <span id="cb1-2"><a></a><span class="bu">print</span>(d.species.value_counts().to_string())</span>
 <span id="cb1-3"><a></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">rarest species: </span><span class="sc">{</span>(d.species <span class="op">==</span> <span class="st">'ember_drake'</span>)<span class="sc">.</span>mean()<span class="sc">:.2%}</span><span class="ss"> of records"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -289,7 +289,7 @@ rarest species: 2.12% of records</code></pre>
 <p>If you knew the true class probabilities at every point, the best rule would be to predict the most likely class:</p>
 <p><span class="math display">\[ \hat y(x) = \arg\max_j \Pr(Y = j \mid X = x) \]</span></p>
 <p>This data is generated from four known Gaussians with known priors, so that posterior is <strong>computable</strong>:</p>
-<div id="160437cc" class="cell" data-execution_count="4">
+<div id="54183f95" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a></a>post <span class="op">=</span> ess.bestiary_posterior(d.wing_span_cm, d.tail_length_cm)</span>
 <span id="cb3-2"><a></a>bayes_pred <span class="op">=</span> np.array(SPECIES)[post.argmax(<span class="dv">1</span>)]</span>
 <span id="cb3-3"><a></a></span>
@@ -333,7 +333,7 @@ Bayes balanced accuracy 0.8876</code></pre>
 </section>
 <section id="standardise-or-the-units-decide-for-you" class="slide level2">
 <h2>Standardise, or the units decide for you</h2>
-<div id="26b6041c" class="cell" data-execution_count="5">
+<div id="c6eff036" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a></a><span class="bu">print</span>(<span class="st">"raw scales:"</span>)</span>
 <span id="cb5-2"><a></a><span class="bu">print</span>(d[[<span class="st">"wing_span_cm"</span>, <span class="st">"tail_length_cm"</span>, <span class="st">"mass_g"</span>, <span class="st">"scale_count"</span>]]</span>
 <span id="cb5-3"><a></a>      .std().<span class="bu">round</span>(<span class="dv">2</span>).to_string())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -346,12 +346,12 @@ scale_count       64.13</code></pre>
 </div>
 </div>
 <div class="warn">
-<p><code>mass_g</code> has a standard deviation nearly forty times that of tail length. In Euclidean distance it would swamp everything else — and it is <strong>pure noise</strong>. A distance-based method with unstandardised features is measuring whatever happens to have the biggest numbers.</p>
+<p><code>mass_g</code> has a standard deviation nearly twenty times that of tail length. In Euclidean distance it would swamp everything else — and it is <strong>pure noise</strong>. A distance-based method with unstandardised features is measuring whatever happens to have the biggest numbers.</p>
 </div>
 </section>
 <section id="k-1-against-k-400" class="slide level2">
 <h2><span class="math inline">\(k = 1\)</span> against <span class="math inline">\(k = 400\)</span></h2>
-<div id="c3fe0378" class="cell" data-execution_count="6">
+<div id="8de86223" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a></a><span class="cf">for</span> k <span class="kw">in</span> (<span class="dv">1</span>, <span class="dv">5</span>, <span class="dv">15</span>, <span class="dv">45</span>, <span class="dv">125</span>, <span class="dv">400</span>):</span>
 <span id="cb7-2"><a></a>    m <span class="op">=</span> KNeighborsClassifier(k).fit(A, ytr)</span>
 <span id="cb7-3"><a></a>    <span class="bu">print</span>(<span class="ss">f"k = </span><span class="sc">{</span>k<span class="sc">:4d}</span><span class="ss">   train </span><span class="sc">{</span>m<span class="sc">.</span>score(A, ytr)<span class="sc">:.3f}</span><span class="ss">   test </span><span class="sc">{</span>m<span class="sc">.</span>score(B, yte)<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
@@ -402,7 +402,7 @@ Bayes floor: 0.863</code></pre>
 <section id="choosing-k-honestly" class="slide level2">
 <h2>Choosing <span class="math inline">\(k\)</span> honestly</h2>
 <p>You cannot choose <span class="math inline">\(k\)</span> on the test set — that would make the test score an estimate of nothing. Cross-validate <strong>within the training data</strong>:</p>
-<div id="37c692c8" class="cell" data-execution_count="8">
+<div id="0a917808" class="cell" data-execution_count="8">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a></a>grid <span class="op">=</span> GridSearchCV(KNeighborsClassifier(),</span>
 <span id="cb9-2"><a></a>                    {<span class="st">"n_neighbors"</span>: <span class="bu">list</span>(<span class="bu">range</span>(<span class="dv">1</span>, <span class="dv">151</span>, <span class="dv">2</span>))},</span>
 <span id="cb9-3"><a></a>                    cv<span class="op">=</span>KFold(<span class="dv">10</span>, shuffle<span class="op">=</span><span class="va">True</span>, random_state<span class="op">=</span><span class="dv">0</span>)).fit(A, ytr)</span>
@@ -424,7 +424,7 @@ Bayes floor       0.8625</code></pre>
 </section>
 <section id="other-estimators-same-data" class="slide level2">
 <h2>Other estimators, same data</h2>
-<div id="527a498a" class="cell" data-execution_count="9">
+<div id="905399e0" class="cell" data-execution_count="9">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a></a><span class="cf">for</span> label, model <span class="kw">in</span> [</span>
 <span id="cb11-2"><a></a>    (<span class="st">"logistic regression (linear boundary)"</span>, LogisticRegression(max_iter<span class="op">=</span><span class="dv">5000</span>)),</span>
 <span id="cb11-3"><a></a>    (<span class="st">"QDA (curved — the correct family)"</span>, QuadraticDiscriminantAnalysis()),</span>
@@ -467,7 +467,7 @@ k-NN, k = 45                             train 0.855  test 0.873</code></pre>
 </section>
 <section id="the-confusion-matrix" class="slide level2">
 <h2>The confusion matrix</h2>
-<div id="58c23de9" class="cell" data-execution_count="10">
+<div id="b1b2f700" class="cell" data-execution_count="10">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a></a>knn <span class="op">=</span> KNeighborsClassifier(<span class="dv">45</span>).fit(A, ytr)</span>
 <span id="cb13-2"><a></a>pred <span class="op">=</span> knn.predict(B)</span>
 <span id="cb13-3"><a></a></span>
@@ -488,7 +488,7 @@ accuracy 0.8729</code></pre>
 </section>
 <section id="the-number-that-ends-the-argument" class="slide level2">
 <h2>The number that ends the argument</h2>
-<div id="b4fa0621" class="cell" data-execution_count="11">
+<div id="1d6861a1" class="cell" data-execution_count="11">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a></a>blind <span class="op">=</span> np.where(pred <span class="op">==</span> <span class="st">"ember_drake"</span>, <span class="st">"thornback"</span>, pred)</span>
 <span id="cb15-2"><a></a><span class="bu">print</span>(<span class="ss">f"the model as fitted              </span><span class="sc">{</span>accuracy_score(yte, pred)<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
 <span id="cb15-3"><a></a><span class="bu">print</span>(<span class="ss">f"the same model, ember drakes      "</span></span>
@@ -507,7 +507,7 @@ difference                       0.0167</code></pre>
 </section>
 <section id="precision-and-recall-per-class" class="slide level2">
 <h2>Precision and recall, per class</h2>
-<div id="1e279577" class="cell" data-execution_count="12">
+<div id="26c727d9" class="cell" data-execution_count="12">
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a></a><span class="bu">print</span>(classification_report(yte, pred, labels<span class="op">=</span>LABS, zero_division<span class="op">=</span><span class="dv">0</span>, digits<span class="op">=</span><span class="dv">3</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>              precision    recall  f1-score   support
@@ -568,7 +568,7 @@ weighted avg      0.876     0.873     0.874       480
 </section>
 <section id="adding-noise-measured" class="slide level2">
 <h2>Adding noise, measured</h2>
-<div id="dc313e6c" class="cell" data-execution_count="13">
+<div id="df99b351" class="cell" data-execution_count="13">
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a></a>Ntr, Nte, nytr, nyte <span class="op">=</span> train_test_split(XN, y, test_size<span class="op">=</span><span class="fl">0.3</span>, random_state<span class="op">=</span><span class="dv">1</span>,</span>
 <span id="cb19-2"><a></a>                                        stratify<span class="op">=</span>y)</span>
 <span id="cb19-3"><a></a>nsc <span class="op">=</span> StandardScaler().fit(Ntr)</span>
@@ -606,7 +606,7 @@ k =  125   2 real features 0.854   + 3 noise columns 0.846   (-0.008)</code></pr
 <section id="importance-without-coefficients" class="slide level2">
 <h2>Importance without coefficients</h2>
 <p><span class="math inline">\(k\)</span>-NN has nothing to report as an effect size. To find out what a feature is worth, <strong>scramble it</strong> and see what breaks:</p>
-<div id="aba7982f" class="cell" data-execution_count="14">
+<div id="a0f2b8cf" class="cell" data-execution_count="14">
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a></a><span class="im">from</span> sklearn.inspection <span class="im">import</span> permutation_importance</span>
 <span id="cb21-2"><a></a></span>
 <span id="cb21-3"><a></a>m5 <span class="op">=</span> KNeighborsClassifier(<span class="dv">45</span>).fit(nsc.transform(Ntr), nytr)</span>

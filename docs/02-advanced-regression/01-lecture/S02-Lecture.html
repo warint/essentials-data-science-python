@@ -262,7 +262,7 @@ Thierry Warin, PhD
 </section>
 <section id="the-data" class="slide level2">
 <h2>The data</h2>
-<div id="50815398" class="cell" data-execution_count="2">
+<div id="87c97141" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a></a>d <span class="op">=</span> ess.load(<span class="st">"sourdough"</span>)</span>
 <span id="cb1-2"><a></a><span class="bu">print</span>(d.shape)</span>
 <span id="cb1-3"><a></a>d.head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -361,7 +361,7 @@ Thierry Warin, PhD
 </section>
 <section id="the-obvious-model-and-its-confident-wrong-answer" class="slide level2">
 <h2>The obvious model, and its confident wrong answer</h2>
-<div id="2631df1c" class="cell" data-execution_count="3">
+<div id="246176f2" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a></a>flat <span class="op">=</span> smf.ols(<span class="st">"rise_mm ~ hydration_pct + oven_c"</span>, data<span class="op">=</span>d).fit()</span>
 <span id="cb3-2"><a></a><span class="bu">print</span>(flat.params.<span class="bu">round</span>(<span class="dv">4</span>))</span>
 <span id="cb3-3"><a></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">R2 = </span><span class="sc">{</span>flat<span class="sc">.</span>rsquared<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -374,7 +374,7 @@ dtype: float64
 R2 = 0.3575</code></pre>
 </div>
 </div>
-<div id="215fdbb0" class="cell" data-execution_count="4">
+<div id="80a3b8e8" class="cell" data-execution_count="4">
 <div class="cell-output cell-output-stdout">
 <pre><code>best recipe according to this model:  hydration 95.0%,  oven 260 C
 ...which is the top-right corner of the design.</code></pre>
@@ -398,7 +398,7 @@ R2 = 0.3575</code></pre>
 <p>Differentiate and set to zero: the turning point is at</p>
 <p><span class="math display">\[ x^\star = -\frac{\beta_1}{2\beta_2} \]</span></p>
 <p>and it is a <strong>maximum</strong> when <span class="math inline">\(\beta_2 &lt; 0\)</span>.</p>
-<div id="ce09e4d5" class="cell" data-execution_count="5">
+<div id="1d69ad76" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a></a>quad <span class="op">=</span> smf.ols(<span class="st">"rise_mm ~ hydration_pct + I(hydration_pct**2)"</span>, data<span class="op">=</span>d).fit()</span>
 <span id="cb6-2"><a></a>b1 <span class="op">=</span> quad.params[<span class="st">"hydration_pct"</span>]</span>
 <span id="cb6-3"><a></a>b2 <span class="op">=</span> quad.params[<span class="st">"I(hydration_pct ** 2)"</span>]</span>
@@ -419,7 +419,7 @@ R2 0.3575 -&gt; 0.4122</code></pre>
 <p>Once <span class="math inline">\(x^2\)</span> is in the model, <strong><span class="math inline">\(\beta_1\)</span> is no longer “the effect of <span class="math inline">\(x\)</span>”</strong>. The slope now varies with <span class="math inline">\(x\)</span>:</p>
 <p><span class="math display">\[ \frac{\partial y}{\partial x} = \beta_1 + 2\beta_2 x \]</span></p>
 </div>
-<div id="151193fa" class="cell" data-execution_count="6">
+<div id="ea7f9152" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a></a><span class="cf">for</span> h <span class="kw">in</span> (<span class="dv">65</span>, <span class="dv">75</span>, <span class="dv">85</span>, <span class="dv">92</span>):</span>
 <span id="cb8-2"><a></a>    <span class="bu">print</span>(<span class="ss">f"at </span><span class="sc">{</span>h<span class="sc">}</span><span class="ss">% hydration, one more point of water is worth "</span></span>
 <span id="cb8-3"><a></a>          <span class="ss">f"</span><span class="sc">{</span>b1 <span class="op">+</span> <span class="dv">2</span><span class="op">*</span>b2<span class="op">*</span>h<span class="sc">:+.3f}</span><span class="ss"> mm"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -457,7 +457,7 @@ at 92% hydration, one more point of water is worth -1.237 mm</code></pre>
 </section>
 <section id="is-there-one-here" class="slide level2">
 <h2>Is there one here?</h2>
-<div id="d663841c" class="cell" data-execution_count="7">
+<div id="c8e6f99d" class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a></a>full <span class="op">=</span> smf.ols(FULL, data<span class="op">=</span>d).fit()</span>
 <span id="cb10-2"><a></a>b3 <span class="op">=</span> full.params[<span class="st">"hydration_pct:oven_c"</span>]</span>
 <span id="cb10-3"><a></a><span class="bu">print</span>(<span class="ss">f"interaction  </span><span class="sc">{</span>b3<span class="sc">:+.5f}</span><span class="ss">   t = </span><span class="sc">{</span>full<span class="sc">.</span>tvalues[<span class="st">'hydration_pct:oven_c'</span>]<span class="sc">:.2f}</span><span class="ss">"</span></span>
@@ -466,7 +466,7 @@ at 92% hydration, one more point of water is worth -1.237 mm</code></pre>
 <pre><code>interaction  +0.01506   t = 17.00   p = 2.3e-42</code></pre>
 </div>
 </div>
-<div id="18a39c06" class="cell" data-execution_count="8">
+<div id="da22bc46" class="cell" data-execution_count="8">
 <div class="cell-output cell-output-stdout">
 <pre><code>
 best oven temperature, conditional on hydration:
@@ -497,7 +497,7 @@ best oven temperature, conditional on hydration:
 </section>
 <section id="the-bakers-are-not-interchangeable" class="slide level2">
 <h2>The bakers are not interchangeable</h2>
-<div id="aeeaf339" class="cell" data-execution_count="10">
+<div id="47ac920a" class="cell" data-execution_count="10">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a></a><span class="bu">print</span>(d.groupby(<span class="st">"baker"</span>)[[<span class="st">"hydration_pct"</span>, <span class="st">"rise_mm"</span>]].mean().<span class="bu">round</span>(<span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>       hydration_pct  rise_mm
@@ -519,7 +519,7 @@ H               88.9     27.2</code></pre>
 <section id="what-cbaker-does" class="slide level2">
 <h2>What <code>C(baker)</code> does</h2>
 <p>It adds one dummy per baker (minus a reference), giving each their own intercept. The other coefficients are then estimated <strong>within</strong> bakers: from variation in hydration <em>among that baker’s own loaves</em>, where skill is held constant because it is the same person.</p>
-<div id="c29a5453" class="cell" data-execution_count="11">
+<div id="a3ef77f5" class="cell" data-execution_count="11">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a></a>no_fe <span class="op">=</span> FULL.replace(<span class="st">" + C(baker)"</span>, <span class="st">""</span>)</span>
 <span id="cb15-2"><a></a>m_nofe <span class="op">=</span> smf.ols(no_fe, data<span class="op">=</span>d).fit()</span>
 <span id="cb15-3"><a></a></span>
@@ -538,7 +538,7 @@ planted answer:         86.62%</code></pre>
 </section>
 <section id="read-those-three-numbers-again" class="slide level2">
 <h2>Read those three numbers again</h2>
-<div id="ffc4fcb4" class="cell" data-execution_count="12">
+<div id="9eda1b6c" class="cell" data-execution_count="12">
 <div class="cell-output cell-output-stdout">
 <pre><code>the model without baker effects is off by -4.20 percentage points
 and it reports R2 = 0.904</code></pre>
@@ -574,7 +574,7 @@ and it reports R2 = 0.904</code></pre>
 </section>
 <section id="the-ladder" class="slide level2">
 <h2>The ladder</h2>
-<div id="563bb61f" class="cell" data-execution_count="13">
+<div id="10fd2d00" class="cell" data-execution_count="13">
 <div class="cell-output cell-output-stdout">
 <pre><code>                       model    R2    AIC  hydration*  oven*  error (pp)
        linear, with baker FE 0.490 1819.4       95.00  260.0        8.38
@@ -592,7 +592,7 @@ planted optimum: 86.62% hydration, 236.9 C</code></pre>
 <section id="report-a-region-not-a-point" class="slide level2">
 <h2>Report a region, not a point</h2>
 <p>An optimum estimated from data has uncertainty, and quoting it to two decimal places implies a precision you do not have.</p>
-<div id="c6eab922" class="cell" data-execution_count="14">
+<div id="f607e8ea" class="cell" data-execution_count="14">
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a></a>pred <span class="op">=</span> full.get_prediction(pd.DataFrame(</span>
 <span id="cb19-2"><a></a>    {<span class="st">"hydration_pct"</span>: np.linspace(<span class="dv">70</span>, <span class="dv">95</span>, <span class="dv">60</span>), <span class="st">"oven_c"</span>: T_TRUE, <span class="st">"baker"</span>: <span class="st">"D"</span>}</span>
 <span id="cb19-3"><a></a>)).summary_frame()</span>
@@ -608,20 +608,20 @@ planted optimum: 86.62% hydration, 236.9 C</code></pre>
 
 </div>
 <img data-src="S02-Lecture_files/figure-revealjs/cell-15-output-1.png" class="quarto-figure quarto-figure-center r-stretch"><div class="muted">
-<p>The peak is flat. Anything from roughly 84% to 89% is indistinguishable, and that — not a single number — is the honest recommendation.</p>
+<p>The peak is flat. Anything from roughly 82% to 91% is indistinguishable, and that — not a single number — is the honest recommendation.</p>
 </div>
 </section>
 <section id="comparing-models-and-what-aic-is-not" class="slide level2">
 <h2>Comparing models, and what AIC is not</h2>
 <p><span class="math display">\[ \mathrm{AIC} = -2\log L + 2k \]</span></p>
 <p>Fit, penalised for parameters. Lower is better, and <strong>only relative</strong> — an AIC of 1,204 means nothing on its own.</p>
-<div id="fb33b7f8" class="cell" data-execution_count="15">
+<div id="92199b37" class="cell" data-execution_count="15">
 <div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a></a>nested_test <span class="op">=</span> smf.ols(FULL.replace(<span class="st">" + hydration_pct:oven_c"</span>, <span class="st">""</span>), data<span class="op">=</span>d).fit()</span>
-<span id="cb20-2"><a></a>f_stat, p_val, _ <span class="op">=</span> nested_test.compare_f_test(full)</span>
+<span id="cb20-2"><a></a>f_stat, p_val, _ <span class="op">=</span> full.compare_f_test(nested_test)</span>
 <span id="cb20-3"><a></a><span class="bu">print</span>(<span class="ss">f"F-test for adding the interaction: F = </span><span class="sc">{</span>f_stat<span class="sc">:.2f}</span><span class="ss">, p = </span><span class="sc">{</span>p_val<span class="sc">:.2e}</span><span class="ss">"</span>)</span>
 <span id="cb20-4"><a></a><span class="bu">print</span>(<span class="ss">f"AIC </span><span class="sc">{</span>nested_test<span class="sc">.</span>aic<span class="sc">:.1f}</span><span class="ss"> -&gt; </span><span class="sc">{</span>full<span class="sc">.</span>aic<span class="sc">:.1f}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>F-test for adding the interaction: F = 127.71, p = nan
+<pre><code>F-test for adding the interaction: F = 289.08, p = 2.31e-42
 AIC 1380.6 -&gt; 1185.5</code></pre>
 </div>
 </div>

@@ -260,7 +260,7 @@ Thierry Warin, PhD
 </section>
 <section id="the-data" class="slide level2">
 <h2>The data</h2>
-<div id="812a5ff5" class="cell" data-execution_count="2">
+<div id="1e989477" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a></a>d <span class="op">=</span> ess.load(<span class="st">"cat_cafe"</span>)</span>
 <span id="cb1-2"><a></a><span class="bu">print</span>(d.groupby(<span class="st">"cat_arrival_quarter"</span>).cafe_id.nunique().to_string())</span>
 <span id="cb1-3"><a></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="sc">{</span>d<span class="sc">.</span>cafe_id<span class="sc">.</span>nunique()<span class="sc">}</span><span class="ss"> cafés × </span><span class="sc">{</span>d<span class="sc">.</span>quarter<span class="sc">.</span>nunique()<span class="sc">}</span><span class="ss"> quarters "</span></span>
@@ -291,7 +291,7 @@ never-treated cafés: 0</code></pre>
 <h2>The estimator everyone reaches for</h2>
 <p>Unit fixed effects, time fixed effects, one treatment dummy:</p>
 <p><span class="math display">\[ Y_{it} = \alpha_i + \gamma_t + \beta\, D_{it} + \varepsilon_{it} \]</span></p>
-<div id="d8ee6402" class="cell" data-execution_count="4">
+<div id="f2d84f7f" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a></a>twfe <span class="op">=</span> smf.ols(<span class="st">"dwell_min ~ has_cat + C(cafe_id) + C(quarter)"</span>, data<span class="op">=</span>d).fit()</span>
 <span id="cb3-2"><a></a></span>
 <span id="cb3-3"><a></a>b <span class="op">=</span> twfe.params[<span class="st">"has_cat"</span>]</span>
@@ -307,7 +307,7 @@ never-treated cafés: 0</code></pre>
 </section>
 <section id="what-was-actually-planted" class="slide level2">
 <h2>What was actually planted</h2>
-<div id="2f96479d" class="cell" data-execution_count="5">
+<div id="55165e26" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a></a><span class="bu">print</span>(TRUTH.groupby(<span class="st">"cohort"</span>).true_att.agg([<span class="st">"min"</span>, <span class="st">"max"</span>, <span class="st">"mean"</span>]).<span class="bu">round</span>(<span class="dv">2</span>).to_string())</span>
 <span id="cb5-2"><a></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">every planted effect is POSITIVE, mean +</span><span class="sc">{</span>TRUTH<span class="sc">.</span>true_att<span class="sc">.</span>mean()<span class="sc">:.2f}</span><span class="ss">"</span>)</span>
 <span id="cb5-3"><a></a><span class="bu">print</span>(<span class="ss">f"two-way fixed effects reports  </span><span class="sc">{</span>b<span class="sc">:+.3f}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -340,7 +340,7 @@ two-way fixed effects reports  -2.088</code></pre>
 <section id="twfe-is-a-weighted-average-of-22s" class="slide level2">
 <h2>TWFE is a weighted average of 2×2s</h2>
 <p>Goodman-Bacon (2021) showed that with staggered adoption, a two-way fixed effects estimate is <strong>exactly</strong> a weighted average of every 2×2 difference-in-differences you could form from the data.</p>
-<div id="76aa25f2" class="cell" data-execution_count="6">
+<div id="8b4333e2" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a></a>bacon <span class="op">=</span> dd.BaconDecomposition().fit(</span>
 <span id="cb7-2"><a></a>    d, outcome<span class="op">=</span><span class="st">"dwell_min"</span>, unit<span class="op">=</span><span class="st">"cafe_id"</span>, time<span class="op">=</span><span class="st">"quarter"</span>,</span>
 <span id="cb7-3"><a></a>    first_treat<span class="op">=</span><span class="st">"cat_arrival_quarter"</span>)</span>
@@ -360,7 +360,7 @@ two-way fixed effects reports  -2.088</code></pre>
 </section>
 <section id="read-the-comparison-types" class="slide level2">
 <h2>Read the comparison types</h2>
-<div id="a3246006" class="cell" data-execution_count="7">
+<div id="693ed1e2" class="cell" data-execution_count="7">
 <div class="cell-output cell-output-stdout">
 <pre><code>earlier_vs_later      weight 0.4968   average estimate   +8.525   contribution   +4.235
 later_vs_earlier      weight 0.5032   average estimate  -12.564   contribution   -6.323
@@ -378,7 +378,7 @@ TWFE estimate: -2.0877   decomposition error: 5.77e-15</code></pre>
 <div class="step">
 <p>Look at the <code>later_vs_earlier</code> rows. In those, the <strong>later</strong> cohort is the treated group and the <strong>earlier</strong> cohort is the control group — a control group that already has a cat.</p>
 </div>
-<div id="05a7033f" class="cell" data-execution_count="8">
+<div id="0580d322" class="cell" data-execution_count="8">
 <div class="cell-output cell-output-stdout">
 <pre><code> treated_group  control_group  estimate  weight  time_start  time_end
              7              4  -12.7084  0.2065           4        12
@@ -432,7 +432,7 @@ TWFE estimate: -2.0877   decomposition error: 5.77e-15</code></pre>
 <p>Callaway and Sant’Anna (2021) refuse to pool. Instead of one <span class="math inline">\(\beta\)</span>, estimate one effect for <strong>each cohort <span class="math inline">\(g\)</span> in each period <span class="math inline">\(t\)</span></strong>:</p>
 <p><span class="math display">\[ \text{ATT}(g, t) = \mathbb{E}\left[Y_t(g) - Y_t(0) \mid G = g\right] \]</span></p>
 <p>Each is a clean 2×2, using as controls only units that are <strong>not yet treated</strong> at time <span class="math inline">\(t\)</span> — never the already-treated.</p>
-<div id="2306c5c0" class="cell" data-execution_count="9">
+<div id="779f8f4c" class="cell" data-execution_count="9">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a></a>cs <span class="op">=</span> dd.CallawaySantAnna(control_group<span class="op">=</span><span class="st">"not_yet_treated"</span>).fit(</span>
 <span id="cb11-2"><a></a>    d, outcome<span class="op">=</span><span class="st">"dwell_min"</span>, unit<span class="op">=</span><span class="st">"cafe_id"</span>, time<span class="op">=</span><span class="st">"quarter"</span>,</span>
 <span id="cb11-3"><a></a>    first_treat<span class="op">=</span><span class="st">"cat_arrival_quarter"</span>, aggregate<span class="op">=</span><span class="st">"group"</span>)</span>
@@ -447,7 +447,7 @@ TWFE          -2.0877</code></pre>
 </section>
 <section id="cell-by-cell-against-the-planted-truth" class="slide level2">
 <h2>Cell by cell, against the planted truth</h2>
-<div id="2730ad11" class="cell" data-execution_count="10">
+<div id="0c617601" class="cell" data-execution_count="10">
 <div class="cell-output cell-output-stdout">
 <pre><code> cohort  quarter    est    se  true_att  error  within_2se
       4        4  3.245 0.462       4.0 -0.755        True
@@ -469,7 +469,7 @@ mean absolute error 0.382   within 2 se: 9/9</code></pre>
 </section>
 <section id="and-aggregated-by-cohort" class="slide level2">
 <h2>And aggregated by cohort</h2>
-<div id="7c7e43f5" class="cell" data-execution_count="11">
+<div id="f358d023" class="cell" data-execution_count="11">
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a></a><span class="cf">for</span> g, v <span class="kw">in</span> cs.group_effects.items():</span>
 <span id="cb14-2"><a></a>    ident <span class="op">=</span> cells[(cells.cohort <span class="op">==</span> g) <span class="op">&amp;</span> (cells.event_time <span class="op">&gt;=</span> <span class="dv">0</span>) <span class="op">&amp;</span> cells.est.notna()]</span>
 <span id="cb14-3"><a></a>    <span class="bu">print</span>(<span class="ss">f"cohort </span><span class="sc">{</span>g<span class="sc">:2d}</span><span class="ss">:  CS </span><span class="sc">{</span>v[<span class="st">'effect'</span>]<span class="sc">:+7.3f}</span><span class="ss"> (se </span><span class="sc">{</span>v[<span class="st">'se'</span>]<span class="sc">:.3f}</span><span class="ss">)   "</span></span>
@@ -494,7 +494,7 @@ cohort  7:  CS  +3.009 (se 0.447)   planted  +3.000   over 3 identified quarters
 </section>
 <section id="averaging-by-time-since-adoption" class="slide level2">
 <h2>Averaging by time since adoption</h2>
-<div id="8a9cd77f" class="cell" data-execution_count="12">
+<div id="ba591fa8" class="cell" data-execution_count="12">
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a></a>ok <span class="op">=</span> cells[cells.est.notna()]</span>
 <span id="cb16-2"><a></a>ev <span class="op">=</span> pd.DataFrame([</span>
 <span id="cb16-3"><a></a>    {<span class="st">"event_time"</span>: e,</span>
@@ -533,7 +533,7 @@ cohort  7:  CS  +3.009 (se 0.447)   planted  +3.000   over 3 identified quarters
 </section>
 <section id="how-to-read-the-pre-period-honestly" class="slide level2">
 <h2>How to read the pre-period honestly</h2>
-<div id="67fc0b2a" class="cell" data-execution_count="14">
+<div id="bba9daf4" class="cell" data-execution_count="14">
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a></a>pre <span class="op">=</span> cells[(cells.event_time <span class="op">&lt;</span> <span class="dv">0</span>) <span class="op">&amp;</span> cells.est.notna()]</span>
 <span id="cb18-2"><a></a><span class="bu">print</span>(<span class="ss">f"placebo cells        </span><span class="sc">{</span><span class="bu">len</span>(pre)<span class="sc">}</span><span class="ss">"</span>)</span>
 <span id="cb18-3"><a></a><span class="bu">print</span>(<span class="ss">f"mean estimate        </span><span class="sc">{</span>pre<span class="sc">.</span>est<span class="sc">.</span>mean()<span class="sc">:+.4f}</span><span class="ss">"</span>)</span>
@@ -562,7 +562,7 @@ individually significant at 5%: 1 of 12</code></pre>
 </section>
 <section id="nine-cells-come-back-empty" class="slide level2">
 <h2>Nine cells come back empty</h2>
-<div id="cfc312f1" class="cell" data-execution_count="15">
+<div id="ae15062c" class="cell" data-execution_count="15">
 <div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a></a>missing <span class="op">=</span> cells[(cells.event_time <span class="op">&gt;=</span> <span class="dv">0</span>) <span class="op">&amp;</span> cells.est.isna()]</span>
 <span id="cb20-2"><a></a><span class="bu">print</span>(missing[[<span class="st">"cohort"</span>, <span class="st">"quarter"</span>, <span class="st">"true_att"</span>]].to_string(index<span class="op">=</span><span class="va">False</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -615,7 +615,7 @@ individually significant at 5%: 1 of 12</code></pre>
 </section>
 <section id="computing-it" class="slide level2">
 <h2>Computing it</h2>
-<div id="9ff87b69" class="cell" data-execution_count="16">
+<div id="7038685a" class="cell" data-execution_count="16">
 <div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a></a><span class="cf">for</span> g, v <span class="kw">in</span> cs.group_effects.items():</span>
 <span id="cb22-2"><a></a>    n_q <span class="op">=</span> <span class="bu">len</span>(cells[(cells.cohort <span class="op">==</span> g) <span class="op">&amp;</span> (cells.event_time <span class="op">&gt;=</span> <span class="dv">0</span>)</span>
 <span id="cb22-3"><a></a>                    <span class="op">&amp;</span> cells.est.notna()])</span>

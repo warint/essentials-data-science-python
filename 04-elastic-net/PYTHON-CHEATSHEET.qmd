@@ -235,8 +235,8 @@ pred["mean"], pred["mean_ci_lower"], pred["mean_ci_upper"]
 fit.aic, fit.bic                  # lower is better, and only relatively
 
 # -- Choose and validate -------------------------------------------
-f_stat, p_val, _ = small.compare_f_test(big)
-# only for nested models: small must be big with terms removed
+f_stat, p_val, _ = big.compare_f_test(small)
+# call it on the bigger model; small must be big with terms removed
 from scipy.optimize import minimize
 r = minimize(neg_predicted, [75, 225], bounds=[(55, 95), (190, 260)])
 # find the peak of a fitted surface numerically, inside the design

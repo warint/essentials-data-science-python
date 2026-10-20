@@ -162,8 +162,8 @@ TOOLKIT = OrderedDict([
         "fit.aic, fit.bic                  # lower is better, and only relatively")),
 
     (".compare_f_test", ("02", "Choose and validate",
-        "f_stat, p_val, _ = small.compare_f_test(big)\n"
-        "# only for nested models: small must be big with terms removed")),
+        "f_stat, p_val, _ = big.compare_f_test(small)\n"
+        "# call it on the bigger model; small must be big with terms removed")),
     ("minimize", ("02", "Choose and validate",
         "from scipy.optimize import minimize\n"
         "r = minimize(neg_predicted, [75, 225], bounds=[(55, 95), (190, 260)])\n"

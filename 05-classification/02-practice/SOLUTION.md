@@ -151,7 +151,7 @@ Permutation importance finds them:
 | `tail_length_cm` | 0.313 |
 | `wing_span_cm` | 0.263 |
 | `mass_g` | 0.006 |
-| `antenna_mm` | 0.004 |
+| `antenna_mm` | 0.003 |
 | `scale_count` | 0.001 |
 
 A penalised regression would have shrunk the noise coefficients towards zero and

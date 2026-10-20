@@ -221,7 +221,7 @@ print(d[["wing_span_cm", "tail_length_cm", "mass_g", "scale_count"]]
 ```
 
 ::: {.warn}
-`mass_g` has a standard deviation nearly forty times that of tail length. In
+`mass_g` has a standard deviation nearly twenty times that of tail length. In
 Euclidean distance it would swamp everything else — and it is **pure noise**. A
 distance-based method with unstandardised features is measuring whatever happens
 to have the biggest numbers.

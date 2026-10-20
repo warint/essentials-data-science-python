@@ -20,7 +20,7 @@ Setting both partial derivatives to zero gives the optimum:
 | **oven** | **236.86 °C** |
 
 The Hessian is negative definite, so this is a genuine peak rather than a saddle.
-Anything from roughly **84% to 89%** hydration is statistically
+Anything from roughly **82% to 91%** hydration is statistically
 indistinguishable from the maximum, and that range — not the point — is the
 honest recommendation.
 
@@ -42,8 +42,8 @@ The marginal value of water depends on where you are:
 | at hydration | one more point is worth |
 |---|---|
 | 65% | **+2.2 mm** |
-| 80% | **−0.4 mm** |
-| 92% | **−1.7 mm** |
+| 80% | **+0.6 mm** |
+| 92% | **−0.8 mm** |
 
 **Stage 3.** The interaction is **+0.01506** (planted 0.015) with **t = 17.00**.
 Solving $\partial y/\partial v = 0$ for the best temperature at a given
@@ -51,8 +51,8 @@ hydration:
 
 | hydration | best oven |
 |---|---|
-| 65% | **228.8 °C** |
-| 90% | **238.1 °C** |
+| 65% | **229.0 °C** |
+| 90% | **238.2 °C** |
 
 Nine degrees apart. An additive model returns the same temperature for both, and
 that is exactly what it gets wrong: **wetter dough wants a hotter oven.**
@@ -95,7 +95,7 @@ the reason it is not much of a defence either.
 
 ## What full marks look like
 
-- A recipe stated as a **range** (roughly 84–89% hydration, 233–240 °C), not a
+- A recipe stated as a **range** (roughly 82–91% hydration, 233–240 °C), not a
   point.
 - The two conditional temperatures, with the sentence "wetter dough wants a
   hotter oven".

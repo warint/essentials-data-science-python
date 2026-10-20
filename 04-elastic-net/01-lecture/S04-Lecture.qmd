@@ -498,7 +498,7 @@ is the next slide.
 ### Prediction. Not truth.
 :::
 
-## The lasso selected 25 ingredients. Seven are real.
+## The lasso selected 25 ingredients. Six are real.
 
 ```{python}
 #| echo: false

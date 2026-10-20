@@ -277,7 +277,7 @@ Thierry Warin, PhD
 <section id="todays-data" class="slide level2">
 <h2>Today’s data</h2>
 <p>84 roller coasters. Two of the columns are related by a law of physics, and the whole session is about whether a regression can find it.</p>
-<div id="1a952966" class="cell" data-execution_count="2">
+<div id="02dc6154" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a></a>d <span class="op">=</span> ess.load(<span class="st">"coasters"</span>)</span>
 <span id="cb1-2"><a></a><span class="bu">print</span>(d.shape)</span>
 <span id="cb1-3"><a></a>d[[<span class="st">"coaster"</span>, <span class="st">"drop_m"</span>, <span class="st">"speed_kmh"</span>, <span class="st">"propulsion"</span>]].head()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -355,7 +355,7 @@ Thierry Warin, PhD
 </section>
 <section id="plot-it-before-you-fit-anything" class="slide level2">
 <h2>Plot it before you fit anything</h2>
-<div id="d1260c38" class="cell" data-execution_count="3">
+<div id="87f625f6" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">7.2</span>, <span class="fl">3.2</span>))</span>
 <span id="cb3-2"><a></a><span class="cf">for</span> prop, colour <span class="kw">in</span> [(<span class="st">"gravity"</span>, CL.ink), (<span class="st">"launch"</span>, CL.warn)]:</span>
 <span id="cb3-3"><a></a>    sub <span class="op">=</span> d[d.propulsion <span class="op">==</span> prop]</span>
@@ -385,7 +385,7 @@ Thierry Warin, PhD
 </section>
 <section id="fit-the-line" class="slide level2">
 <h2>Fit the line</h2>
-<div id="8779c4cb" class="cell" data-execution_count="4">
+<div id="a9c1baa7" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a></a>g <span class="op">=</span> d[d.propulsion <span class="op">==</span> <span class="st">"gravity"</span>].copy()      <span class="co"># 78 gravity-driven coasters</span></span>
 <span id="cb4-2"><a></a>lin <span class="op">=</span> smf.ols(<span class="st">"speed_kmh ~ drop_m"</span>, data<span class="op">=</span>g).fit()</span>
 <span id="cb4-3"><a></a><span class="bu">print</span>(lin.summary().tables[<span class="dv">1</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -404,7 +404,7 @@ drop_m         0.9397      0.021     44.787      0.000       0.898       0.982
 </section>
 <section id="reading-that-one-column-at-a-time" class="slide level2">
 <h2>Reading that, one column at a time</h2>
-<div id="38765cf4" class="cell" data-execution_count="5">
+<div id="13dde62f" class="cell" data-execution_count="5">
 <div class="cell-output cell-output-stdout">
 <pre><code>coefficient     0.9397   km/h per metre of drop
 std error       0.0210   how much it would wobble on new data
@@ -422,7 +422,7 @@ t                44.79   coefficient / std error
 </section>
 <section id="and-now-r2" class="slide level2">
 <h2>And now <span class="math inline">\(R^2\)</span></h2>
-<div id="7378dd7a" class="cell" data-execution_count="6">
+<div id="77d9aec5" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a></a><span class="bu">print</span>(<span class="ss">f"R2      </span><span class="sc">{</span>lin<span class="sc">.</span>rsquared<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
 <span id="cb7-2"><a></a><span class="bu">print</span>(<span class="ss">f"adj R2  </span><span class="sc">{</span>lin<span class="sc">.</span>rsquared_adj<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
 <span id="cb7-3"><a></a><span class="bu">print</span>(<span class="ss">f"n       </span><span class="sc">{</span><span class="bu">int</span>(lin.nobs)<span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -451,7 +451,7 @@ n       78</code></pre>
 <h2>The one plot to draw first</h2>
 <p>A residual is what the model failed to explain: <span class="math inline">\(e_i = y_i - \hat y_i\)</span>.</p>
 <p>Plot the residuals against the fitted values. If the model has the shape right, there is <strong>no pattern</strong> — the residuals are a formless band around zero. Any structure you can see is signal the model left on the table.</p>
-<div id="72ea693e" class="cell" data-execution_count="7">
+<div id="e2dce5f5" class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">7.2</span>, <span class="fl">3.2</span>))</span>
 <span id="cb9-2"><a></a>ax.scatter(lin.fittedvalues, lin.resid, s<span class="op">=</span><span class="dv">16</span>, alpha<span class="op">=</span><span class="fl">0.75</span>, color<span class="op">=</span>CL.ink)</span>
 <span id="cb9-3"><a></a>ax.axhline(<span class="dv">0</span>, color<span class="op">=</span>CL.muted, lw<span class="op">=</span><span class="dv">1</span>)</span>
@@ -464,7 +464,7 @@ n       78</code></pre>
 <section id="what-that-plot-is-telling-you" class="slide level2">
 <h2>What that plot is telling you</h2>
 <p>The band is not formless. It rises, peaks, and comes back down — an arch. Bin the residuals and the arch is unmistakable:</p>
-<div id="a0bf13eb" class="cell" data-execution_count="8">
+<div id="0d128823" class="cell" data-execution_count="8">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a></a>bands <span class="op">=</span> pd.cut(g.drop_m, [<span class="dv">0</span>, <span class="dv">25</span>, <span class="dv">45</span>, <span class="dv">65</span>, <span class="dv">85</span>, <span class="dv">105</span>, <span class="dv">200</span>])</span>
 <span id="cb10-2"><a></a><span class="bu">print</span>(g.assign(resid<span class="op">=</span>lin.resid).groupby(bands, observed<span class="op">=</span><span class="va">True</span>)[<span class="st">"resid"</span>]</span>
 <span id="cb10-3"><a></a>       .agg([<span class="st">"mean"</span>, <span class="st">"count"</span>]).<span class="bu">round</span>(<span class="dv">2</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -485,7 +485,7 @@ drop_m
 </section>
 <section id="confirm-it-with-a-test-not-just-an-eye" class="slide level2">
 <h2>Confirm it with a test, not just an eye</h2>
-<div id="f3c9cb19" class="cell" data-execution_count="9">
+<div id="fc045cd5" class="cell" data-execution_count="9">
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a></a>quad <span class="op">=</span> smf.ols(<span class="st">"speed_kmh ~ drop_m + I(drop_m**2)"</span>, data<span class="op">=</span>g).fit()</span>
 <span id="cb12-2"><a></a>t <span class="op">=</span> quad.tvalues[<span class="st">"I(drop_m ** 2)"</span>]</span>
 <span id="cb12-3"><a></a><span class="bu">print</span>(<span class="ss">f"quadratic term:  t = </span><span class="sc">{</span>t<span class="sc">:.2f}</span><span class="ss">,  p = </span><span class="sc">{</span>quad<span class="sc">.</span>pvalues[<span class="st">'I(drop_m ** 2)'</span>]<span class="sc">:.2e}</span><span class="ss">"</span>)</span>
@@ -521,7 +521,7 @@ linear R2 0.9635  -&gt;  quadratic R2 0.9816</code></pre>
 <p>If <span class="math inline">\(v = c\,h^{k}\)</span> then taking logs of both sides gives</p>
 <p><span class="math display">\[ \log v = \log c + k \log h \]</span></p>
 <p>which is a straight line <strong>whose slope is the exponent</strong>. So regress <span class="math inline">\(\log v\)</span> on <span class="math inline">\(\log h\)</span> and read <span class="math inline">\(k\)</span> off directly.</p>
-<div id="ad8ea4ad" class="cell" data-execution_count="10">
+<div id="f5cbaaa6" class="cell" data-execution_count="10">
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a></a>g[<span class="st">"log_speed"</span>] <span class="op">=</span> np.log(g.speed_kmh)</span>
 <span id="cb14-2"><a></a>g[<span class="st">"log_drop"</span>]  <span class="op">=</span> np.log(g.drop_m)</span>
 <span id="cb14-3"><a></a></span>
@@ -537,7 +537,7 @@ R2 = 0.9859</code></pre>
 </section>
 <section id="read-that-interval" class="slide level2">
 <h2>Read that interval</h2>
-<div id="c82b4551" class="cell" data-execution_count="11">
+<div id="da3e2ab5" class="cell" data-execution_count="11">
 <div class="cell-output cell-output-stdout">
 <pre><code>theory says      k = 0.5      (v proportional to sqrt(h))
 the data says    k = 0.4971   95% CI [0.4835, 0.5106]
@@ -593,7 +593,7 @@ frictionless      3.6*sqrt(2g) = 15.95</code></pre>
 <h2>Leverage, and the fact that it sums to <span class="math inline">\(p\)</span></h2>
 <p>Leverage is the diagonal of the hat matrix <span class="math inline">\(H = X(X^\top X)^{-1}X^\top\)</span>, and <span class="math inline">\(h_{ii}\)</span> is how much <span class="math inline">\(\hat y_i\)</span> responds to <span class="math inline">\(y_i\)</span>. Its total is fixed:</p>
 <p><span class="math display">\[ \sum_i h_{ii} = \operatorname{trace}(H) = p \]</span></p>
-<div id="fb0fbf34" class="cell" data-execution_count="13">
+<div id="9f123acd" class="cell" data-execution_count="13">
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a></a>full <span class="op">=</span> smf.ols(<span class="st">"log_speed ~ log_drop"</span>,</span>
 <span id="cb17-2"><a></a>               data<span class="op">=</span>d.assign(log_speed<span class="op">=</span>np.log(d.speed_kmh),</span>
 <span id="cb17-3"><a></a>                             log_drop<span class="op">=</span>np.log(d.drop_m))).fit()</span>
@@ -618,7 +618,7 @@ mean leverage      0.0238   = p/n
 <p>Cook’s distance asks the question you actually care about: <strong>if I deleted this row, how far would all the fitted values move?</strong></p>
 <p><span class="math display">\[ D_i = \frac{\sum_j (\hat y_j - \hat y_{j(i)})^2}{p\,\hat\sigma^2} \]</span></p>
 <p>It combines leverage with the size of the residual, which is why it is the one number to look at rather than either on its own.</p>
-<div id="7652c0d4" class="cell" data-execution_count="14">
+<div id="aac939aa" class="cell" data-execution_count="14">
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a></a>cooks <span class="op">=</span> inf.cooks_distance[<span class="dv">0</span>]</span>
 <span id="cb19-2"><a></a><span class="bu">print</span>(<span class="ss">f"largest Cook's D   </span><span class="sc">{</span>cooks<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
 <span id="cb19-3"><a></a><span class="bu">print</span>(<span class="ss">f"above 4/n (</span><span class="sc">{</span><span class="dv">4</span><span class="op">/</span><span class="bu">len</span>(d)<span class="sc">:.4f}</span><span class="ss">):  </span><span class="sc">{</span>(cooks <span class="op">&gt;</span> <span class="dv">4</span><span class="op">/</span><span class="bu">len</span>(d))<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">}</span><span class="ss"> of </span><span class="sc">{</span><span class="bu">len</span>(d)<span class="sc">}</span><span class="ss"> rows"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -630,7 +630,7 @@ above 4/n (0.0476):  6 of 84 rows</code></pre>
 </section>
 <section id="now-go-and-look-at-the-rows" class="slide level2">
 <h2>Now go and look at the rows</h2>
-<div id="8c0e0b16" class="cell" data-execution_count="15">
+<div id="143da850" class="cell" data-execution_count="15">
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a></a>top <span class="op">=</span> np.argsort(cooks)[<span class="op">-</span><span class="dv">6</span>:][::<span class="op">-</span><span class="dv">1</span>]</span>
 <span id="cb21-2"><a></a><span class="bu">print</span>(d.iloc[top][[<span class="st">"coaster"</span>, <span class="st">"drop_m"</span>, <span class="st">"speed_kmh"</span>, <span class="st">"propulsion"</span>]].to_string(index<span class="op">=</span><span class="va">False</span>))</span>
 <span id="cb21-3"><a></a></span>
@@ -664,7 +664,7 @@ Basilisk Coil    44.0      221.3     launch
 </section>
 <section id="what-keeping-them-costs" class="slide level2">
 <h2>What keeping them costs</h2>
-<div id="9532ca91" class="cell" data-execution_count="16">
+<div id="d6b72258" class="cell" data-execution_count="16">
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a></a><span class="bu">print</span>(<span class="ss">f"gravity only (n=</span><span class="sc">{</span><span class="bu">len</span>(g)<span class="sc">}</span><span class="ss">):  k = </span><span class="sc">{</span>k<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
 <span id="cb23-2"><a></a><span class="bu">print</span>(<span class="ss">f"all 84 coasters:        k = </span><span class="sc">{</span>full<span class="sc">.</span>params[<span class="st">'log_drop'</span>]<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">

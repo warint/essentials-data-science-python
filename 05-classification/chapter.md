@@ -28,16 +28,18 @@ The regression analogue is the irreducible error $\sigma^2$: the variance of $y$
 around $f(x)$, which no estimator of $f$ can touch.
 
 ```python
-import essentials as ess
 import numpy as np
 from sklearn.metrics import accuracy_score, balanced_accuracy_score
+import essentials as ess
 
 d = ess.load("bestiary")
+y = d.species.astype(str).to_numpy()
 species = ess.bestiary_species()
 post = ess.bestiary_posterior(d.wing_span_cm, d.tail_length_cm)
 bayes = np.array(species)[post.argmax(1)]
 
-accuracy_score(d.species.astype(str).to_numpy(), bayes)   # 0.8625
+print(accuracy_score(y, bayes))            # 0.8625
+print(balanced_accuracy_score(y, bayes))   # 0.8876
 ```
 
 | | |
@@ -120,10 +122,19 @@ controlled continuously.
 ### Standardise, or the units decide
 
 $k$-NN is a distance method, and in this data `mass_g` has a standard deviation
-nearly forty times that of tail length. In Euclidean distance it would dominate
+nearly twenty times that of tail length. In Euclidean distance it would dominate
 every other feature — and it is pure noise. **A distance method on
 unstandardised features is measuring whichever variable happens to have the
 biggest numbers.**
+
+```python
+import essentials as ess
+
+d = ess.load("bestiary")
+sd = d[["wing_span_cm", "tail_length_cm", "mass_g", "antenna_mm", "scale_count"]].std()
+print(sd.round(2))                                  # mass_g 45.01, tail 2.53
+print(round(sd.mass_g / sd.tail_length_cm, 1))      # 17.8
+```
 
 Fit the scaler on the **training** data only. Fitting it on everything leaks the
 test set's mean and variance into the model.
@@ -162,34 +173,83 @@ and barely moves between samples: high bias, low variance.
 
 The decomposition is usually presented as algebra and left there. Here the truth
 is known, so it can be measured. Draw 40 independent training samples from the
-same generator, fit each, and predict at 300 fixed query points:
+same generator, fit each, and predict at 300 fixed query points spread uniformly
+over the range of the two features:
+
+- **modal** — the most common prediction across the 40 fits, at each query point
+- **bias** — how often that modal prediction differs from the Bayes label
+- **variance** — how often a single fit differs from its own modal prediction
 
 ```python
+import numpy as np
+import pandas as pd
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+import essentials as ess
+
+feats = ["wing_span_cm", "tail_length_cm"]
+d = ess.load("bestiary")
+rng = np.random.default_rng(0)
+Q = np.column_stack([rng.uniform(d[c].min(), d[c].max(), 300) for c in feats])
+truth = np.array(ess.bestiary_species())[ess.bestiary_posterior(Q[:, 0], Q[:, 1]).argmax(1)]
+
+ks = (1, 5, 15, 45, 125, 400)
+preds = {k: [] for k in ks}
 for r in range(40):
     samp = ess._make_bestiary(seed=90000 + r)     # a fresh draw from the same world
-    ...
-modal = the most common prediction across the 40 fits, at each query point
-bias  = how often that modal prediction differs from the Bayes label
-var   = how often a single fit differs from its own modal prediction
+    X, y = samp[feats].to_numpy(), samp.species.astype(str).to_numpy()
+    sc = StandardScaler().fit(X)
+    for k in ks:
+        preds[k].append(KNeighborsClassifier(k).fit(sc.transform(X), y)
+                                               .predict(sc.transform(Q)))
+
+for k in ks:
+    P = np.array(preds[k])                                  # 40 fits x 300 points
+    modal = pd.DataFrame(P).mode().iloc[0].to_numpy()
+    print(f"k = {k:3d}  bias {(modal != truth).mean():.4f}  "
+          f"variance {(P != modal).mean():.4f}  total {(P != truth).mean():.4f}")
+# k = 1: bias 0.0967, variance 0.1303 ... k = 400: bias 0.3233, variance 0.0108
 ```
 
 | $k$ | bias | variance | total disagreement with the Bayes label |
 |---|---|---|---|
-| 1 | 0.0867 | **0.1462** | 0.1778 |
-| 5 | 0.0900 | 0.0469 | 0.1098 |
-| **15** | 0.1000 | 0.0279 | **0.1032** |
-| 45 | 0.1100 | 0.0197 | 0.1194 |
-| 125 | 0.1967 | 0.0126 | 0.1988 |
-| 400 | **0.2133** | 0.0126 | 0.2139 |
+| 1 | 0.0967 | **0.1303** | 0.1600 |
+| 5 | 0.0900 | 0.0391 | 0.1130 |
+| **15** | 0.0933 | 0.0224 | **0.1099** |
+| 45 | 0.1133 | 0.0382 | 0.1393 |
+| 125 | 0.3033 | 0.0135 | 0.3061 |
+| 400 | **0.3233** | 0.0108 | 0.3202 |
 
 Read the columns rather than the shape. **Variance falls by a factor of twelve**
-between $k=1$ and $k=400$; **bias rises by a factor of two and a half**. The total
+between $k=1$ and $k=400$; **bias more than triples**. The total
 is U-shaped with a minimum in between.
 
 Neither extreme is a modelling failure. Both are the same dial at different
 settings — and the dial is the only thing you control.
 
 ## 5.4 The trade, made visible on one split
+
+Hold out 30% of the creatures, stratified so the 2% species appears in both halves,
+and fit the scaler on the training rows only:
+
+```python
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+import essentials as ess
+
+d = ess.load("bestiary")
+X = d[["wing_span_cm", "tail_length_cm"]].to_numpy()
+y = d.species.astype(str).to_numpy()
+Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=1, stratify=y)
+sc = StandardScaler().fit(Xtr)
+A, B = sc.transform(Xtr), sc.transform(Xte)
+
+for k in (1, 5, 9, 45, 125, 400):
+    m = KNeighborsClassifier(k).fit(A, ytr)
+    print(f"k = {k:3d}  train {m.score(A, ytr):.3f}  test {m.score(B, yte):.3f}")
+# k = 1: train 0.999, test 0.762 (error 0.2375 — under twice the Bayes 0.1375)
+```
 
 | $k$ | train | test |
 |---|---|---|
@@ -224,12 +284,21 @@ You cannot choose $k$ on the test set: doing so makes the test score an estimate
 of nothing. Cross-validate within the training data.
 
 ```python
-from sklearn.model_selection import GridSearchCV, KFold
+from sklearn.model_selection import GridSearchCV, KFold, train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+import essentials as ess
+
+d = ess.load("bestiary")
+X = d[["wing_span_cm", "tail_length_cm"]].to_numpy()
+y = d.species.astype(str).to_numpy()
+Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=1, stratify=y)
+A = StandardScaler().fit(Xtr).transform(Xtr)
 
 grid = GridSearchCV(KNeighborsClassifier(),
                     {"n_neighbors": list(range(1, 151, 2))},
                     cv=KFold(10, shuffle=True, random_state=0)).fit(A, ytr)
-grid.best_params_      # 21
+print(grid.best_params_)      # {'n_neighbors': 21}
 ```
 
 CV picked 21, not the 45 that happened to win on the test set. Both land within a
@@ -239,6 +308,31 @@ would have been cheating for nothing.
 ## 5.5 The confusion matrix, and the 2% species
 
 Accuracy at $k = 45$ is 0.873. The matrix (rows = truth):
+
+```python
+import numpy as np
+import pandas as pd
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+import essentials as ess
+
+d = ess.load("bestiary")
+X = d[["wing_span_cm", "tail_length_cm"]].to_numpy()
+y = d.species.astype(str).to_numpy()
+Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=1, stratify=y)
+sc = StandardScaler().fit(Xtr)
+pred = KNeighborsClassifier(45).fit(sc.transform(Xtr), ytr).predict(sc.transform(Xte))
+
+labels = sorted(set(y))
+print(pd.DataFrame(confusion_matrix(yte, pred, labels=labels),
+                   index=labels, columns=labels))
+
+blind = np.where(pred == "ember_drake", "thornback", pred)   # thornback: the majority
+print(accuracy_score(yte, pred), accuracy_score(yte, blind))  # 0.8729 0.8562
+print(classification_report(yte, pred, digits=3))   # ember_drake: precision 1.000, recall 0.800
+```
 
 | | → dusk_moth | → ember_drake | → glimmerwing | → thornback |
 |---|---|---|---|---|
@@ -294,7 +388,7 @@ and that formula **adds squared differences measured in different units.** A
 difference of one gram and a difference of one centimetre are treated as the same
 quantity. In practice the variable with the largest numerical range determines the
 neighbours entirely and every other predictor is decoration — and in this data
-`mass_g` has a standard deviation nearly forty times that of tail length, and is
+`mass_g` has a standard deviation nearly twenty times that of tail length, and is
 pure noise.
 
 > This is the third time the same conclusion has arrived — the penalties in
@@ -313,6 +407,21 @@ grows, and it does so much faster than intuition suggests.
 
 Draw 600 points and one query point from a standard normal in $p$ dimensions, and
 ask how much further the farthest point is than the nearest:
+
+```python
+import numpy as np
+
+rng = np.random.default_rng(3)
+for p in (1, 2, 5, 10, 50, 200, 1000):
+    X = rng.standard_normal((600, p))
+    q = rng.standard_normal(p)
+    dist = np.linalg.norm(X - q, axis=1)
+    near, far = dist.min(), dist.max()
+    print(f"p = {p:4d}  nearest {near:.3f}  farthest {far:.3f}  ratio {(far - near) / near:.2f}")
+# p = 1000: nearest 41.448, farthest 47.261, ratio 0.14
+
+print([round(0.01 ** (1 / p), 3) for p in (1, 2, 5, 10, 50, 100)])   # range for 1%
+```
 
 | $p$ | nearest | farthest | $(\text{far}-\text{near})/\text{near}$ |
 |---|---|---|---|
@@ -351,6 +460,30 @@ which is not local in any useful sense.
 
 `mass_g`, `antenna_mm` and `scale_count` contain no information about species.
 
+```python
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+import essentials as ess
+
+d = ess.load("bestiary")
+y = d.species.astype(str).to_numpy()
+real = ["wing_span_cm", "tail_length_cm"]
+noise = ["mass_g", "antenna_mm", "scale_count"]
+tr, te = train_test_split(d.index, test_size=0.3, random_state=1, stratify=y)
+
+for k in (5, 45, 125):
+    score = {}
+    for name, cols in [("2 real", real), ("+ 3 noise", real + noise)]:
+        m = make_pipeline(StandardScaler(), KNeighborsClassifier(k))
+        score[name] = m.fit(d.loc[tr, cols], y[tr]).score(d.loc[te, cols], y[te])
+    print(k, {n: round(s, 3) for n, s in score.items()})
+# 45 {'2 real': 0.873, '+ 3 noise': 0.846}
+```
+
+A pipeline fits the scaler inside `.fit`, so it only ever sees training rows.
+
 | $k$ | 2 real features | + 3 noise columns |
 |---|---|---|
 | 5 | 0.850 | 0.838 |
@@ -377,9 +510,24 @@ To learn what a feature is worth to a model with no coefficients, scramble it an
 see what breaks:
 
 ```python
+import pandas as pd
 from sklearn.inspection import permutation_importance
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+import essentials as ess
+
+d = ess.load("bestiary")
+cols = ["wing_span_cm", "tail_length_cm", "mass_g", "antenna_mm", "scale_count"]
+y = d.species.astype(str).to_numpy()
+X_train, X_test, y_train, y_test = train_test_split(
+    d[cols].to_numpy(), y, test_size=0.3, random_state=1, stratify=y)
+sc = StandardScaler().fit(X_train)
+X_train, X_test = sc.transform(X_train), sc.transform(X_test)
+model = KNeighborsClassifier(45).fit(X_train, y_train)
 
 imp = permutation_importance(model, X_test, y_test, n_repeats=12, random_state=0)
+print(pd.Series(imp.importances_mean, index=cols).sort_values(ascending=False).round(3))
 ```
 
 | feature | importance |
@@ -387,7 +535,7 @@ imp = permutation_importance(model, X_test, y_test, n_repeats=12, random_state=0
 | `tail_length_cm` | 0.313 |
 | `wing_span_cm` | 0.263 |
 | `mass_g` | 0.006 |
-| `antenna_mm` | 0.004 |
+| `antenna_mm` | 0.003 |
 | `scale_count` | 0.001 |
 
 Permutation importance is model-agnostic: it works for anything with a
@@ -399,6 +547,33 @@ Now the real question. Nearest neighbours is flexible; flexibility costs varianc
 and **the only justification for paying is that the truth is non-linear in a way a
 rigid model misses.** Whether that holds is an empirical question, answered by
 comparison rather than by assertion.
+
+```python
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.tree import DecisionTreeClassifier
+import essentials as ess
+
+d = ess.load("bestiary")
+X = d[["wing_span_cm", "tail_length_cm"]].to_numpy()
+y = d.species.astype(str).to_numpy()
+Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.3, random_state=1, stratify=y)
+sc = StandardScaler().fit(Xtr)
+A, B = sc.transform(Xtr), sc.transform(Xte)
+
+for name, model in [
+    ("logistic regression", LogisticRegression(max_iter=5000)),
+    ("QDA", QuadraticDiscriminantAnalysis()),
+    ("tree, depth 3", DecisionTreeClassifier(max_depth=3, random_state=0)),
+    ("tree, unlimited", DecisionTreeClassifier(random_state=0)),
+    ("k-NN, k = 45", KNeighborsClassifier(45)),
+]:
+    model.fit(A, ytr)
+    print(f"{name:20s} train {model.score(A, ytr):.3f}  test {model.score(B, yte):.3f}")
+```
 
 | model | train | test |
 |---|---|---|
@@ -465,8 +640,8 @@ distance cannot.**
    assumption-free. It assumes smoothness, and it assumes you know what "close"
    means.
 3. $k$ is the bias–variance dial, with roughly $n/k$ effective parameters. Here,
-   measured over 40 independent samples: **variance falls twelvefold, bias rises
-   two-and-a-half-fold**, and the total is U-shaped.
+   measured over 40 independent samples: **variance falls twelvefold, bias more
+   than triples**, and the total is U-shaped.
 4. Cover & Hart: 1-NN is asymptotically within **twice** the Bayes rate. A real
    guarantee and a poor target.
 5. **Standardise.** Distance adds squared differences in different units, so

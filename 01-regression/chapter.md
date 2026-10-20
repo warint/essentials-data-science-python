@@ -49,7 +49,8 @@ Every equation in this chapter is something you can execute, and executing it is
 the fastest way to find out whether you have understood what it claims:
 
 ```python
-import numpy as np, statsmodels.api as sm
+import numpy as np
+import statsmodels.api as sm
 import essentials as ess
 
 d = ess.load("coasters")
@@ -59,8 +60,8 @@ g["lv"], g["lh"] = np.log(g.speed_kmh), np.log(g.drop_m)
 X = sm.add_constant(g[["lh"]]).to_numpy()
 y = g.lv.to_numpy()
 
-np.linalg.solve(X.T @ X, X.T @ y)    # [2.71914274, 0.49705579]
-sm.OLS(y, X).fit().params            # [2.71914274, 0.49705579]
+print(np.linalg.solve(X.T @ X, X.T @ y))    # [2.71914274 0.49705579]
+print(sm.OLS(y, X).fit().params)            # [2.71914274 0.49705579]
 ```
 
 The two agree to $1.3\times10^{-14}$. Write it as `solve()` rather than `inv()`:
@@ -161,8 +162,15 @@ merely different but *undefined*, because $X^{\top}X$ becomes singular.
 A fitted model hands you three numbers per variable. You need all three.
 
 ```python
+import numpy as np
 import statsmodels.formula.api as smf
+import essentials as ess
+
+d = ess.load("coasters")
+g = d[d.propulsion == "gravity"].copy()        # the 78 gravity coasters
+
 lin = smf.ols("speed_kmh ~ drop_m", data=g).fit()
+print(lin.summary().tables[1])     # drop_m: coef 0.9397, then std err, t, P>|t|
 ```
 
 The **coefficient** is a quantity with units: 0.94 km/h per metre of drop. A
@@ -232,6 +240,26 @@ unitless, which makes it the more honest number to report:
 | `speed_kmh ~ drop_m` | 0.9635 | **6.84 km/h** |
 | `speed_kmh ~ sqrt(drop_m)` | 0.9837 | **4.57 km/h** |
 | *(the standard deviation of `speed_kmh` itself)* | | 35.55 km/h |
+
+```python
+import numpy as np
+import statsmodels.formula.api as smf
+import essentials as ess
+
+d = ess.load("coasters")
+g = d[d.propulsion == "gravity"].copy()        # the 78 gravity coasters
+g["lv"], g["lh"] = np.log(g.speed_kmh), np.log(g.drop_m)
+
+loglog = smf.ols("lv ~ lh", data=g).fit()
+tss = ((g.lv - g.lv.mean()) ** 2).sum()
+print(tss, loglog.ess, loglog.ssr)            # 8.373582 8.255655 0.117927
+print(abs(tss - (loglog.ess + loglog.ssr)))   # ~1e-15, or exactly 0
+
+for f in ["speed_kmh ~ drop_m", "speed_kmh ~ np.sqrt(drop_m)"]:
+    m = smf.ols(f, data=g).fit()
+    print(f, round(m.rsquared, 4), round(np.sqrt(m.scale), 2))  # R^2, RSE
+print(round(g.speed_kmh.std(), 2))            # 35.55
+```
 
 "Typically wrong by 6.8 km/h" means something. "$R^2 = 0.96$" means something
 only relative to the variance of this particular sample — and the third row is
@@ -303,8 +331,21 @@ usually shows up, since the spread of a quantity so often scales with its level.
 
 ```python
 import matplotlib.pyplot as plt
-plt.scatter(lin.fittedvalues, lin.resid, s=16)
+import numpy as np
+import statsmodels.formula.api as smf
+import essentials as ess
+
+d = ess.load("coasters")
+g = d[d.propulsion == "gravity"].copy()        # the 78 gravity coasters
+
+lin = smf.ols("speed_kmh ~ drop_m", data=g).fit()
+r = lin.get_influence().resid_studentized_internal   # the standardised residual
+
+plt.scatter(lin.fittedvalues, r, s=16)
 plt.axhline(0)
+plt.xlabel("fitted speed (km/h)")
+plt.ylabel("standardised residual")
+plt.show()
 ```
 
 The coaster residuals are not formless. They **arch**: negative at small drops,
@@ -315,6 +356,21 @@ impression into a table you can put in a report:
 |---|---|---|---|---|---|---|
 | mean residual (km/h) | −7.33 | +1.45 | +3.82 | +6.44 | +0.61 | −4.52 |
 
+```python
+import pandas as pd
+import numpy as np
+import statsmodels.formula.api as smf
+import essentials as ess
+
+d = ess.load("coasters")
+g = d[d.propulsion == "gravity"].copy()        # the 78 gravity coasters
+
+lin = smf.ols("speed_kmh ~ drop_m", data=g).fit()
+band = pd.cut(g.drop_m, [0, 25, 45, 65, 85, 105, np.inf], right=False)
+print(lin.resid.groupby(band, observed=True).mean().round(2))
+# -7.33  +1.45  +3.82  +6.44  +0.61  -4.52
+```
+
 The sign changes twice. A straight line is being asked to trace a curve and is
 splitting the difference. **More data would not fix this.** A different functional
 form would.
@@ -322,8 +378,16 @@ form would.
 Confirm it with a test rather than an eye:
 
 ```python
+import numpy as np
+import statsmodels.formula.api as smf
+import essentials as ess
+
+d = ess.load("coasters")
+g = d[d.propulsion == "gravity"].copy()        # the 78 gravity coasters
+
 quad = smf.ols("speed_kmh ~ drop_m + I(drop_m**2)", data=g).fit()
-quad.tvalues["I(drop_m ** 2)"]     # -8.57, p ~ 1e-12
+print(quad.tvalues["I(drop_m ** 2)"])     # -8.57
+print(quad.pvalues["I(drop_m ** 2)"])     # 9.8e-13
 ```
 
 `I(...)` tells the formula parser to treat its contents as arithmetic; without
@@ -351,10 +415,18 @@ $$ \log v = \log c + k \log h .$$
 A straight line **whose slope is the exponent**:
 
 ```python
+import numpy as np
+import statsmodels.formula.api as smf
+import essentials as ess
+
+d = ess.load("coasters")
+g = d[d.propulsion == "gravity"].copy()        # the 78 gravity coasters
+g["lv"], g["lh"] = np.log(g.speed_kmh), np.log(g.drop_m)
+
 power = smf.ols("lv ~ lh", data=g).fit()
-power.params["log_drop"]           # 0.4971
-power.conf_int().loc["log_drop"]   # [0.4835, 0.5106]
-np.exp(power.params["Intercept"])  # 15.17
+print(power.params["lh"])                   # 0.4971
+print(power.conf_int().loc["lh"].values)    # [0.4835 0.5106]
+print(np.exp(power.params["Intercept"]))    # 15.17
 ```
 
 The interval contains 0.5 and excludes 1. A regression has recovered a physical
@@ -405,6 +477,25 @@ which says exactly what leverage means: a floor of $1/n$ everyone gets, plus a
 term growing with squared distance from the centre of the predictor space,
 measured in units of the predictors' own spread. On the coaster model the closed
 form and the hat-matrix diagonal agree to $2\times10^{-16}$, and:
+
+```python
+import numpy as np
+import statsmodels.formula.api as smf
+import essentials as ess
+
+d = ess.load("coasters")
+g = d[d.propulsion == "gravity"].copy()        # the 78 gravity coasters
+g["lv"], g["lh"] = np.log(g.speed_kmh), np.log(g.drop_m)
+
+power = smf.ols("lv ~ lh", data=g).fit()
+h = power.get_influence().hat_matrix_diag
+
+x = g.lh.to_numpy()
+closed = 1 / len(x) + (x - x.mean()) ** 2 / ((x - x.mean()) ** 2).sum()
+print(np.abs(h - closed).max())           # ~2e-16
+print(h.sum(), h.mean())                  # 2.0  0.025641
+print(h.min(), h.max())                   # 0.01283  0.07042
+```
 
 ```
 sum 2.0000000000  = p = 2      mean 0.025641 = p/n = 0.025641
@@ -471,9 +562,17 @@ and without them.
 ### And then go and read the rows
 
 ```python
+import numpy as np
+import statsmodels.formula.api as smf
+import essentials as ess
+
+d = ess.load("coasters")                       # all 84, launched ones included
+d["lv"], d["lh"] = np.log(d.speed_kmh), np.log(d.drop_m)
+full = smf.ols("lv ~ lh", data=d).fit()
+
 inf = full.get_influence()
 cooks = inf.cooks_distance[0]
-d.iloc[np.argsort(cooks)[-6:][::-1]][["coaster", "drop_m", "speed_kmh", "propulsion"]]
+print(d.iloc[np.argsort(cooks)[-6:][::-1]][["coaster", "drop_m", "speed_kmh", "propulsion"]])
 ```
 
 Five of the six most influential coasters are **launched** — accelerated by
@@ -490,6 +589,21 @@ Keeping them costs the entire result:
 |---|---|---|
 | gravity only, $n = 78$ | **0.4971** | [0.4835, 0.5106] |
 | all 84 coasters | 0.3722 | [0.2935, 0.4508] |
+
+```python
+import numpy as np
+import statsmodels.formula.api as smf
+import essentials as ess
+
+d = ess.load("coasters")
+d["lv"], d["lh"] = np.log(d.speed_kmh), np.log(d.drop_m)
+
+for label, rows in [("gravity only", d[d.propulsion == "gravity"]), ("all 84", d)]:
+    m = smf.ols("lv ~ lh", data=rows).fit()
+    print(label, len(rows), m.params["lh"].round(4), m.conf_int().loc["lh"].round(4).values)
+# gravity only 78 0.4971 [0.4835 0.5106]
+# all 84       84 0.3722 [0.2935 0.4508]
+```
 
 Six rows — seven per cent of the data — move the exponent from a law of physics to
 a number corresponding to nothing, and the interval around 0.37 is narrow.
@@ -526,7 +640,27 @@ a normal would give — which is a robustness concern, since least squares weigh
 those heavily. A systematic S-shape means skew.
 
 On the log–log coaster residuals, Shapiro–Wilk gives $W = 0.977$, $p = 0.175$: no
-evidence against normality. Formal tests exist (Shapiro & Wilk, 1965) and their
+evidence against normality.
+
+```python
+import matplotlib.pyplot as plt
+import statsmodels.api as sm
+from scipy import stats
+import numpy as np
+import statsmodels.formula.api as smf
+import essentials as ess
+
+d = ess.load("coasters")
+g = d[d.propulsion == "gravity"].copy()        # the 78 gravity coasters
+g["lv"], g["lh"] = np.log(g.speed_kmh), np.log(g.drop_m)
+
+power = smf.ols("lv ~ lh", data=g).fit()
+print(stats.shapiro(power.resid))         # W = 0.977, p = 0.175
+
+sm.qqplot(power.resid, line="s")
+plt.show()
+```
+ Formal tests exist (Shapiro & Wilk, 1965) and their
 weakness is instructive: with $n = 400$ they reject on a departure far too small
 to affect any inference, while with $n = 20$ they fail to reject a departure large
 enough to matter.
@@ -582,6 +716,23 @@ On the **correct** model — gravity coasters only — all three agree:
 | HC3 | 0.4971 | 0.0065 | [0.4844, 0.5098] |
 | clustered by park | 0.4971 | 0.0066 | [0.4842, 0.5099] |
 
+```python
+import numpy as np
+import statsmodels.formula.api as smf
+import essentials as ess
+
+d = ess.load("coasters")
+d["lv"], d["lh"] = np.log(d.speed_kmh), np.log(d.drop_m)
+
+for label, rows in [("all 84", d), ("gravity only", d[d.propulsion == "gravity"])]:
+    for name, kw in [("classical", {}),
+                     ("HC3", {"cov_type": "HC3"}),
+                     ("cluster", {"cov_type": "cluster", "cov_kwds": {"groups": rows.park}})]:
+        m = smf.ols("lv ~ lh", data=rows).fit(**kw)
+        print(f"{label:13} {name:9} {m.params['lh']:.4f}  se {m.bse['lh']:.4f}")
+# all 84: se 0.0395 / 0.0643 / 0.0590      gravity only: se 0.0068 / 0.0065 / 0.0066
+```
+
 > When the model is right, robust and classical standard errors agree. **A large
 > gap between them is a signal that something is wrong with the specification**,
 > not merely a reason to prefer the robust one. Report both and the reader learns
@@ -595,6 +746,20 @@ there is curvature, and a variance test has no way to see it. For that, the RESE
 procedure adds powers of the fitted values back into the regression and asks
 whether they matter (Ramsey, 1969).
 
+```python
+from statsmodels.stats.diagnostic import het_breuschpagan, linear_reset
+import numpy as np
+import statsmodels.formula.api as smf
+import essentials as ess
+
+d = ess.load("coasters")
+g = d[d.propulsion == "gravity"].copy()        # the 78 gravity coasters
+
+lin = smf.ols("speed_kmh ~ drop_m", data=g).fit()
+print(het_breuschpagan(lin.resid, lin.model.exog)[1])   # 0.958: sees nothing
+print(linear_reset(lin, power=2, use_f=True).pvalue)    # 9.8e-13: sees the curve
+```
+
 ## 1.11 The assumption nobody plots
 
 Independence has no standard diagnostic plot, which is most of why it goes
@@ -607,8 +772,16 @@ less information than its row count suggests, and the standard errors — comput
 from that row count — come out too small.
 
 ```python
-smf.ols("lv ~ lh", data=a).fit(cov_type="cluster",
-                               cov_kwds={"groups": a.park})
+import numpy as np
+import statsmodels.formula.api as smf
+import essentials as ess
+
+a = ess.load("coasters")                       # all 84, so a.park lines up
+a["lv"], a["lh"] = np.log(a.speed_kmh), np.log(a.drop_m)
+
+m = smf.ols("lv ~ lh", data=a).fit(cov_type="cluster",
+                                   cov_kwds={"groups": a.park})
+print(m.params["lh"], m.bse["lh"])             # 0.3722  0.0590
 ```
 
 The coefficient is identical in every row of both tables above — as promised,
@@ -642,6 +815,23 @@ for a model with $k$ estimated parameters and maximised likelihood $\hat L$
 the data too, so a strict count includes it, while `statsmodels` counts only the
 regression coefficients for OLS.
 
+```python
+import numpy as np
+import statsmodels.formula.api as smf
+import essentials as ess
+
+d = ess.load("coasters")
+g = d[d.propulsion == "gravity"].copy()        # the 78 gravity coasters
+g["lv"], g["lh"] = np.log(g.speed_kmh), np.log(g.drop_m)
+
+power = smf.ols("lv ~ lh", data=g).fit()
+n, rss = power.nobs, power.ssr
+llf = -n / 2 * (np.log(2 * np.pi) + np.log(rss / n) + 1)    # Gaussian, sigma^2 = RSS/n
+print(llf, power.llf)                     # 142.604279 142.604279
+print(-2 * llf + 2 * 2, power.aic)        # -281.2086 -281.2086
+print(-2 * llf + 2 * 3)                   # -279.2086
+```
+
 ```
 llf by hand -> 142.604279            statsmodels -> 142.604279
 AIC with k=2 (coefficients only)  -281.2086     statsmodels -281.2086
@@ -665,6 +855,23 @@ Candidates on identical rows:
 | 461.72 | 0.9838 | **0.9846** | `+ length_m + inversions + queue_min` |
 | 471.97 | 0.9811 | 0.9816 | `drop_m + I(drop_m**2)` |
 | 523.22 | 0.9630 | 0.9635 | `drop_m` |
+
+```python
+import numpy as np
+import statsmodels.formula.api as smf
+import essentials as ess
+
+d = ess.load("coasters")
+g = d[d.propulsion == "gravity"].copy()        # the 78 gravity coasters
+
+for rhs in ["np.sqrt(drop_m)",
+            "np.sqrt(drop_m) + queue_min",
+            "np.sqrt(drop_m) + length_m + inversions + queue_min",
+            "drop_m + I(drop_m**2)",
+            "drop_m"]:
+    m = smf.ols("speed_kmh ~ " + rhs, data=g).fit()
+    print(f"{m.aic:7.2f}  {m.rsquared_adj:.4f}  {m.rsquared:.4f}  {rhs}")
+```
 
 Read the second and third rows. `queue_min` is pure noise — how long the queue was
 when somebody measured it — and adding it **raises $R^2$** from 0.9837 to 0.9839

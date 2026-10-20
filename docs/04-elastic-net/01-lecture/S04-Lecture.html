@@ -260,7 +260,7 @@ Thierry Warin, PhD
 </section>
 <section id="the-data" class="slide level2">
 <h2>The data</h2>
-<div id="4cf12213" class="cell" data-execution_count="2">
+<div id="fb9c1b1b" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a></a>r <span class="op">=</span> ess.load(<span class="st">"secret_recipe"</span>)</span>
 <span id="cb1-2"><a></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>r<span class="sc">.</span>shape[<span class="dv">0</span>]<span class="sc">}</span><span class="ss"> bakes, </span><span class="sc">{</span>r<span class="sc">.</span>shape[<span class="dv">1</span>] <span class="op">-</span> <span class="dv">2</span><span class="sc">}</span><span class="ss"> candidate ingredients"</span>)</span>
 <span id="cb1-3"><a></a><span class="bu">print</span>(r[[<span class="st">"bake_id"</span>, <span class="st">"vanilla_extract"</span>, <span class="st">"sea_salt"</span>, <span class="st">"dutch_cocoa"</span>,</span>
@@ -281,7 +281,7 @@ Thierry Warin, PhD
 </section>
 <section id="what-least-squares-does-here" class="slide level2">
 <h2>What least squares does here</h2>
-<div id="8597f688" class="cell" data-execution_count="3">
+<div id="70ba4e3c" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a></a>Xtr, Xte, ytr, yte <span class="op">=</span> train_test_split(Xs, y, test_size<span class="op">=</span><span class="fl">0.35</span>, random_state<span class="op">=</span><span class="dv">7</span>)</span>
 <span id="cb3-2"><a></a>ols <span class="op">=</span> LinearRegression().fit(Xtr, ytr)</span>
 <span id="cb3-3"><a></a></span>
@@ -327,7 +327,7 @@ variance of y  35.45</code></pre>
 <section id="standardise-first-always" class="slide level2">
 <h2>Standardise first, always</h2>
 <p>A penalty adds up the coefficients. A coefficient’s size depends on its variable’s units, so an unstandardised penalty punishes whichever variable happens to be measured in small units.</p>
-<div id="eac887c2" class="cell" data-execution_count="4">
+<div id="f0bc117a" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a></a>Xs <span class="op">=</span> StandardScaler().fit_transform(X.values)     <span class="co"># mean 0, sd 1, every column</span></span>
 <span id="cb5-2"><a></a><span class="bu">print</span>(<span class="ss">f"column means </span><span class="sc">{</span>np<span class="sc">.</span><span class="bu">abs</span>(Xs.mean(<span class="dv">0</span>))<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.2e}</span><span class="ss">, sds </span><span class="sc">{</span>Xs<span class="sc">.</span>std(<span class="dv">0</span>)<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -369,7 +369,7 @@ variance of y  35.45</code></pre>
 </section>
 <section id="ridge-on-our-data" class="slide level2">
 <h2>Ridge on our data</h2>
-<div id="7f05ca03" class="cell" data-execution_count="5">
+<div id="5bc86f3d" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a></a>alphas <span class="op">=</span> np.logspace(<span class="op">-</span><span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">25</span>)</span>
 <span id="cb7-2"><a></a>ridge <span class="op">=</span> RidgeCV(alphas<span class="op">=</span>alphas, cv<span class="op">=</span>kf).fit(Xs, y)</span>
 <span id="cb7-3"><a></a>coef <span class="op">=</span> pd.Series(ridge.coef_, index<span class="op">=</span>names)</span>
@@ -427,7 +427,7 @@ CV MSE             28.50</code></pre>
 </section>
 <section id="the-lasso-on-our-data" class="slide level2">
 <h2>The lasso on our data</h2>
-<div id="db9503f7" class="cell" data-execution_count="7">
+<div id="36280501" class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a></a>lasso <span class="op">=</span> LassoCV(cv<span class="op">=</span>kf, random_state<span class="op">=</span><span class="dv">0</span>, max_iter<span class="op">=</span><span class="dv">200_000</span>).fit(Xs, y)</span>
 <span id="cb9-2"><a></a>lc <span class="op">=</span> pd.Series(lasso.coef_, index<span class="op">=</span>names)</span>
 <span id="cb9-3"><a></a>sel <span class="op">=</span> lc[lc.<span class="bu">abs</span>() <span class="op">&gt;</span> <span class="fl">1e-6</span>]</span>
@@ -457,7 +457,7 @@ baking_powder_ground    0.320</code></pre>
 </section>
 <section id="against-the-planted-truth" class="slide level2">
 <h2>Against the planted truth</h2>
-<div id="0d163274" class="cell" data-execution_count="8">
+<div id="af1c3aeb" class="cell" data-execution_count="8">
 <div class="cell-output cell-output-stdout">
 <pre><code>                 planted  lasso
 vanilla_extract      4.0  3.191
@@ -488,7 +488,7 @@ selected 25 ingredients; 7 are real</code></pre>
 </section>
 <section id="what-was-planted" class="slide level2">
 <h2>What was planted</h2>
-<div id="7ebc07e6" class="cell" data-execution_count="9">
+<div id="8dd22548" class="cell" data-execution_count="9">
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a></a><span class="bu">print</span>(<span class="ss">f"corr(baking_soda, baking_powder) = "</span></span>
 <span id="cb12-2"><a></a>      <span class="ss">f"</span><span class="sc">{</span>X<span class="sc">.</span>baking_soda<span class="sc">.</span>corr(X.baking_powder)<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
 <span id="cb12-3"><a></a><span class="bu">print</span>(<span class="ss">f"true effects: soda </span><span class="sc">{</span>TRUTH[<span class="st">'baking_soda'</span>]<span class="sc">:+.2f}</span><span class="ss">, "</span></span>
@@ -538,7 +538,7 @@ lasso:  soda +0.000   powder +1.942</code></pre>
 </section>
 <section id="the-grouping-effect-measured" class="slide level2">
 <h2>The grouping effect, measured</h2>
-<div id="d0093b54" class="cell" data-execution_count="10">
+<div id="13cc16c3" class="cell" data-execution_count="10">
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a></a>enet <span class="op">=</span> ElasticNetCV(l1_ratio<span class="op">=</span><span class="fl">0.95</span>, cv<span class="op">=</span>kf, random_state<span class="op">=</span><span class="dv">0</span>,</span>
 <span id="cb14-2"><a></a>                    max_iter<span class="op">=</span><span class="dv">200_000</span>).fit(Xs, y)</span>
 <span id="cb14-3"><a></a>ec <span class="op">=</span> pd.Series(enet.coef_, index<span class="op">=</span>names)</span>
@@ -563,7 +563,7 @@ pair total  —  lasso +1.942   elastic net +1.855   planted +3.000</code></pre>
 </section>
 <section id="but-be-careful-what-you-claim" class="slide level2">
 <h2>But be careful what you claim</h2>
-<div id="021825fc" class="cell" data-execution_count="11">
+<div id="5fc8190d" class="cell" data-execution_count="11">
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a></a><span class="cf">for</span> seed <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">5</span>):</span>
 <span id="cb16-2"><a></a>    m <span class="op">=</span> ElasticNetCV(l1_ratio<span class="op">=</span><span class="fl">0.95</span>, cv<span class="op">=</span>KFold(<span class="dv">10</span>, shuffle<span class="op">=</span><span class="va">True</span>, random_state<span class="op">=</span>seed),</span>
 <span id="cb16-3"><a></a>                     random_state<span class="op">=</span><span class="dv">0</span>, max_iter<span class="op">=</span><span class="dv">200_000</span>).fit(Xs, y)</span>
@@ -597,9 +597,9 @@ CV seed 4:  soda +0.552   powder +1.358   sum +1.910</code></pre>
 <section id="prediction.-not-truth." style="margin-top: 1.0em; color:#F7F4ED">
 <h3>Prediction. Not truth.</h3>
 </section>
-<section id="the-lasso-selected-25-ingredients.-seven-are-real." class="slide level2">
-<h2>The lasso selected 25 ingredients. Seven are real.</h2>
-<div id="5a821bcb" class="cell" data-execution_count="13">
+<section id="the-lasso-selected-25-ingredients.-six-are-real." class="slide level2">
+<h2>The lasso selected 25 ingredients. Six are real.</h2>
+<div id="4b09f4f7" class="cell" data-execution_count="13">
 <div class="cell-output cell-output-stdout">
 <pre><code>selected            25
 genuinely non-zero  7
@@ -617,7 +617,7 @@ missed              ['baking_soda']</code></pre>
 </section>
 <section id="and-the-signal-that-got-away" class="slide level2">
 <h2>And the signal that got away</h2>
-<div id="fa74b157" class="cell" data-execution_count="14">
+<div id="2eda6521" class="cell" data-execution_count="14">
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a></a>weak <span class="op">=</span> <span class="st">"dutch_cocoa"</span></span>
 <span id="cb19-2"><a></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>weak<span class="sc">}</span><span class="ss">:  planted </span><span class="sc">{</span>TRUTH[weak]<span class="sc">:+.2f}</span><span class="ss">"</span>)</span>
 <span id="cb19-3"><a></a><span class="bu">print</span>(<span class="ss">f"            lasso </span><span class="sc">{</span>lc[weak]<span class="sc">:+.3f}</span><span class="ss">   elastic net </span><span class="sc">{</span>ec[weak]<span class="sc">:+.3f}</span><span class="ss">"</span>)</span>

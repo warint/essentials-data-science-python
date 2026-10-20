@@ -16,10 +16,12 @@ and cannot be inverted. There are **infinitely many** coefficient vectors that
 fit the training rows exactly, and the data cannot choose between them.
 
 ```python
-import essentials as ess
+import numpy as np
 from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+import essentials as ess
 
 r = ess.load("secret_recipe")
 X = r.drop(columns=["bake_id", "taste_score"])
@@ -28,6 +30,10 @@ Xs = StandardScaler().fit_transform(X.values)
 
 Xtr, Xte, ytr, yte = train_test_split(Xs, y, test_size=0.35, random_state=7)
 ols = LinearRegression().fit(Xtr, ytr)
+
+print(f"{mean_squared_error(ytr, ols.predict(Xtr)):.8f}")   # 0.00000000
+print(f"{mean_squared_error(yte, ols.predict(Xte)):.2f}")   # 36.23
+print(f"{np.var(y):.2f}")                                    # 35.45
 ```
 
 | | |
@@ -55,6 +61,16 @@ were the standard answer for decades and remain the default in a great deal of
 applied software.
 
 ```python
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import StandardScaler
+import essentials as ess
+
+r = ess.load("secret_recipe")
+X = r.drop(columns=["bake_id", "taste_score"])
+y = r.taste_score.to_numpy()
+Xs = StandardScaler().fit_transform(X.values)
+
+
 def forward(X, y, k_max):
     chosen, remaining = [], list(range(X.shape[1]))
     for _ in range(k_max):
@@ -64,6 +80,12 @@ def forward(X, y, k_max):
                                  .score(X[:, chosen + [j]], y))
         chosen.append(best); remaining.remove(best)
     return chosen
+
+
+picked = X.columns[forward(Xs, y, 15)]
+print(list(picked[:6]))      # vanilla_extract, baking_powder, sea_salt,
+                             # brown_sugar, browned_butter, dutch_cocoa
+print(sum(c not in ess._RECIPE_TRUTH for c in picked))   # 9 of 15 are noise
 ```
 
 Run it for fifteen steps and the first six chosen are `vanilla_extract`,
@@ -72,7 +94,44 @@ six of the seven planted ingredients, in almost their true order of magnitude.
 It looks like a triumph. Of the fifteen selected, **nine are noise.**
 
 The damning result is what happens when the same procedure is run on bootstrap
-resamples of the same data:
+resamples of the same data — ten steps each time, 120 times (about a minute):
+
+```python
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import StandardScaler
+import essentials as ess
+
+r = ess.load("secret_recipe")
+X = r.drop(columns=["bake_id", "taste_score"])
+y = r.taste_score.to_numpy()
+Xs = StandardScaler().fit_transform(X.values)
+
+
+def forward(X, y, k_max):
+    chosen, remaining = [], list(range(X.shape[1]))
+    for _ in range(k_max):
+        best = max(remaining,
+                   key=lambda j: LinearRegression()
+                                 .fit(X[:, chosen + [j]], y)
+                                 .score(X[:, chosen + [j]], y))
+        chosen.append(best); remaining.remove(best)
+    return chosen
+
+
+rng = np.random.default_rng(0)
+counts = pd.Series(0, index=X.columns)
+for _ in range(120):
+    i = rng.choice(60, 60, replace=True)          # a bootstrap resample
+    counts.iloc[forward(Xs[i], y[i], 10)] += 1
+
+freq = counts / 120
+print((counts > 0).sum())                          # 189 of 200
+print(freq[["vanilla_extract", "sea_salt", "brown_sugar",
+            "baking_powder", "sour_cream_toasted"]].round(3))
+# 0.825, 0.617, 0.542, 0.483, 0.275
+```
 
 | | |
 |---|---|
@@ -129,10 +188,6 @@ trade.
 > bias 2 and variance 10, giving $4 + 10 = 14$. **The biased estimator wins by a
 > factor of seven.** Every method in this chapter is a version of B.
 
-> Two estimators. A is unbiased with variance 100, giving error $0 + 100$. B has
-> bias 2 and variance 10, giving $4 + 10 = 14$. **The biased estimator wins by a
-> factor of seven.** Every method in this chapter is a version of B.
-
 ### Standardise first
 
 The penalties are on the *size* of the coefficients, and a coefficient's size
@@ -174,6 +229,27 @@ On the standardised recipe design, $X$ has **59 non-zero singular values**
 (largest 21.55, smallest non-zero 7.47, so a condition ratio of only 2.9) and
 **141 directions in which the data has no variation at all**:
 
+```python
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+import essentials as ess
+
+r = ess.load("secret_recipe")
+X = r.drop(columns=["bake_id", "taste_score"])
+Xs = StandardScaler().fit_transform(X.values)
+
+d = np.linalg.svd(Xs, compute_uv=False)
+nz = d[d > 1e-8]
+print(len(nz), Xs.shape[1] - len(nz))                          # 59, 141
+print(f"{nz.max():.2f} {nz.min():.2f}")                         # 21.55 7.47
+
+for lam in [1, 10, 100, 1000]:
+    f = nz**2 / (nz**2 + lam)
+    print(lam, f"{f.max():.4f} {np.median(f):.4f} {f.min():.4f}")
+# 1     0.9979 0.9945 0.9824
+# 1000  0.3172 0.1540 0.0528
+```
+
 | $\lambda$ | strongest direction | median | weakest non-zero | the 141 null directions |
 |---|---|---|---|---|
 | 1 | 0.9979 | 0.9945 | 0.9824 | **0** |
@@ -196,12 +272,25 @@ For any finite $\lambda$ the factor on a non-zero direction is strictly between
 0 and 1, so **ridge never reaches exactly zero** and keeps all $p$ coefficients.
 
 ```python
-from sklearn.linear_model import RidgeCV
-from sklearn.model_selection import KFold
 import numpy as np
+from sklearn.linear_model import Ridge, RidgeCV
+from sklearn.model_selection import KFold, cross_val_score
+from sklearn.preprocessing import StandardScaler
+import essentials as ess
+
+r = ess.load("secret_recipe")
+X = r.drop(columns=["bake_id", "taste_score"])
+y = r.taste_score.to_numpy()
+Xs = StandardScaler().fit_transform(X.values)
 
 kf = KFold(10, shuffle=True, random_state=0)
 ridge = RidgeCV(alphas=np.logspace(-2, 4, 25), cv=kf).fit(Xs, y)
+
+mse = -cross_val_score(Ridge(alpha=ridge.alpha_), Xs, y, cv=kf,
+                       scoring="neg_mean_squared_error").mean()
+print(ridge.alpha_, f"{mse:.2f}")                  # 0.01 28.50
+print((np.abs(ridge.coef_) > 1e-6).sum(),          # 200 non-zero
+      (np.abs(ridge.coef_) > 0.1).sum())           # 135 above 0.1
 ```
 
 Chosen $\lambda = 0.01$, cross-validated MSE **28.50**, **200 of 200**
@@ -242,6 +331,27 @@ $z_j/(1+\lambda)$.
 
 Build a genuinely orthonormal design and check both, at $\lambda = 1$:
 
+```python
+import numpy as np
+from sklearn.linear_model import Lasso, Ridge
+
+n, lam = 100, 1.0
+Q, _ = np.linalg.qr(np.random.default_rng(0).normal(size=(n, 6)))   # Q'Q = I
+z = np.array([3.0, 1.5, 0.4, -0.9, -2.2, 0.05])
+y = Q @ z                                          # so the OLS solution is z
+
+# scikit-learn's lasso minimises ||y - Xb||^2 / (2n) + alpha*||b||_1,
+# so lambda/2 on our scale is alpha = lambda / (2n) on theirs.
+lasso = Lasso(alpha=lam / (2 * n), fit_intercept=False, tol=1e-12).fit(Q, y)
+ridge = Ridge(alpha=lam, fit_intercept=False).fit(Q, y)
+
+soft = np.sign(z) * np.maximum(np.abs(z) - lam / 2, 0)
+print(lasso.coef_.round(3))                        # [ 2.5  1.   0.  -0.4 -1.7  0. ]
+print(ridge.coef_.round(3))                        # [ 1.5  0.75 0.2 -0.45 -1.1 0.025]
+print(np.abs(lasso.coef_ - soft).max(),            # ~4e-16
+      np.abs(ridge.coef_ - z / (1 + lam)).max())   # ~3e-16
+```
+
 | $z$ (OLS) | lasso, fitted | soft-threshold formula | ridge, fitted | $z/(1+\lambda)$ |
 |---|---|---|---|---|
 | +3.000 | +2.500 | **+2.500** | +1.500 | **+1.500** |
@@ -266,9 +376,27 @@ again, at +0.200 and +0.025.
 ### On the recipe data
 
 ```python
-from sklearn.linear_model import LassoCV
+import pandas as pd
+from sklearn.linear_model import Lasso, LassoCV
+from sklearn.model_selection import KFold, cross_val_score
+from sklearn.preprocessing import StandardScaler
+import essentials as ess
+
+r = ess.load("secret_recipe")
+X = r.drop(columns=["bake_id", "taste_score"])
+y = r.taste_score.to_numpy()
+Xs = StandardScaler().fit_transform(X.values)
+kf = KFold(10, shuffle=True, random_state=0)
 
 lasso = LassoCV(cv=kf, random_state=0, max_iter=200_000).fit(Xs, y)
+coef = pd.Series(lasso.coef_, index=X.columns)
+
+mse = -cross_val_score(Lasso(alpha=lasso.alpha_, max_iter=200_000), Xs, y,
+                       cv=kf, scoring="neg_mean_squared_error").mean()
+print(f"{lasso.alpha_:.2f} {mse:.2f}")             # 0.43 9.90
+print((coef != 0).sum())                           # 25
+print(pd.DataFrame({"planted": pd.Series(ess._RECIPE_TRUTH),
+                    "lasso": coef[list(ess._RECIPE_TRUTH)].round(3)}))
 ```
 
 Chosen $\lambda = 0.43$, cross-validated MSE **9.90** — three times better than
@@ -320,6 +448,31 @@ At `l1_ratio=0.95` the elastic net keeps both: soda +0.374, powder +1.481.
 
 Refit across five cross-validation seeds:
 
+```python
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import ElasticNetCV
+from sklearn.model_selection import KFold
+from sklearn.preprocessing import StandardScaler
+import essentials as ess
+
+r = ess.load("secret_recipe")
+X = r.drop(columns=["bake_id", "taste_score"])
+y = r.taste_score.to_numpy()
+Xs = StandardScaler().fit_transform(X.values)
+
+print(f"{np.corrcoef(X.baking_soda, X.baking_powder)[0, 1]:.3f}")   # 0.963
+
+pair = ["baking_soda", "baking_powder"]
+for seed in range(5):
+    kf = KFold(10, shuffle=True, random_state=seed)
+    m = ElasticNetCV(l1_ratio=0.95, cv=kf, random_state=0,
+                     max_iter=200_000).fit(Xs, y)
+    c = pd.Series(m.coef_, index=X.columns)[pair]
+    print(seed, c.round(3).tolist(), round(c.sum(), 3))
+# 0 [0.374, 1.481] 1.855   ...   2 [1.318, 0.891] 2.209
+```
+
 | CV seed | soda | powder | **sum** |
 |---|---|---|---|
 | 0 | +0.374 | +1.481 | **+1.855** |
@@ -346,7 +499,7 @@ predicts the held-out part, then averages. `shuffle=True` matters: without it
 `KFold` takes contiguous blocks, and if the rows are sorted by anything the folds
 are not exchangeable.
 
-The lasso selected **25** ingredients. Seven are real. Nineteen are false
+The lasso selected **25** ingredients. Six are real. Nineteen are false
 positives.
 
 This is not a failure. Cross-validation estimates **prediction** error, and the
@@ -363,6 +516,38 @@ The cross-validation curve is itself an estimate with noise in it, so its minimu
 is **optimistically located**. The standard correction is to take not the
 $\lambda$ with the lowest estimated error but the *largest* $\lambda$ whose error
 is within one standard error of the minimum:
+
+```python
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import Lasso
+from sklearn.model_selection import KFold, cross_val_score
+from sklearn.preprocessing import StandardScaler
+import essentials as ess
+
+r = ess.load("secret_recipe")
+X = r.drop(columns=["bake_id", "taste_score"])
+y = r.taste_score.to_numpy()
+Xs = StandardScaler().fit_transform(X.values)
+kf = KFold(10, shuffle=True, random_state=0)
+
+grid = np.logspace(-2, 1, 16)
+folds = np.array([-cross_val_score(Lasso(alpha=a, max_iter=200_000), Xs, y,
+                                   cv=kf, scoring="neg_mean_squared_error")
+                  for a in grid])
+mean, se = folds.mean(1), folds.std(1) / np.sqrt(kf.n_splits)
+best = mean.argmin()
+one_se = grid[mean <= mean[best] + se[best]].max()
+
+for lam in [grid[best], one_se]:
+    c = pd.Series(Lasso(alpha=lam, max_iter=200_000).fit(Xs, y).coef_,
+                  index=X.columns)
+    sel = set(c[c != 0].index)
+    print(f"{lam:.3f}", len(sel), len(sel & set(ess._RECIPE_TRUTH)),
+          len(sel - set(ess._RECIPE_TRUTH)))
+# 0.398 27 6 21
+# 0.631 15 5 10
+```
 
 | | $\lambda$ | selected | true found | false positives |
 |---|---|---|---|---|

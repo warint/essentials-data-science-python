@@ -89,6 +89,16 @@ present against when it is absent — gives:
 | **naive difference** | **+14.975** |
 | planted mean ATT | **+11.917** |
 
+```python
+import essentials as ess
+
+d = ess.load("cat_cafe")
+means = d.groupby("has_cat").dwell_min.mean()
+print(means.round(3).to_dict())                       # {0: 43.984, 1: 58.959}
+print(f"naive difference {means[1] - means[0]:+.3f}")  # +14.975
+print(f"planted mean ATT {ess.cat_cafe_truth().true_att.mean():+.3f}")  # +11.917
+```
+
 Overstated by 26%, and here the selection term is not even about *which* cafés
 adopt — every café eventually does. It is about *when*: the "cat present"
 observations are later quarters, and everyone's dwell time drifts up by 0.55
@@ -219,6 +229,20 @@ The planted $\text{ATT}(4,6)$ is **+12.00**. A single clean 2×2 recovers it to
 within six hundredths of a minute. (Computed from the unrounded means the figure
 is +12.054; the table above is rounded to three decimals.)
 
+```python
+import statsmodels.formula.api as smf
+import essentials as ess
+
+d = ess.load("cat_cafe")
+s = d[d.cat_arrival_quarter.isin([4, 10]) & d.quarter.isin([1, 6])].copy()
+print(s.pivot_table("dwell_min", "cat_arrival_quarter", "quarter").round(3))
+
+s["treated"] = (s.cat_arrival_quarter == 4).astype(int)
+s["post"] = (s.quarter == 6).astype(int)
+m = smf.ols("dwell_min ~ treated * post", data=s).fit()
+print(f"DiD {m.params['treated:post']:+.3f}")   # +12.054 -- the interaction is the estimate
+```
+
 > **Hold on to that.** The design is not the problem. Everything that goes wrong
 > in the rest of this chapter goes wrong in the *pooling* of many such
 > comparisons into one number.
@@ -241,6 +265,19 @@ rather than a presentational detail. On this data:
 | levels | **−2.0877** | −4.42 |
 | logs | −0.0038 | −0.46 |
 
+```python
+import numpy as np                     # the formula's np.log needs it in scope
+import statsmodels.formula.api as smf
+import essentials as ess
+
+d = ess.load("cat_cafe")
+for y in ["dwell_min", "np.log(dwell_min)"]:
+    m = smf.ols(f"{y} ~ has_cat + C(cafe_id) + C(quarter)", data=d).fit()
+    print(f"{y:18s} {m.params['has_cat']:+.4f}  t {m.tvalues['has_cat']:+.2f}")
+# dwell_min          -2.0877  t -4.42
+# np.log(dwell_min)  -0.0038  t -0.46
+```
+
 Both are wrong — the truth is positive — but they are wrong *differently*: levels
 gives a confidently wrong sign, logs gives a null. **Say which scale you chose,
 and why.**
@@ -252,7 +289,13 @@ The natural generalisation to many units and periods:
 $$ Y_{it} = \alpha_i + \gamma_t + \beta D_{it} + \varepsilon_{it} $$
 
 ```python
+import statsmodels.formula.api as smf
+import essentials as ess
+
+d = ess.load("cat_cafe")
 twfe = smf.ols("dwell_min ~ has_cat + C(cafe_id) + C(quarter)", data=d).fit()
+print(f"has_cat = {twfe.params['has_cat']:+.4f}   se {twfe.bse['has_cat']:.4f}   "
+      f"t {twfe.tvalues['has_cat']:.2f}   p {twfe.pvalues['has_cat']:.1e}")
 ```
 
 ```
@@ -273,10 +316,24 @@ With staggered adoption, a two-way fixed effects estimate is **exactly** a
 weighted average of every 2×2 comparison the data allows.
 
 ```python
+import numpy as np
 import diff_diff as dd
+import essentials as ess
+
+d = ess.load("cat_cafe")
 bacon = dd.BaconDecomposition().fit(
     d, outcome="dwell_min", unit="cafe_id", time="quarter",
     first_treat="cat_arrival_quarter")
+
+b = bacon.to_dataframe()
+print(b[["treated_group", "control_group", "comparison_type", "estimate", "weight"]]
+      .round(3).to_string(index=False))
+
+for kind, s in b.groupby("comparison_type"):
+    w, avg = s.weight.sum(), np.average(s.estimate, weights=s.weight)
+    print(f"{kind:17s} weight {w:.4f}  average {avg:+.3f}  contribution {w * avg:+.3f}")
+print(f"total {(b.weight * b.estimate).sum():+.3f}   "      # -2.088
+      f"TWFE {bacon.twfe_estimate:+.3f}   error {bacon.decomposition_error:.0e}")
 ```
 
 | treated | control | type | estimate | weight |
@@ -345,11 +402,28 @@ only units **not yet treated** at time $t$. The forbidden comparisons are not
 down-weighted; they are never formed.
 
 ```python
+import pandas as pd
+import diff_diff as dd
+import essentials as ess
+
+d = ess.load("cat_cafe")
 cs = dd.CallawaySantAnna(control_group="not_yet_treated").fit(
     d, outcome="dwell_min", unit="cafe_id", time="quarter",
     first_treat="cat_arrival_quarter", aggregate="group")
 
-cs.overall_att          # +10.0566
+print(f"overall ATT {cs.overall_att:+.4f}")          # +10.0566
+for g, v in cs.group_effects.items():
+    print(f"cohort {g}: {v['effect']:+.3f} (se {v['se']:.3f})")
+# cohort 4: +13.470 (se 0.396)
+# cohort 7: +3.009 (se 0.447)
+
+# every group-time cell, against the planted answer
+cells = pd.DataFrame([{"cohort": g, "quarter": t, "est": v["effect"], "se": v["se"]}
+                      for (g, t), v in cs.group_time_effects.items()])
+post = cells.merge(ess.cat_cafe_truth(), on=["cohort", "quarter"]).dropna()
+err = post.est - post.true_att
+print(f"within 2 se: {(err.abs() <= 2 * post.se).sum()} of {len(post)}   "
+      f"mean abs error {err.abs().mean():.3f}")      # 9 of 9   0.382
 ```
 
 Every identified post-treatment cell lands **within two standard errors** of the
@@ -380,6 +454,37 @@ Averaging the cells by time since adoption:
 Flat and indistinguishable from zero before adoption; rising steadily after, and
 tracking the planted line.
 
+```python
+import numpy as np
+import pandas as pd
+import diff_diff as dd
+import matplotlib.pyplot as plt
+import essentials as ess
+
+d = ess.load("cat_cafe")
+cs = dd.CallawaySantAnna(control_group="not_yet_treated").fit(
+    d, outcome="dwell_min", unit="cafe_id", time="quarter",
+    first_treat="cat_arrival_quarter", aggregate="group")
+
+cells = pd.DataFrame([{"cohort": g, "quarter": t, "event_time": t - g,
+                       "est": v["effect"], "se": v["se"]}
+                      for (g, t), v in cs.group_time_effects.items()])
+cells = cells.merge(ess.cat_cafe_truth(), on=["cohort", "quarter"], how="left")
+cells["true_att"] = cells.true_att.fillna(0.0)      # no effect before adoption
+
+ev = (cells.dropna(subset=["est"]).groupby("event_time")
+      .agg(est=("est", "mean"),
+           se=("se", lambda s: np.sqrt((s ** 2).sum()) / len(s)),
+           planted=("true_att", "mean")))
+print(ev.round(3))          # event time 0: +2.339 (0.368) against +2.75
+
+plt.errorbar(ev.index, ev.est, yerr=1.96 * ev.se, fmt="o", capsize=2, label="estimate")
+plt.plot(ev.index, ev.planted, ls=":", label="planted")
+plt.axhline(0, lw=0.8); plt.axvline(-0.5, ls="--", lw=0.8)
+plt.xlabel("quarters since the cat arrived"); plt.legend()
+plt.show()
+```
+
 Note that the *raw* event-time means do not show this. Averaging `dwell_min` by
 event time gives 44.01, 43.91, 44.62, 45.10 at event times −4 to −1 — a gentle
 rise that looks like anticipation and is in fact the common time trend, because
@@ -390,6 +495,25 @@ removes it; raw means by event time are not an event study.**
 
 Twelve placebo cells, mean **−0.0016**, largest absolute estimate 1.18 — and
 **one of the twelve is individually significant at 5%**.
+
+```python
+import pandas as pd
+import diff_diff as dd
+import essentials as ess
+
+d = ess.load("cat_cafe")
+cs = dd.CallawaySantAnna(control_group="not_yet_treated").fit(
+    d, outcome="dwell_min", unit="cafe_id", time="quarter",
+    first_treat="cat_arrival_quarter", aggregate="group")
+cells = pd.DataFrame([{"cohort": g, "quarter": t, "event_time": t - g,
+                       "est": v["effect"], "se": v["se"]}
+                      for (g, t), v in cs.group_time_effects.items()])
+
+pre = cells[(cells.event_time < 0) & cells.est.notna()]
+print(len(pre), f"{pre.est.mean():+.4f}", f"{pre.est.abs().max():.2f}")  # 12 -0.0016 1.18
+print((pre.est.abs() > 1.96 * pre.se).sum())                          # 1 significant
+print(len(cells[(cells.event_time >= 0) & cells.est.isna()]))          # 9 cells NA
+```
 
 At a 5% level on twelve tests you expect about 0.6 false rejections, so one is
 exactly what a design with genuinely parallel trends looks like. And parallel
@@ -444,7 +568,34 @@ to zero — the **breakdown value**:
 | 7 | +3.009 | 2.0 quarters | +1.504 min/quarter |
 
 The measurable pre-treatment trend is **+0.0443 min/quarter** — about **87 times
-smaller**. Which yields a defensible sentence:
+smaller**.
+
+```python
+import numpy as np
+import pandas as pd
+import diff_diff as dd
+import essentials as ess
+
+d = ess.load("cat_cafe")
+cs = dd.CallawaySantAnna(control_group="not_yet_treated").fit(
+    d, outcome="dwell_min", unit="cafe_id", time="quarter",
+    first_treat="cat_arrival_quarter", aggregate="group")
+cells = pd.DataFrame([{"cohort": g, "event_time": t - g, "est": v["effect"]}
+                      for (g, t), v in cs.group_time_effects.items()]).dropna()
+
+for g, v in cs.group_effects.items():
+    n_q = ((cells.cohort == g) & (cells.event_time >= 0)).sum()   # identified quarters
+    exposure = np.arange(1, n_q + 1).mean()
+    print(f"cohort {g}: ATT {v['effect']:+.3f}  exposure {exposure:.1f}  "
+          f"breakdown {v['effect'] / exposure:+.3f} min/quarter")
+# cohort 4: ATT +13.470  exposure 3.5  breakdown +3.849 min/quarter
+# cohort 7: ATT +3.009  exposure 2.0  breakdown +1.504 min/quarter
+
+pre = cells[cells.event_time < 0]
+print(f"pre-trend {np.polyfit(pre.event_time, pre.est, 1)[0]:+.4f} min/quarter")  # +0.0443
+```
+
+Which yields a defensible sentence:
 
 > *"To explain away the cohort-4 effect, the treated cafés would have to have been
 > on a differential trend of 3.85 minutes per quarter. The trend measurable before

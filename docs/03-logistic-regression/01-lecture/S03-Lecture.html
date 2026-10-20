@@ -259,7 +259,7 @@ Thierry Warin, PhD
 </section>
 <section id="the-data" class="slide level2">
 <h2>The data</h2>
-<div id="075a0d62" class="cell" data-execution_count="2">
+<div id="90a1b87e" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a></a>d <span class="op">=</span> ess.load(<span class="st">"mushrooms"</span>)</span>
 <span id="cb1-2"><a></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(d)<span class="sc">}</span><span class="ss"> mushrooms, </span><span class="sc">{</span>d<span class="sc">.</span>poisonous<span class="sc">.</span>mean()<span class="sc">:.1%}</span><span class="ss"> poisonous"</span>)</span>
 <span id="cb1-3"><a></a><span class="bu">print</span>(d.toxicity.value_counts().reindex(</span>
@@ -289,7 +289,7 @@ fatal             64</code></pre>
 </section>
 <section id="fitting-it" class="slide level2">
 <h2>Fitting it</h2>
-<div id="b24f3843" class="cell" data-execution_count="3">
+<div id="bbdc1608" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a></a>F <span class="op">=</span> (<span class="st">"poisonous ~ cap_diameter_cm + stem_height_cm + odor_index + ring_present"</span></span>
 <span id="cb3-2"><a></a>     <span class="st">" + volva_present + C(spore_print, Treatment('brown'))"</span></span>
 <span id="cb3-3"><a></a>     <span class="st">" + C(gill_spacing, Treatment('close')) + C(habitat, Treatment('grassland'))"</span>)</span>
@@ -319,7 +319,7 @@ volva_present                                      4.2925      0.296     14.503 
 </section>
 <section id="read-it-as-odds-ratios" class="slide level2">
 <h2>Read it as odds ratios</h2>
-<div id="6a9b6b5a" class="cell" data-execution_count="4">
+<div id="9b5dc8ce" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a></a>odds <span class="op">=</span> pd.DataFrame({</span>
 <span id="cb5-2"><a></a>    <span class="st">"coefficient"</span>: fit.params,</span>
 <span id="cb5-3"><a></a>    <span class="st">"odds ratio"</span>: np.exp(fit.params),</span>
@@ -344,7 +344,7 @@ C(spore_print, Treatment('brown'))[T.black]          -1.792       0.167</code></
 </section>
 <section id="one-feature-is-doing-most-of-the-work" class="slide level2">
 <h2>One feature is doing most of the work</h2>
-<div id="13d32822" class="cell" data-execution_count="5">
+<div id="e5a229e6" class="cell" data-execution_count="5">
 <div class="cell-output cell-output-stdout">
 <pre><code>volva_present   coefficient +4.292   odds ratio x73
 
@@ -361,7 +361,7 @@ share poisonous, without one:      21.6%</code></pre>
 </section>
 <section id="the-same-coefficient-in-probability-terms" class="slide level2">
 <h2>The same coefficient, in probability terms</h2>
-<div id="90e1fecb" class="cell" data-execution_count="6">
+<div id="9085066c" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a></a><span class="cf">for</span> base_p <span class="kw">in</span> (<span class="fl">0.01</span>, <span class="fl">0.10</span>, <span class="fl">0.50</span>, <span class="fl">0.90</span>):</span>
 <span id="cb8-2"><a></a>    base_odds <span class="op">=</span> base_p <span class="op">/</span> (<span class="dv">1</span> <span class="op">-</span> base_p)</span>
 <span id="cb8-3"><a></a>    new_odds <span class="op">=</span> base_odds <span class="op">*</span> np.exp(b)</span>
@@ -390,7 +390,7 @@ p = 0.90  -&gt;  0.9985   (a rise of +0.0985)</code></pre>
 <section id="one-coefficient-the-wald-test" class="slide level2">
 <h2>One coefficient: the Wald test</h2>
 <p>The <span class="math inline">\(z\)</span>-statistic in the output is <span class="math inline">\(\hat\beta / \mathrm{se}(\hat\beta)\)</span>, compared against a normal rather than a <span class="math inline">\(t\)</span> distribution — maximum likelihood gives asymptotic standard errors.</p>
-<div id="ca145bd4" class="cell" data-execution_count="7">
+<div id="9e0730fe" class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a></a><span class="bu">print</span>(fit.summary2().tables[<span class="dv">1</span>].loc[</span>
 <span id="cb10-2"><a></a>    [<span class="st">"volva_present"</span>, <span class="st">"ring_present"</span>, <span class="st">"odor_index"</span>, <span class="st">"cap_diameter_cm"</span>],</span>
 <span id="cb10-3"><a></a>    [<span class="st">"Coef."</span>, <span class="st">"Std.Err."</span>, <span class="st">"z"</span>, <span class="st">"P&gt;|z|"</span>]].<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -407,7 +407,7 @@ cap_diameter_cm -0.0611    0.0251  -2.4311  0.0151</code></pre>
 <h2>Several at once: the likelihood-ratio test</h2>
 <p>To test whether a <strong>group</strong> of variables belongs — all three habitat levels, say — compare log-likelihoods:</p>
 <p><span class="math display">\[ 2\left(\ell_{\text{full}} - \ell_{\text{restricted}}\right) \sim \chi^2_{\Delta k} \]</span></p>
-<div id="873ff7e5" class="cell" data-execution_count="8">
+<div id="595e5fa4" class="cell" data-execution_count="8">
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a></a><span class="im">from</span> scipy <span class="im">import</span> stats</span>
 <span id="cb12-2"><a></a></span>
 <span id="cb12-3"><a></a>reduced <span class="op">=</span> smf.logit(</span>
@@ -436,7 +436,7 @@ pseudo R2 0.5204 -&gt; 0.5331</code></pre>
 </section>
 <section id="predict-gives-probabilities-not-classes" class="slide level2">
 <h2><code>.predict</code> gives probabilities, not classes</h2>
-<div id="f86fb8ef" class="cell" data-execution_count="9">
+<div id="19d1216b" class="cell" data-execution_count="9">
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a></a>p_hat <span class="op">=</span> fit.predict(d)</span>
 <span id="cb14-2"><a></a><span class="bu">print</span>(p_hat.describe().<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -456,7 +456,7 @@ max         0.9999</code></pre>
 </section>
 <section id="the-baseline-you-have-to-beat" class="slide level2">
 <h2>The baseline you have to beat</h2>
-<div id="1af6eb64" class="cell" data-execution_count="10">
+<div id="15af8ef5" class="cell" data-execution_count="10">
 <div class="cell-output cell-output-stdout">
 <pre><code>'call everything edible':  accuracy 71.3%
                            poisonous mushrooms eaten: 402 of 402</code></pre>
@@ -468,7 +468,7 @@ max         0.9999</code></pre>
 </section>
 <section id="the-four-cells-at-t-0.5" class="slide level2">
 <h2>The four cells at <span class="math inline">\(t = 0.5\)</span></h2>
-<div id="48d94968" class="cell" data-execution_count="11">
+<div id="513663db" class="cell" data-execution_count="11">
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a></a>tn, fp, fn, tp <span class="op">=</span> confusion_matrix(d.poisonous, (p_hat <span class="op">&gt;</span> <span class="fl">0.5</span>).astype(<span class="bu">int</span>)).ravel()</span>
 <span id="cb17-2"><a></a><span class="bu">print</span>(pd.DataFrame([[tn, fp], [fn, tp]],</span>
 <span id="cb17-3"><a></a>                   index<span class="op">=</span>[<span class="st">"truly edible"</span>, <span class="st">"truly poisonous"</span>],</span>
@@ -524,7 +524,7 @@ poisonous mushrooms called edible: 105 of 402 (26.1%)</code></pre>
 </section>
 <section id="does-the-theory-hold-on-our-data" class="slide level2">
 <h2>Does the theory hold on our data?</h2>
-<div id="059adaec" class="cell" data-execution_count="12">
+<div id="0d0caed5" class="cell" data-execution_count="12">
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a></a>grid <span class="op">=</span> pd.DataFrame([outcomes(t) <span class="cf">for</span> t <span class="kw">in</span></span>
 <span id="cb19-2"><a></a>                     np.concatenate([[<span class="fl">0.002</span>, <span class="fl">0.005</span>, <span class="fl">0.01</span>, <span class="fl">0.0196</span>, <span class="fl">0.05</span>],</span>
 <span id="cb19-3"><a></a>                                     np.linspace(<span class="fl">0.1</span>, <span class="fl">0.9</span>, <span class="dv">9</span>)])])</span>
@@ -551,7 +551,7 @@ poisonous mushrooms called edible: 105 of 402 (26.1%)</code></pre>
 </section>
 <section id="the-loss-curve" class="slide level2">
 <h2>The loss curve</h2>
-<div id="41c66b45" class="cell" data-execution_count="13">
+<div id="3303b322" class="cell" data-execution_count="13">
 
 <div class="cell-output cell-output-stdout">
 <pre><code>theory       t = 0.0196   loss 630
@@ -568,7 +568,7 @@ within 5% of the minimum:  t in [0.0210, 0.0305]</code></pre>
 </section>
 <section id="read-the-two-rows-that-matter" class="slide level2">
 <h2>Read the two rows that matter</h2>
-<div id="75e6ce5b" class="cell" data-execution_count="14">
+<div id="e24704b3" class="cell" data-execution_count="14">
 <div class="cell-output cell-output-stdout">
 <pre><code>t = 0.5000   accuracy 0.877   missed 105   discarded 26%   loss 5317
 t = 0.0196   accuracy 0.585   missed   1   discarded 70%   loss 630</code></pre>
@@ -600,7 +600,7 @@ t = 0.0196   accuracy 0.585   missed   1   discarded 70%   loss 630</code></pre>
 <h2>Edible, upset stomach, hospital, fatal</h2>
 <p>Those four are <strong>ordered</strong>, and collapsing them to a binary throws that away. An ordinal (proportional-odds) model uses one set of coefficients and a set of cut-points:</p>
 <p><span class="math display">\[ \log\frac{\Pr(Y \le j)}{\Pr(Y &gt; j)} = \alpha_j - \textstyle\sum_k \beta_k x_k \]</span></p>
-<div id="9ee5254c" class="cell" data-execution_count="16">
+<div id="a9706a64" class="cell" data-execution_count="16">
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a></a><span class="im">from</span> statsmodels.miscmodels.ordinal_model <span class="im">import</span> OrderedModel</span>
 <span id="cb23-2"><a></a></span>
 <span id="cb23-3"><a></a>sub <span class="op">=</span> d.dropna(subset<span class="op">=</span>[<span class="st">"toxicity"</span>]).copy()</span>
